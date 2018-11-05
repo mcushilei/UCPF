@@ -34,7 +34,7 @@
 #include ".\list\list.h"
 #include ".\pool\pool.h"
 #include ".\queue\queue.h"
-//#include ".\scheduler\scheduler.h"
+#include ".\scheduler\os.h"
 #include ".\string\string.h"
 #include ".\timer\timer.h"
 #include ".\ttp\ttp.h"
