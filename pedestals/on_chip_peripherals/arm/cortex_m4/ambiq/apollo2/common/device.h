@@ -33,11 +33,11 @@
 //! REG_BFVM    Mask a bitfield.
 //!
 #define REG_BFVS(part, reg, field, value)                               \
-    ( ((uint32_t)(value) << REG_##part##_##reg##_##field##_S)       &   \
+    ( ((uint32_t)(value) << REG_##part##_##reg##_##field##_S) &         \
       REG_##part##_##reg##_##field##_M )
 
 #define REG_BFVG(part, reg, field, value)                               \
-    ( ((uint32_t)(value) & REG_##part##_##reg##_##field##_M)        >>  \
+    ( ((uint32_t)(value) & REG_##part##_##reg##_##field##_M) >>         \
       REG_##part##_##reg##_##field##_S )
 
 #define REG_BFVM(part, reg, field)                                      \
@@ -53,8 +53,8 @@
 //!
 #define REG_BFW(part, reg, field, value)                                \
     REG_##part.reg =                                                    \
-    ( REG_##part.reg & (~REG_##part##_##reg##_##field##_M) )        |   \
-    ( ((uint32_t)(value) << REG_##part##_##reg##_##field##_S)       &   \
+    ( REG_##part.reg & (~REG_##part##_##reg##_##field##_M) )  |         \
+    ( ((uint32_t)(value) << REG_##part##_##reg##_##field##_S) &         \
       REG_##part##_##reg##_##field##_M )
         
 #define REG_BFS(part, reg, field)                                       \
@@ -64,17 +64,17 @@
     REG_##part.reg &= ~REG_##part##_##reg##_##field##_M
 
 #define REG_BFR(part, reg, field)                                       \
-    ( (REG_##part.reg << REG_##part##_##reg##_##field##_S)          &   \
-      REG_##part##_##reg##_##field##_M )
+    ( ((uint32_t)REG_##part.reg & REG_##part##_##reg##_##field##_M) >>  \
+      REG_##part##_##reg##_##field##_S )
 
 #define REG_BFM(part, reg, field)                                       \
     ( REG_##part.reg & REG_##part##_##reg##_##field##_M)
 
 //! \brief Register access macros for multi-instance modules
 #define REG_M_BFW(part, instance, reg, field, value)                        \
-    REG_##part##n(instance).reg =                                              \
-    ( REG_##part##n(instance).reg & (~REG_##part##_##reg##_##field##_M) )  |   \
-    ( ((uint32_t)(value) << REG_##part##_##reg##_##field##_S)           &   \
+    REG_##part##n(instance).reg =                                           \
+    ( REG_##part##n(instance).reg & (~REG_##part##_##reg##_##field##_M) ) | \
+    ( ((uint32_t)(value) << REG_##part##_##reg##_##field##_S)             & \
       REG_##part##_##reg##_##field##_M )
         
 #define REG_M_BFS(part, instance, reg, field)                               \
@@ -84,8 +84,8 @@
     REG_##part##n(instance).reg &= ~REG_##part##_##reg##_##field##_M
 
 #define REG_M_BFR(part, instance, reg, field)                               \
-    ( (REG_##part##n(instance).reg << REG_##part##_##reg##_##field##_S)    &   \
-      REG_##part##_##reg##_##field##_M )
+    ( ((uint32_t)REG_##part##n(instance).reg & REG_##part##_##reg##_##field##_M) >>   \
+      REG_##part##_##reg##_##field##_S )
 
 #define REG_M_BFM(part, instance, reg, field)                               \
     ( REG_##part##n(instance).reg & REG_##part##_##reg##_##field##_M)
