@@ -207,6 +207,12 @@ bool com_open(com_t *ptThis, const uint8_t *pchCom, const com_cfg_t *ptCfg, void
 
     ZeroMemory(ptThis, sizeof(ptThis));
 
+    uint8_t comName[32] = "\\\\.\\";
+    if (0u != strncat_s(comName, _countof(comName), pchCom, _TRUNCATE)) {
+        com_in_error(ptThis);
+        return false;
+    }
+
     this.hCom = CreateFile(
                     pchCom,
                     GENERIC_READ | GENERIC_WRITE,
