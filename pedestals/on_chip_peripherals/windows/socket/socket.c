@@ -15,15 +15,11 @@
  *  along with this program; if not, see http://www.gnu.org/licenses/.        *
 *******************************************************************************/
 
-//! Do not move this pre-processor statement to other places
-#define __WINDOWS_SOCKET_C__
-
-
 
 
 /*============================ INCLUDES ======================================*/
 #include ".\app_cfg.h"
-#include ".\socket_public.h"
+#include ".\socket.h"
 #pragma comment(lib, "Ws2_32.lib")
 
 /*============================ MACROS ========================================*/

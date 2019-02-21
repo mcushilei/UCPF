@@ -15,22 +15,27 @@
  *  along with this program; if not, see http://www.gnu.org/licenses/.        *
 *******************************************************************************/
 
-#ifndef __LIST_C__
 #ifndef __LIST_H__
 #define __LIST_H__
 
 /*============================ INCLUDES ======================================*/
 #include ".\app_cfg.h"
-#include ".\list_public.h"
 
 /*============================ MACROS ========================================*/
 /*============================ MACROFIED FUNCTIONS ===========================*/
 #define LIST_IS_EMPTY(__PNODE)      ( (__PNODE)->Next == (__PNODE) )
 
 /*============================ TYPES =========================================*/
-/*============================ GLOBAL VARIABLES ==============================*/
-/*============================ PROTOTYPES ====================================*/
+DEF_STRUCTURE(list_node_t)
+    list_node_t       *Next;
+    list_node_t       *Prev;
+END_DEF_STRUCTURE(list_node_t)
 
-#endif
+/*============================ PUBLIC VARIABLES ==============================*/
+/*============================ PUBLIC PROTOTYPES =============================*/
+extern void list_init   (list_node_t *head);
+extern void list_insert (list_node_t *node, list_node_t *ahead);
+extern void list_remove (list_node_t *entry);
+
 #endif
 /* EOF */

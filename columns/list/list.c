@@ -15,14 +15,12 @@
  *  along with this program; if not, see http://www.gnu.org/licenses/.        *
 *******************************************************************************/
 
-//! \note do not move this pre-processor statement to other places
-#define __LIST_C__
 
 //! \brief options for circular doubly-linked list.
 
 /*============================ INCLUDES ======================================*/
 #include ".\app_cfg.h"
-#include ".\list_public.h"
+#include ".\list.h"
 
 /*============================ MACROS ========================================*/
 /*============================ MACROFIED FUNCTIONS ===========================*/

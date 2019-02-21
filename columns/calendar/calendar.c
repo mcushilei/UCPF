@@ -15,13 +15,11 @@
  *  along with this program; if not, see http://www.gnu.org/licenses/.        *
 *******************************************************************************/
 
-//! \note do not move this pre-processor statement to other places
-#define __CALENDAR_C__
 
 
 /*============================ INCLUDES ======================================*/
 #include ".\app_cfg.h"
-#include ".\calendar_public.h"
+#include ".\calendar.h"
 
 /*============================ MACROS ========================================*/
 /*============================ MACROFIED FUNCTIONS ===========================*/

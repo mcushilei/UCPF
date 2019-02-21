@@ -18,6 +18,7 @@
 
 /*============================ INCLUDES ======================================*/
 #include ".\app_cfg.h"
+#include ".\com.h"
 
 /*============================ MACROS ========================================*/
 #define this                    (*ptThis)
@@ -27,45 +28,6 @@
 
 /*============================ MACROFIED FUNCTIONS ===========================*/
 /*============================ TYPES =========================================*/
-//! \name em_com_mode_t
-//! @{
-typedef enum {
-    UART_NO_PARITY          = 0x0000,
-    UART_EVEN_PARITY        = 0x0001,
-    UART_ODD_PARITY         = 0x0002,
-    UART_FORCE_1_PARITY     = 0x0003,
-    UART_FORCE_0_PARITY     = 0x0004,
-
-    UART_1_STOPBIT          = 0x0010,
-    UART_2_STOPBIT          = 0x0020,
-
-    UART_5_BIT_LENGTH       = 0x0500,
-    UART_6_BIT_LENGTH       = 0x0600,
-    UART_7_BIT_LENGTH       = 0x0700,
-    UART_8_BIT_LENGTH       = 0x0800,
-} em_com_mode_t;
-//! @}
-
-//! \name com_cfg_t
-//! @{
-typedef struct {
-    uint32_t        wBaudrate;  //!< commport baudrate
-    uint16_t        hwMode;     //!< commport mode
-} com_cfg_t;
-//! @}
-
-//! \name com_t
-//! @{
-typedef struct {
-    HANDLE          hCom;
-    HANDLE          hHardwareEvent;
-    HANDLE          hHardwareThread;
-    bool            bIsOpened;
-    DWORD           flagClosePort;
-    void(*pComEventHandle)(DWORD eventFlag);
-} com_t;
-//! @}
-
 /*============================ GLOBAL VARIABLES ==============================*/
 /*============================ LOCAL VARIABLES ===============================*/
 /*============================ PROTOTYPES ====================================*/

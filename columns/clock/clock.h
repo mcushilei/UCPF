@@ -16,20 +16,34 @@
 *******************************************************************************/
 
 
-#ifndef __SERVICE_CLOCK_C__
 #ifndef __SERVICE_CLOCK_H__
 #define __SERVICE_CLOCK_H__
 
 /*============================ INCLUDES ======================================*/
 #include ".\app_cfg.h"
-#include ".\clock_public.h"
+#include "..\list\list.h"
 
 /*============================ MACROS ========================================*/
 /*============================ MACROFIED FUNCTIONS ===========================*/
 /*============================ TYPES =========================================*/
-/*============================ GLOBAL VARIABLES ==============================*/
-/*============================ PROTOTYPES ====================================*/
+typedef void alarmclock_routine_t(void);
+
+typedef struct {
+	uint8_t                 Flag;
+	uint32_t                Count;
+	alarmclock_routine_t   *pRoutine;
+	list_node_t             ListNode;
+} alarmclock_t;
+
+/*============================ PUBLIC VARIABLES ==============================*/
+/*============================ PUBLIC PROTOTYPES =============================*/
+extern bool clock_init          (void);
+extern bool clock_set_time      (uint32_t time);
+extern void clock_tick_tock     (void);
+extern bool alarmclock_config   (alarmclock_t *ac, uint32_t value, alarmclock_routine_t *pRoutine);
+extern void alarmclock_start    (alarmclock_t *ac, uint32_t value);
+extern void alarmclock_stop     (alarmclock_t *ac);
+extern bool alarmclock_is_timeout(alarmclock_t *ac);
 
 #endif  //! #ifndef __SERVICE_CLOCK_H__
-#endif  //! #ifndef __SERVICE_CLOCK_C__
 /* EOF */

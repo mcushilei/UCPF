@@ -16,20 +16,55 @@
 *******************************************************************************/
 
 
-#ifndef __EVENT_FSM_C__
 #ifndef __EVENT_FSM_H__
 #define __EVENT_FSM_H__
 
 /*============================ INCLUDES ======================================*/
-#include ".\event_fsm_public.h"
+#include ".\app_cfg.h"
 
 /*============================ MACROS ========================================*/
 /*============================ MACROFIED FUNCTIONS ===========================*/
 /*============================ TYPES =========================================*/
+#ifndef __EFSM_USER_CONFIG__
+typedef uint8_t  event_code_t;
+#endif
+
+typedef uint8_t efsm_state_t(event_code_t event, void *arg);
+typedef efsm_state_t *efsm_stack_t;
+
+typedef struct {
+    efsm_stack_t   *Stack;          //!< stack of layer.
+    uint8_t         StackSize;
+    uint8_t         StackLevel;     //!< stack level.
+    uint8_t         CurrentLevel;   //!< current level.
+    uint8_t         Status;
+} efsm_t;
+
+enum {
+    EFSM_STATUS_RUNNING     = 0,
+    EFSM_STATUS_TRANSFER_STATE,
+    EFSM_STATUS_ADD_LAYER,
+};
+
+enum {
+    EFSM_EVENT_ENTRY_STATE = 0,
+    EFSM_EVENT_EXIT_STATE,
+    EFSM_EVENT_USER_DEFINED,
+};
+
 /*============================ GLOBAL VARIABLES ==============================*/
 /*============================ PROTOTYPES ====================================*/
+extern bool     efsm_init  (efsm_t         *EFSM,
+                            efsm_stack_t   *Stack,
+                            uint8_t         StackSize,
+                            efsm_state_t   *InitState);
+extern uint8_t  efsm_dispatch_event (efsm_t *EFSM, event_code_t event, void *arg);
+
+extern bool efsm_to_state       (efsm_t *EFSM, efsm_state_t *State);
+extern bool efsm_to_upper       (efsm_t *EFSM, efsm_state_t *State);
+extern bool efsm_to_current     (efsm_t *EFSM);
+extern bool efsm_current_layer_to_state(efsm_t *EFSM, efsm_state_t *State);
 
 
 #endif  //! #ifndef __EVENT_FSM_H__
-#endif  //! #ifndef __EVENT_FSM_C__
 /* EOF */

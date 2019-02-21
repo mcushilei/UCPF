@@ -16,8 +16,8 @@
 *******************************************************************************/
 
 
-#ifndef __COM_H__
-#define __COM_H__
+#ifndef __WINDOWS_COM_H__
+#define __WINDOWS_COM_H__
 
 /*============================ INCLUDES ======================================*/
 #include ".\app_cfg.h"
@@ -67,7 +67,7 @@ typedef struct {
 /*============================ LOCAL VARIABLES ===============================*/
 /*============================ PROTOTYPES ====================================*/
 extern uint32_t enum_all_comm(void);
-extern bool com_open(com_t *ptThis, const uint8_t *pchCom, com_cfg_t *ptCfg, void *pComEventHandle);
+extern bool com_open(com_t *ptThis, const uint8_t *pchCom, const com_cfg_t *ptCfg, void *pComEventHandle);
 extern bool com_close(com_t *ptThis);
 extern uint32_t com_write(com_t *ptThis, uint8_t *pchData, uint32_t wLen);
 extern uint32_t com_read(com_t *ptThis, uint8_t *pchData, uint32_t wLen);

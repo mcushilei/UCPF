@@ -15,26 +15,34 @@
  *  along with this program; if not, see http://www.gnu.org/licenses/.        *
 *******************************************************************************/
 
-#ifndef __FIFO_C__
 #ifndef __FIFO_H__
 #define __FIFO_H__
 
 /*============================ INCLUDES ======================================*/
 #include ".\app_cfg.h"
-#include ".\fifo_public.h"
 
 /*============================ MACROS ========================================*/
 /*============================ MACROFIED FUNCTIONS ===========================*/
-#define FIFO8_INIT(__FIFO, __PBUF, __BUF_SIZE)                         \
-    fifo8_init(&__FIFO, __PBUF, __BUF_SIZE)
-#define FIFO8_IN(__FIFO, __OBJ)         fifo8_in(&__FIFO, (const uint8_t *)&(__OBJ))
-#define FIFO8_OUT(__FIFO, __OBJ)        fifo8_out(&__FIFO, (uint8_t *)&(__OBJ))
-
-
 /*============================ TYPES =========================================*/
+typedef struct {
+    void        *Buffer;
+    size_t       Size;           //!< buffer size.
+    size_t       ItemSize;       //!< item size.
+    size_t       Out;            //!< point to space filled.
+    size_t       In;             //!< point to space empty.
+} fifo_t;
+
 /*============================ GLOBAL VARIABLES ==============================*/
 /*============================ PROTOTYPES ====================================*/
+extern bool fifo_init       (void *obj, void *buffer, size_t size, size_t itemSize);
+extern bool fifo_in         (void *obj, const void *buffer);
+extern bool fifo_out        (void *obj, void *buffer);
 
-#endif
+extern bool fifo8_init      (void *obj, uint8_t *buffer, size_t size);
+extern bool fifo8_in        (void *obj, const uint8_t *buffer);
+extern bool fifo8_out       (void *obj, uint8_t *buffer);
+//extern bool fifo8_in_burst  (void *obj, const uint8_t *buffer, size_t Size);
+//extern bool fifo8_out_burst (void *obj, uint8_t *buffer, size_t Size);
+
 #endif
 /* EOF */

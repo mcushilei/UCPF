@@ -15,21 +15,31 @@
  *  along with this program; if not, see http://www.gnu.org/licenses/.        *
 *******************************************************************************/
 
-//! Do not move this pre-processor statement to other places
-#ifndef __FSM_SEM_C__
 #ifndef __FSM_SEM_H__
 #define __FSM_SEM_H__
 
 /*============================ INCLUDES ======================================*/
 #include ".\app_cfg.h"
-#include ".\fsm_sem_public.h"
+#include ".\fsm_core.h"
 
 /*============================ MACROS ========================================*/
 /*============================ MACROFIED FUNCTIONS ===========================*/
 /*============================ TYPES =========================================*/
-/*============================ GLOBAL VARIABLES ==============================*/
-/*============================ PROTOTYPES ====================================*/
+typedef struct {
+    fsm_waitable_obj_t;
+    uint16_t                SemCounter;
+} fsm_semaphore_t;
+
+/*============================ PUBLIC VARIABLES ==============================*/
+/*============================ PUBLIC PROTOTYPES =============================*/
+/*-------------------------------- semaphore ---------------------------------*/
+extern void         fsm_semaphore_init(void);
+extern fsm_err_t    fsm_semaphore_create   (fsm_handle_t       *pptSem,
+                                            uint16_t            initialCount);
+extern fsm_err_t    fsm_semaphore_wait     (fsm_handle_t        hObject,
+                                            uint32_t            timeDelay);
+extern fsm_err_t    fsm_semaphore_release  (fsm_handle_t        hObject,
+                                            uint16_t            releaseCount);
 
 #endif  //!< #ifndef __FSM_SEM_H__
-#endif  //!< #ifndef __FSM_SEM_C__
 /* EOF */

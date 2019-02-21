@@ -1,5 +1,5 @@
 /*******************************************************************************
- *  Copyright(C)2017 by Dreistein<mcu_shilei@hotmail.com>                     *
+ *  Copyright(C)2017-2018 by Dreistein<mcu_shilei@hotmail.com>                *
  *                                                                            *
  *  This program is free software; you can redistribute it and/or modify it   *
  *  under the terms of the GNU Lesser General Public License as published     *
@@ -16,7 +16,6 @@
 *******************************************************************************/
 
 
-#ifndef __DSP_C__
 #ifndef __DSP_H__
 #define __DSP_H__
 
@@ -76,5 +75,4 @@ extern void fft(float_complex_t xin[FFT_SAMPLE_NUM]);
 extern void window_coeff(float *pBuff, uint32_t buffSize, uint8_t windowType, float Alpha, float Beta, bool unityGain);
 
 #endif  //! #ifndef __DSP_H__
-#endif  //! #ifndef __DSP_C__
 /* EOF */

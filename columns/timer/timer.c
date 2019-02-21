@@ -15,15 +15,13 @@
 *  along with this program; if not, see http://www.gnu.org/licenses/.        *
 *******************************************************************************/
 
-//! \note do not move this pre-processor statement to other places
-#define __SERVICE_TIMER_C__
 
 //! \brief normal precision timer that count in millisecond. abstract: a clock 
 //!        with only one hand which has a one-day cycle.
 
 /*============================ INCLUDES ======================================*/
 #include ".\app_cfg.h"
-#include ".\timer_public.h"
+#include ".\timer.h"
 #include "..\scheduler\os.h"
 
 /*============================ MACROS ========================================*/

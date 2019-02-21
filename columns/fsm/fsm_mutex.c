@@ -15,12 +15,12 @@
  *  along with this program; if not, see http://www.gnu.org/licenses/.        *
 *******************************************************************************/
 
-//! Do not move this pre-processor statement to other places
-#define __FSM_MUTEX_C__
+
+
 
 /*============================ INCLUDES ======================================*/
 #include ".\app_cfg.h"
-#include ".\fsm_mutex_public.h"
+#include ".\fsm_mutex.h"
 
 #if SAFE_TASK_THREAD_SYNC == ENABLED
 

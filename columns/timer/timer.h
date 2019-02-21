@@ -16,20 +16,39 @@
 *******************************************************************************/
 
 
-#ifndef __SERVICE_TIMER_C__
 #ifndef __SERVICE_TIMER_H__
 #define __SERVICE_TIMER_H__
 
 /*============================ INCLUDES ======================================*/
 #include ".\app_cfg.h"
-#include ".\timer_public.h"
+#include "..\list\list.h"
 
 /*============================ MACROS ========================================*/
 /*============================ MACROFIED FUNCTIONS ===========================*/
 /*============================ TYPES =========================================*/
+typedef void timer_routine_t(void);
+
+typedef struct {
+	uint8_t         Flag;
+	uint32_t        Count;
+	uint32_t        Period;
+	timer_routine_t *pRoutine;
+	list_node_t     ListNode;
+} timer_t;
+
 /*============================ GLOBAL VARIABLES ==============================*/
 /*============================ PROTOTYPES ====================================*/
+extern bool timer_init(void);
+extern void timer_tick(void);
+extern bool timer_config(
+	timer_t        *timer,
+	uint32_t		initValue,
+	uint32_t		reloadValue,
+	timer_routine_t *pRoutine);
+extern void timer_start(timer_t *timer, uint32_t value);
+extern void timer_stop(timer_t *timer);
+extern bool timer_is_timeout(timer_t *timer);
+extern bool timer_is_running(timer_t *timer);
 
 #endif  //! #ifndef __SERVICE_TIMER_H__
-#endif  //! #ifndef __SERVICE_TIMER_C__
 /* EOF */

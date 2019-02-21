@@ -15,13 +15,12 @@
  *  along with this program; if not, see http://www.gnu.org/licenses/.        *
 *******************************************************************************/
 
-//! \note do not move queue pre-processor statement to other places
-#define __QUEUE_C__
+
 
 
 /*============================ INCLUDES ======================================*/
 #include ".\app_cfg.h"
-#include ".\queue_public.h"
+#include ".\queue.h"
 #include "..\string\string.h"
 
 /*============================ MACROS ========================================*/

@@ -15,21 +15,32 @@
  *  along with this program; if not, see http://www.gnu.org/licenses/.        *
 *******************************************************************************/
 
-//! Do not move this pre-processor statement to other places
-#ifndef __FSM_FLAG_C__
 #ifndef __FSM_FLAG_H__
 #define __FSM_FLAG_H__
 
 /*============================ INCLUDES ======================================*/
 #include ".\app_cfg.h"
-#include ".\fsm_flag_public.h"
+#include ".\fsm_core.h"
 
 /*============================ MACROS ========================================*/
 /*============================ MACROFIED FUNCTIONS ===========================*/
 /*============================ TYPES =========================================*/
-/*============================ GLOBAL VARIABLES ==============================*/
-/*============================ PROTOTYPES ====================================*/
+typedef struct {
+    fsm_waitable_obj_t;
+    uint8_t                 EventFlag;
+} fsm_flag_t;
+
+/*============================ PUBLIC VARIABLES ==============================*/
+/*============================ PUBLIC PROTOTYPES =============================*/
+/*-------------------------------- flag event --------------------------------*/
+extern void         fsm_flag_init(void);
+extern fsm_err_t    fsm_flag_create        (fsm_handle_t       *pptEvent,
+                                            bool                isManualReset,
+                                            bool                initialState);
+extern fsm_err_t    fsm_flag_wait          (fsm_handle_t        hObject,
+                                            uint32_t            timeDelay);
+extern fsm_err_t    fsm_flag_set           (fsm_handle_t        hObject);
+extern fsm_err_t    fsm_flag_reset         (fsm_handle_t        hObject);
 
 #endif  //!< #ifndef __FSM_FLAG_H__
-#endif  //!< #ifndef __FSM_FLAG_C__
 /* EOF */

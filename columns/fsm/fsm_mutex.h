@@ -15,21 +15,29 @@
  *  along with this program; if not, see http://www.gnu.org/licenses/.        *
 *******************************************************************************/
 
-//! Do not move this pre-processor statement to other places
-#ifndef __FSM_MUTEX_C__
 #ifndef __FSM_MUTEX_H__
 #define __FSM_MUTEX_H__
 
 /*============================ INCLUDES ======================================*/
 #include ".\app_cfg.h"
-#include ".\fsm_mutex_public.h"
+#include ".\fsm_core.h"
 
 /*============================ MACROS ========================================*/
 /*============================ MACROFIED FUNCTIONS ===========================*/
 /*============================ TYPES =========================================*/
-/*============================ GLOBAL VARIABLES ==============================*/
-/*============================ PROTOTYPES ====================================*/
+typedef struct {
+    fsm_waitable_obj_t;
+    fsm_tcb_t              *MutexOwner;
+} fsm_mutex_t;
+
+/*============================ PUBLIC VARIABLES ==============================*/
+/*============================ PUBLIC PROTOTYPES =============================*/
+/*------------------------- mutual exclusion semaphore -----------------------*/
+extern void         fsm_mutex_init(void);
+extern fsm_err_t    fsm_mutex_create       (fsm_handle_t       *pptMutex);
+extern fsm_err_t    fsm_mutex_wait         (fsm_handle_t        hObject,
+                                            uint32_t            timeDelay);
+extern fsm_err_t    fsm_mutex_release      (fsm_handle_t        hObject);
 
 #endif  //!< #ifndef __FSM_MUTEX_H__
-#endif  //!< #ifndef __FSM_MUTEX_C__
 /* EOF */

@@ -15,12 +15,11 @@
  *  along with this program; if not, see http://www.gnu.org/licenses/.        *
 *******************************************************************************/
 
-//! \note do not move this pre-processor statement to other places
-#define __EVENT_FSM_C__
+
 
 /*============================ INCLUDES ======================================*/
 #include ".\app_cfg.h"
-#include ".\event_fsm_public.h"
+#include ".\event_fsm.h"
 
 /*============================ MACROS ========================================*/
 /*============================ MACROFIED FUNCTIONS ===========================*/

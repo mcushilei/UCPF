@@ -1,5 +1,5 @@
 /*******************************************************************************
- *  Copyright(C)2017 by Dreistein<mcu_shilei@hotmail.com>                     *
+ *  Copyright(C)2017-2018 by Dreistein<mcu_shilei@hotmail.com>                *
  *                                                                            *
  *  This program is free software; you can redistribute it and/or modify it   *
  *  under the terms of the GNU Lesser General Public License as published     *
@@ -15,8 +15,6 @@
  *  along with this program; if not, see http://www.gnu.org/licenses/.        *
 *******************************************************************************/
 
-
-#ifndef __GEOMETRY_C__
 #ifndef __GEOMETRY_H__
 #define __GEOMETRY_H__
 
@@ -61,5 +59,4 @@ extern bool     is_dot_in_polygon(dot2d_t *pDot, dot2d_t *pVertex, uint32_t n);
 extern float    distance_on_earth(float longitude1, float latitude1, float longitude2, float latitude2);
 
 #endif  //! #ifndef __GEOMETRY_H__
-#endif  //! #ifndef __GEOMETRY_C__
 /* EOF */

@@ -19,14 +19,12 @@
 |---1----|----1---|----------2---------|---------n---------|---------2---------|
 */
 
-//! \note do not move this pre-processor statement to other places
-#define __TTP_C__
 
 /*============================ INCLUDES ======================================*/
 #include ".\app_cfg.h"
 #include "..\debug\debug.h"
 #include "..\hash\hash.h"
-#include ".\ttp_public.h"
+#include ".\ttp.h"
 
 /*============================ MACROS ========================================*/
 #define TTP_CRC16_POLLY                CRC16_POLY_CCITT

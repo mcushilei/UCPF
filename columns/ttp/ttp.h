@@ -15,20 +15,52 @@
  *  along with this program; if not, see http://www.gnu.org/licenses/.        *
 *******************************************************************************/
 
-#ifndef __TTP_C__
 #ifndef __TTP_H__
 #define __TTP_H__
 
 /*============================ INCLUDES ======================================*/
 #include ".\app_cfg.h"
-#include ".\ttp_public.h"
+#include "..\queue\queue.h"
 
 /*============================ MACROS ========================================*/
+#define TTP_QUEUE                      queue_t
+
 /*============================ MACROFIED FUNCTIONS ===========================*/
 /*============================ TYPES =========================================*/
+typedef bool ttp_output_byte_t(uint8_t byte);
+typedef bool ttp_poll_byte_t(uint8_t *pByte, bool *pIsTimeout);
+
+typedef struct {
+    ttp_output_byte_t   *OutputByte;
+    ttp_poll_byte_t     *PollByte;
+
+    uint8_t     RcvState0;
+    uint8_t     RcvState1;
+    uint16_t    RcvDataLength;
+    uint16_t    RcvWritePoint;
+    uint16_t    RcvChecksum;
+    uint8_t     RcvPort;
+    uint8_t     RcvQueueBuffer[TTP_PAYLOAD_MAX_SIZE + 6];
+    TTP_QUEUE   RcvQueue;
+
+    uint8_t     SndState;
+    uint16_t    SndWritePoint;
+    uint16_t    SndChecksum;
+} ttp_t;
+
 /*============================ GLOBAL VARIABLES ==============================*/
 /*============================ PROTOTYPES ====================================*/
+extern bool ttp_ini(ttp_t               *obj,
+                    ttp_output_byte_t   *pOutputByte,
+                    ttp_poll_byte_t     *pPollByte);
+extern uint8_t ttp_rcv_fsm( ttp_t       *obj,
+                            uint8_t     *pPort,
+                            uint8_t     *pBuffer,
+                            uint16_t    *pLength);
+extern uint8_t ttp_snd_fsm( ttp_t          *obj,
+                            uint8_t         port,
+                            const uint8_t  *pBuffer,
+                            uint16_t        length);
 
 #endif  //! #ifndef __TTP_H__
-#endif  //! #ifndef __TTP_C__
 /* EOF */

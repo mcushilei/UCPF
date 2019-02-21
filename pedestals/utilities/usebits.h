@@ -56,6 +56,32 @@
 #define BYTE_ORDER_TO_LSB_32(__UINT32)
 #endif
 
+
+#if defined(__BIG_ENDIAN__)
+#define NTHHW(__V)
+#define HTNHW(__V)
+#define NTHW(__V)
+#define HTNW(__V)
+#else
+#define NTHHW(__V) \
+do {\
+    uint16_t __UINT16 = __V;\
+    __V = (((__UINT16) >> 8) & 0x00FF) | (((__UINT16) << 8) & 0xFF00);\
+} while (0)
+
+#define HTNHW(__V) NTHHW(__V)
+
+#define NTHW(__V) \
+do {\
+    uint32_t __UINT32 = __V;\
+    __UINT32 = (((__UINT32) >>  8) & 0x00FF00FF) | (((__UINT32) <<  8) & 0xFF00FF00);\
+    __V      = (((__UINT32) >> 16) & 0x0000FFFF) | (((__UINT32) << 16) & 0xFFFF0000);\
+} while (0)
+
+#define HTNW(__V) NTHW(__V)
+#endif
+
+
 /*============================ TYPES =========================================*/
 typedef union {
     uint16_t    Value;
@@ -80,7 +106,7 @@ typedef union {
         uint8_t B0;
         uint8_t B1;
 #endif
-    } L2M;
+    } B0_LSB;
 
     struct {
 #if defined(__BIG_ENDIAN__)
@@ -90,8 +116,10 @@ typedef union {
         uint8_t B1;
         uint8_t B0;
 #endif
-    } M2L;
+    } B0_MSB;
 } hword_t;
+
+
 
 typedef union {
     uint32_t    Value;
@@ -135,7 +163,7 @@ typedef union {
         uint8_t B2;
         uint8_t B3;
 #endif
-    } L2M;
+    } B0_LSB;
 
     struct {
 #if defined(__BIG_ENDIAN__)
@@ -149,7 +177,7 @@ typedef union {
         uint8_t B1;
         uint8_t B0;
 #endif
-    } M2L;
+    } B0_MSB;
 } word_t;
 
 /*============================ GLOBAL VARIABLES ==============================*/

@@ -1,5 +1,5 @@
 /*******************************************************************************
- *  Copyright(C)2017 by Dreistein<mcu_shilei@hotmail.com>                     *
+ *  Copyright(C)2017-2018 by Dreistein<mcu_shilei@hotmail.com>                *
  *                                                                            *
  *  This program is free software; you can redistribute it and/or modify it   *
  *  under the terms of the GNU Lesser General Public License as published     *
@@ -15,36 +15,17 @@
  *  along with this program; if not, see http://www.gnu.org/licenses/.        *
 *******************************************************************************/
 
-//! \note do not move this pre-processor statement to other places
-#define __GEOMETRY_C__
+
+
 
 /*============================ INCLUDES ======================================*/
 #include ".\app_cfg.h"
 #include <math.h>
+#include ".\geometry.h"
 
 /*============================ MACROS ========================================*/
 /*============================ MACROFIED FUNCTIONS ===========================*/
 /*============================ TYPES =========================================*/
-typedef struct {
-    geonum_t    X;
-    geonum_t    Y;
-} dot2d_t;
-
-typedef struct {
-    dot2d_t     A;
-    dot2d_t     B;
-} segment2d_t;
-
-typedef struct {
-    dot2d_t     O;
-    geonum_t    R;
-} circle2d_t;
-
-typedef struct {
-    dot2d_t     LB;
-    dot2d_t     RT;
-} rectangle2d_t;
-
 /*============================ PROTOTYPES ====================================*/
 /*============================ GLOBAL VARIABLES ==============================*/
 /*============================ LOCAL VARIABLES ===============================*/
