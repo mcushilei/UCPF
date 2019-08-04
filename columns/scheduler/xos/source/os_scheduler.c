@@ -1,5 +1,5 @@
 /*******************************************************************************
- *  Copyright(C)2017-2018 by Dreistein<mcu_shilei@hotmail.com>                *
+ *  Copyright(C)2017-2019 by Dreistein<mcu_shilei@hotmail.com>                *
  *                                                                            *
  *  This program is free software; you can redistribute it and/or modify it   *
  *  under the terms of the GNU Lesser General Public License as published     *
@@ -20,7 +20,8 @@
 #define __OS_SCHEDULER_C__
 
 /*============================ INCLUDES ======================================*/
-#include ".\os.h"
+#include ".\os_private.h"
+#include ".\os_port.h"
 
 /*============================ MACROS ========================================*/
 /*============================ MACROFIED FUNCTIONS ===========================*/
@@ -53,42 +54,6 @@ void OS_SchedulerInit(void)
     osTCBNextRdy  = NULL;
 }
 
-void OS_LockSched(void)
-{
-#if OS_CRITICAL_METHOD == 3u                    //!< Allocate storage for CPU status register
-    CPU_SR  cpu_sr = 0u;
-#endif
-
-
-    if (osRunning != FALSE) {                   //!< Make sure multitasking is running
-        if (osIntNesting == 0u) {               //!< Can't call from an ISR
-            OSEnterCriticalSection(cpu_sr);
-            if (osLockNesting < 255u) {         //!< Prevent osLockNesting from wrapping back to 0
-                osLockNesting++;                //!< Increment lock nesting level
-            }
-            OSExitCriticalSection(cpu_sr);
-        }
-    }
-}
-
-void OS_UnlockSched(void)
-{
-#if OS_CRITICAL_METHOD == 3u                    //!< Allocate storage for CPU status register
-    CPU_SR  cpu_sr = 0u;
-#endif
-
-
-    if (osRunning != FALSE) {                   //!< Make sure multitasking is running
-        if (osIntNesting == 0u) {               //!< Can't call from an ISR
-            OSEnterCriticalSection(cpu_sr);
-            if (osLockNesting > 0u) {           //!< Do not decrement if already 0
-                osLockNesting--;                //!< Decrement lock nesting level
-            }
-            OSExitCriticalSection(cpu_sr);
-        }
-    }
-}
-
 /*!
  *! \Brief       READY TASK TO RUN
  *!
@@ -105,7 +70,7 @@ void OS_UnlockSched(void)
 void OS_SchedulerReadyTask(OS_TCB *ptcb)
 {
     os_list_add(&ptcb->OSTCBList, osRdyList[ptcb->OSTCBPrio].Prev); //!< add task to the end of ready task list.
-    OS_BitmapSet(&osRdyBitmap, ptcb->OSTCBPrio);
+    OS_BitmapSet(&osRdyBitmap, ptcb->OSTCBPrio);                    //!< set the flay to indicate that there are some threads ready to run.
 }
 
 /*!
@@ -129,13 +94,13 @@ void OS_SchedulerUnreadyTask(OS_TCB *ptcb)
     prio = ptcb->OSTCBPrio;
     
     os_list_del(&ptcb->OSTCBList);
-    if (osRdyList[prio].Prev == &osRdyList[prio]) { //!< Is this list empty?
-        OS_BitmapClr(&osRdyBitmap, prio);           //!< Yes, clear the flag.
+    if (osRdyList[prio].Prev == &osRdyList[prio]) { //!< Is osRdyList empty?
+        OS_BitmapClr(&osRdyBitmap, prio);           //!< Yes, clear the ready flag of this priority.
     }
 }
 
 /*!
- *! \Brief       FIND HIGHEST PRIORITY TASK READY TO RUN
+ *! \Brief       FIND HIGHEST PRIORITY TASK IN TEH READY TABLE
  *!
  *! \Description This function try determining the task that has the highest priority to run.
  *!              It will not determine the next task if currnt priority is the hightest.
@@ -164,7 +129,7 @@ void OS_SchedulerPrio(void)
 }
 
 /*!
- *! \Brief       FIND NEXT TASK READY TO RUN
+ *! \Brief       FIND NEXT READY TASK
  *!
  *! \Description This function is called by other OS services to determine the next ready task to
  *!              run. The next task's priority might be the same with current task's.
@@ -191,7 +156,7 @@ void OS_SchedulerNext(void)
 }
 
 /*!
- *! \Brief       FIND HIGHEST PRIORITY TASK READY AND RUN IT
+ *! \Brief       MKAE THE HIGHEST PRIORITY READY TASK RUN
  *!
  *! \Description This function try determining the task that has the highest priority to run.
  *!              It will not determine the next task if currnt priority is the hightest.
@@ -205,10 +170,6 @@ void OS_SchedulerNext(void)
  */
 void OS_SchedulerRunPrio(void)
 {
-#if OS_CRITICAL_METHOD == 3u                    //!< Allocate storage for CPU status register
-    CPU_SR   cpu_sr = 0u;
-#endif
-
     if (osIntNesting != 0u) {                   //!< Can not be used in ISR and ...
         return;
     }
@@ -217,18 +178,18 @@ void OS_SchedulerRunPrio(void)
         return;
     }
 
-    OSEnterCriticalSection(cpu_sr);
+    OSEnterCriticalSection();
     OS_SchedulerPrio();
-    if (osTCBNextRdy != osTCBCur) {
-        OSExitCriticalSection(cpu_sr);
-        OSCtxSw();                              //!< Perform a context switch
+    if (osTCBNextRdy != osTCBCur) {             //!< in case that current task running has the highest priority.
+        OSExitCriticalSection();
+        OSCtxSw();
         return;
     }
-    OSExitCriticalSection(cpu_sr);
+    OSExitCriticalSection();
 }
 
 /*!
- *! \Brief       FIND NEXT TASK READY AND RUN IT
+ *! \Brief       MAKE NEXT READY TASK RUN
  *!
  *! \Description This function is called by other OS services to determine the next ready task to
  *!              run, beacuse current task has been pend. The next task's priority might be the
@@ -243,10 +204,6 @@ void OS_SchedulerRunPrio(void)
  */
 void OS_SchedulerRunNext(void)
 {
-#if OS_CRITICAL_METHOD == 3u                    //!< Allocate storage for CPU status register
-    CPU_SR   cpu_sr = 0u;
-#endif
-
     if (osIntNesting != 0u) {                   //!< Can not be used in ISR and ...
         return;
     }
@@ -255,14 +212,14 @@ void OS_SchedulerRunNext(void)
         return;
     }
 
-    OSEnterCriticalSection(cpu_sr);
+    OSEnterCriticalSection();
     OS_SchedulerNext();
     if (osTCBNextRdy != osTCBCur) {
-        OSExitCriticalSection(cpu_sr);
+        OSExitCriticalSection();
         OSCtxSw();                              //!< Perform a context switch
         return;
     }
-    OSExitCriticalSection(cpu_sr);
+    OSExitCriticalSection();
 }
 
 

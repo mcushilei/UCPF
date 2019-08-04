@@ -16,7 +16,7 @@
 *******************************************************************************/
 
 
-#include ".\source\os.h"
+#include ".\source\os_private.h"
 
 /*!
  *! DEBUG DATA
@@ -85,8 +85,8 @@ const UINT16 OSHooksEn          = OS_HOOKS_EN;
  */
 const UINT32 OSDataSize =
 #if (OS_SEM_EN > 0u) && (OS_MAX_SEMAPHORES > 0u)
-                          + sizeof(osSempFreeTbl)
-                          + sizeof(osSempFreeList)
+                          + sizeof(osSemFreeTbl)
+                          + sizeof(osSemFreeList)
 #endif
 
 #if (OS_MUTEX_EN > 0u) && (OS_MAX_MUTEXES > 0u)

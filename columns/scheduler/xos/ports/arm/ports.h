@@ -1,5 +1,5 @@
 /*******************************************************************************
- *  Copyright(C)2015 by Dreistein<mcu_shilei@hotmail.com>                     *
+ *  Copyright(C)2015-2019 by Dreistein<mcu_shilei@hotmail.com>                *
  *                                                                            *
  *  This program is free software; you can redistribute it and/or modify it   *
  *  under the terms of the GNU Lesser General Public License as published     *
@@ -28,7 +28,7 @@
 #elif   defined(__CORTEX_M3__)
     #include ".\cortex_m3\ports.h"
 #elif   defined(__CORTEX_M4__)
-    #include ".\cortex_m4\ports.h"
+    #include ".\cortex_m4\os_cpu_h.h"
 #else
     #error "No supported CPU."
 #endif

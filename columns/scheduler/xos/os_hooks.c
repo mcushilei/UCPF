@@ -1,5 +1,5 @@
 /*******************************************************************************
- *  Copyright(C)2017 by Dreistein<mcu_shilei@hotmail.com>                     *
+ *  Copyright(C)2017-2019 by Dreistein<mcu_shilei@hotmail.com>                *
  *                                                                            *
  *  This program is free software; you can redistribute it and/or modify it   *
  *  under the terms of the GNU Lesser General Public License as published     *
@@ -16,7 +16,7 @@
 *******************************************************************************/
 
 
-#include ".\source\os.h"
+#include ".\source\os_private.h"
 
 /*!
  *! \Brief       OS INITIALIZATION HOOK (BEGINNING)
@@ -67,17 +67,22 @@ void OSTaskCreateHook(OS_TCB *ptcb)
 /*!
  *! \Brief       TASK RETURN HOOK
  *!
- *! \Description This function is called if a task accidentally returns.  In other words, a task should
- *!              either be an infinite loop or delete itself when done.
+ *! \Description This function is called if a task returns. The task will be deleted if OS_TASK_DEL_EN
+ *!              is set, in this case this hook can be used to free any dynamic resouce when the task
+ *!              is created. Caution: hooks are ment to extent OS function so the app code
+ *!              should NOT rely on this mechanism.
  *!
- *! \Arguments   ptcb      is a pointer to the task control block of the task that is returning.
+ *! \Arguments   ptcb       is a pointer to the task control block of the task that returned.
+ *!
+ *!              parg       this value is returned by the task. NOTE: it is a pointer type!
  *!
  *! \Notes       none
  */
 #if OS_HOOKS_EN > 0u
-void OSTaskReturnHook(OS_TCB  *ptcb)
+void OSTaskReturnHook(OS_TCB *ptcb, void *parg)
 {
     (void)ptcb;
+    (void)parg;
 }
 #endif
 

@@ -15,16 +15,12 @@
  *  along with this program; if not, see http://www.gnu.org/licenses/.        *
 *******************************************************************************/
 
-//! \note do not move this pre-processor statement to other places
-#define __OS_WINDOWS_OS_C__
 
 /*============================ INCLUDES ======================================*/
 #include ".\app_cfg.h"
-#include ".\os_public.h"
+#include ".\os.h"
 
 /*============================ MACROS ========================================*/
-#define MS_PER_TICK                 (10u)
-
 /*============================ MACROFIED FUNCTIONS ===========================*/
 /*============================ TYPES =========================================*/
 /*============================ PROTOTYPES ====================================*/
@@ -38,9 +34,10 @@ void        osInit                 (void)
     InitializeCriticalSectionAndSpinCount(&__globalCriticalSection, 0x00000400);
 }
 
-void        osTimeDelay            (UINT32          ticks)
+void        osTaskDelay            (UINT32          timeout)
 {
-    Sleep(MS_PER_TICK * ticks);
+    Sleep(MS_PER_TICK * timeout);
+    return OS_ERR_NONE;
 }
 
 

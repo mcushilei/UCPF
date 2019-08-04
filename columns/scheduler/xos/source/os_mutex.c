@@ -1,5 +1,5 @@
 /*******************************************************************************
- *  Copyright(C)2017-2018 by Dreistein<mcu_shilei@hotmail.com>                *
+ *  Copyright(C)2017-2019 by Dreistein<mcu_shilei@hotmail.com>                *
  *                                                                            *
  *  This program is free software; you can redistribute it and/or modify it   *
  *  under the terms of the GNU Lesser General Public License as published     *
@@ -17,11 +17,11 @@
 
 
 //! \note do not move this pre-processor statement to other places
-#define  __OS_MUTEX_C__
-
+#define __OS_MUTEX_C__
 
 /*============================ INCLUDES ======================================*/
-#include ".\os.h"
+#include ".\os_private.h"
+#include ".\os_port.h"
 
 #if (OS_MUTEX_EN > 0u) && (OS_MAX_MUTEXES >0u)
 
@@ -37,7 +37,7 @@
 //! overlap enabled:
 //!                         .....
 //!                 |--------- mutex 3 ---------|
-//!       |------------------ mutex 2 -------------|
+//!                       |------------------ mutex 2 -------------|
 //!     |------------------ mutex 1 ----------------------|
 //! |------------------ mutex 0 -----------------------------|   ...
 //! 
@@ -64,9 +64,6 @@
 OS_ERR osMutexCreate(OS_HANDLE *pMutexHandle, UINT8 ceilingPrio)
 {
     OS_MUTEX   *pmutex;
-#if OS_CRITICAL_METHOD == 3u                    //!< Allocate storage for CPU status register
-    CPU_SR   cpu_sr = 0u;
-#endif
 
 
 #if OS_ARG_CHK_EN > 0u
@@ -84,13 +81,13 @@ OS_ERR osMutexCreate(OS_HANDLE *pMutexHandle, UINT8 ceilingPrio)
     }
 
     //! malloc an ECB from pool.
-    OSEnterCriticalSection(cpu_sr);
+    OSEnterCriticalSection();
     pmutex = OS_ObjPoolNew(&osMutexFreeList);
     if (pmutex == NULL) {
-        OSExitCriticalSection(cpu_sr);
+        OSExitCriticalSection();
         return OS_ERR_OBJ_DEPLETED;
     }
-    OSExitCriticalSection(cpu_sr);
+    OSExitCriticalSection();
 
     //! Set object type.
     //! init mutex property.
@@ -101,9 +98,7 @@ OS_ERR osMutexCreate(OS_HANDLE *pMutexHandle, UINT8 ceilingPrio)
     pmutex->OSMutexCnt          = 0u;
     pmutex->OSMutexCeilingPrio  = ceilingPrio;
     pmutex->OSMutexOwnerPrio    = 0u;
-#if OS_MUTEX_OVERLAP_EN > 0u
     os_list_init_head(&pmutex->OSMutexOvlpList);
-#endif
     pmutex->OSMutexOwnerTCB     = NULL;
     os_list_init_head(&pmutex->OSMutexWaitList);
     
@@ -148,15 +143,12 @@ OS_ERR osMutexCreate(OS_HANDLE *pMutexHandle, UINT8 ceilingPrio)
  *!                            original priority.
  */
 #if OS_MUTEX_DEL_EN > 0u
-OS_ERR osMutexDelete(OS_HANDLE *pMutexHandle, UINT8 opt)
+OS_ERR osMutexDelete(OS_HANDLE *pMutexHandle, UINT16 opt)
 {
     OS_MUTEX   *pmutex;
     OS_TCB     *powner;
     BOOL        taskPend;
     BOOL        taskSched = FALSE;
-#if OS_CRITICAL_METHOD == 3u                //!< Allocate storage for CPU status register
-    CPU_SR   cpu_sr = 0u;
-#endif
 
 
 #if OS_ARG_CHK_EN > 0u
@@ -175,7 +167,7 @@ OS_ERR osMutexDelete(OS_HANDLE *pMutexHandle, UINT8 opt)
         return OS_ERR_OBJ_TYPE;
     }
 
-    OSEnterCriticalSection(cpu_sr);
+    OSEnterCriticalSection();
     if (pmutex->OSMutexWaitList.Next != &pmutex->OSMutexWaitList) { //!< See if any tasks suspend for this mutex.
         taskPend    = TRUE;                                         //!< Yes
         taskSched   = TRUE;
@@ -185,11 +177,11 @@ OS_ERR osMutexDelete(OS_HANDLE *pMutexHandle, UINT8 opt)
     switch (opt) {
         case OS_DEL_NOT_IN_USE:
             if (taskPend != FALSE) {
-                OSExitCriticalSection(cpu_sr);
+                OSExitCriticalSection();
                 return OS_ERR_TASK_WAITING;
             }
             if (pmutex->OSMutexOwnerTCB != NULL) {
-                OSExitCriticalSection(cpu_sr);
+                OSExitCriticalSection();
                 return OS_ERR_MUTEX_IS_OWNED;
             }
             break;
@@ -198,18 +190,14 @@ OS_ERR osMutexDelete(OS_HANDLE *pMutexHandle, UINT8 opt)
             break;
 
         default:
-             OSExitCriticalSection(cpu_sr);
+             OSExitCriticalSection();
              return OS_ERR_INVALID_OPT;
     }
     
-    //! remove the owner if there is any.
+    //! remove the owner if there is one.
     powner = pmutex->OSMutexOwnerTCB;
     if (powner != NULL) {
-#if OS_MUTEX_OVERLAP_EN > 0u
         os_list_del(&pmutex->OSMutexOvlpList);
-#else
-        powner->OSTCBOwnMutex = NULL;
-#endif
         if (pmutex->OSMutexOwnerPrio != powner->OSTCBPrio) {        //!< If this task's prio has been changed,
             OS_ChangeTaskPrio(powner, pmutex->OSMutexOwnerPrio);    //!< Yes, restore task's prio.
             taskSched = TRUE;
@@ -217,8 +205,8 @@ OS_ERR osMutexDelete(OS_HANDLE *pMutexHandle, UINT8 opt)
     }
     
     //! Ready ALL tasks are suspending for this mutex.
-    while (pmutex->OSMutexWaitList.Next != &pmutex->OSMutexWaitList) {
-        OS_WaitableObjRdyTask((OS_WAITABLE_OBJ *)pmutex, OS_STAT_PEND_ABORT);
+    while (!OS_LIST_IS_EMPTY(pmutex->OSMutexWaitList)) {
+        OS_WaitableObjRdyTask((OS_WAITABLE_OBJ *)pmutex, &pmutex->OSMutexWaitList, OS_STAT_PEND_ABORT);
     }
     
     pmutex->OSMutexObjHeader.OSObjType = OS_OBJ_TYPE_UNUSED;
@@ -227,7 +215,7 @@ OS_ERR osMutexDelete(OS_HANDLE *pMutexHandle, UINT8 opt)
     pmutex->OSMutexOwnerPrio    = 0u;
     pmutex->OSMutexOwnerTCB     = NULL;
     OS_ObjPoolFree(&osMutexFreeList, pmutex);
-    OSExitCriticalSection(cpu_sr);
+    OSExitCriticalSection();
     
     if (taskSched) {
         OS_SchedulerRunPrio();
@@ -273,9 +261,6 @@ OS_ERR osMutexPend(OS_HANDLE hMutex, UINT32 timeout)
     OS_WAIT_NODE    node;
     OS_ERR          err;
     UINT8           prio;
-#if OS_CRITICAL_METHOD == 3u                //!< Allocate storage for CPU status register
-    CPU_SR       cpu_sr = 0u;
-#endif
 
 
 #if OS_ARG_CHK_EN > 0u
@@ -287,43 +272,36 @@ OS_ERR osMutexPend(OS_HANDLE hMutex, UINT32 timeout)
         return OS_ERR_USE_IN_ISR;           //!< ... mutex can't be used from an ISR.
     }
     if (osLockNesting > 0u) {               //!< See if called with scheduler locked ...
-        return OS_ERR_PEND_LOCKED;          //!< ... can't PEND when locked
+        return OS_ERR_PEND_LOCKED;          //!  ... This usage is deprecated.
     }
     if (OS_OBJ_TYPE_GET(pmutex->OSMutexObjHeader.OSObjType) != OS_OBJ_TYPE_MUTEX) {  //!< Validate object's type.
         return OS_ERR_OBJ_TYPE;
     }
 
-    OSEnterCriticalSection(cpu_sr);
+    OSEnterCriticalSection();
     if (pmutex->OSMutexOwnerTCB == NULL) {              //!< Has mutex been possessed by any other task?...
-#if OS_MUTEX_OVERLAP_EN > 0u                            //!  ...No.
+                                                        //!  ...No.
         os_list_add(&pmutex->OSMutexOvlpList, osTCBCur->OSTCBOwnMutexList.Prev);
-#else
-        if (osTCBCur->OSTCBOwnMutex != NULL) {
-            OSExitCriticalSection(cpu_sr);
-            return OS_ERR_OVERLAP_MUTEX;
-        }
-        osTCBCur->OSTCBOwnMutex  = pmutex;
-#endif
         pmutex->OSMutexCnt       = 0u;
         pmutex->OSMutexOwnerPrio = osTCBCur->OSTCBPrio;
         pmutex->OSMutexOwnerTCB  = osTCBCur;
-        OSExitCriticalSection(cpu_sr);
+        OSExitCriticalSection();
         return OS_ERR_NONE;
     }
     
     if (pmutex->OSMutexOwnerTCB == osTCBCur) {          //!< Is mutex owned by CURRENT task?...
         if (pmutex->OSMutexCnt < 255u) {                //! ...Yes.
             pmutex->OSMutexCnt++;
-            OSExitCriticalSection(cpu_sr);
+            OSExitCriticalSection();
             return OS_ERR_NONE;
         } else {
-            OSExitCriticalSection(cpu_sr);              //!< this should be fatal error!
+            OSExitCriticalSection();              //!< this should be fatal error!
             return OS_ERR_MUTEX_OVERFLOW;
         }
     }
     
     if (timeout == 0u) {
-        OSExitCriticalSection(cpu_sr);
+        OSExitCriticalSection();
         return OS_ERR_TIMEOUT;
     }
 
@@ -337,8 +315,8 @@ OS_ERR osMutexPend(OS_HANDLE hMutex, UINT32 timeout)
         OS_ChangeTaskPrio(pmutex->OSMutexOwnerTCB, prio);   //!< Yes. Rise owner's priority.
     }
 
-    OS_WaitableObjAddTask((OS_WAITABLE_OBJ *)pmutex, &node, timeout);   //!< Suspend current task.
-    OSExitCriticalSection(cpu_sr);
+    OS_WaitableObjAddTask((OS_WAITABLE_OBJ *)pmutex, &node, &pmutex->OSMutexWaitList, timeout);   //!< Suspend current task.
+    OSExitCriticalSection();
     OS_SchedulerRunNext();
 
     switch (node.OSWaitNodeRes) {
@@ -379,9 +357,6 @@ OS_ERR osMutexPost(OS_HANDLE hMutex)
     OS_MUTEX   *pmutex = (OS_MUTEX *)hMutex;
     OS_TCB     *ptcb;
     BOOL        taskSched = FALSE;
-#if OS_CRITICAL_METHOD == 3u                //!< Allocate storage for CPU status register
-    CPU_SR   cpu_sr = 0u;
-#endif
 
 
 #if OS_ARG_CHK_EN > 0u
@@ -396,19 +371,15 @@ OS_ERR osMutexPost(OS_HANDLE hMutex)
         return OS_ERR_OBJ_TYPE;
     }
 
-    OSEnterCriticalSection(cpu_sr);
+    OSEnterCriticalSection();
     if (osTCBCur != pmutex->OSMutexOwnerTCB) {      //!< See if the mutex owned by current task.
-        OSExitCriticalSection(cpu_sr);
+        OSExitCriticalSection();
         return OS_ERR_NOT_MUTEX_OWNER;
     }
-#if OS_MUTEX_OVERLAP_EN > 0u
-#else
-    osTCBCur->OSTCBOwnMutex = NULL;
-#endif
     
     if (pmutex->OSMutexCnt != 0u) {                 //!< Does current task own this mutex recursively?
         pmutex->OSMutexCnt--;
-        OSExitCriticalSection(cpu_sr);
+        OSExitCriticalSection();
         return OS_ERR_NONE;
     }
     
@@ -416,27 +387,21 @@ OS_ERR osMutexPost(OS_HANDLE hMutex)
         OS_ChangeTaskPrio(osTCBCur, pmutex->OSMutexOwnerPrio);  //!< ... Yes, restore task's prio.
         taskSched = TRUE;
     }
-#if OS_MUTEX_OVERLAP_EN > 0u
     os_list_del(&pmutex->OSMutexOvlpList);
-#else
-    osTCBCur->OSTCBOwnMutex = NULL;
-#endif
     
-    if (pmutex->OSMutexWaitList.Next != &pmutex->OSMutexWaitList) {                 //!< Is any task waiting for the mutex?...
-        ptcb = OS_WaitableObjRdyTask((OS_WAITABLE_OBJ *)pmutex, OS_STAT_PEND_OK);   //!< ... Yes, Make the HPT waiting for the mutex ready
+    if (!OS_LIST_IS_EMPTY(pmutex->OSMutexWaitList)) {           //!< Is any task waiting for the mutex?...
+        ptcb = OS_WaitableObjRdyTask((OS_WAITABLE_OBJ *)pmutex, //!< ... Yes, Make the HPT waiting for the mutex ready
+                                     &pmutex->OSMutexWaitList,
+                                     OS_STAT_PEND_OK);
         pmutex->OSMutexOwnerTCB  = ptcb;
         pmutex->OSMutexOwnerPrio = ptcb->OSTCBPrio;
-#if OS_MUTEX_OVERLAP_EN > 0u
         os_list_add(&pmutex->OSMutexOvlpList, ptcb->OSTCBOwnMutexList.Prev);
-#else
-        ptcb->OSTCBOwnMutex      = pmutex;
-#endif
         taskSched = TRUE;
-    } else {                                                                        //!< ... No.
+    } else {                                                    //!< ... No.
         pmutex->OSMutexOwnerTCB  = NULL;
         pmutex->OSMutexOwnerPrio = 0u;
     }
-    OSExitCriticalSection(cpu_sr);
+    OSExitCriticalSection();
     
     if (taskSched) {
         OS_SchedulerRunPrio();
@@ -464,9 +429,6 @@ OS_ERR osMutexPost(OS_HANDLE hMutex)
 OS_ERR osMutexQuery(OS_HANDLE hMutex, OS_MUTEX_INFO *pInfo)
 {
     OS_MUTEX       *pmutex = (OS_MUTEX *)hMutex;
-#if OS_CRITICAL_METHOD == 3u            //!< Allocate storage for CPU status register
-    CPU_SR       cpu_sr = 0u;
-#endif
 
 
 #if OS_ARG_CHK_EN > 0u
@@ -481,17 +443,14 @@ OS_ERR osMutexQuery(OS_HANDLE hMutex, OS_MUTEX_INFO *pInfo)
         return OS_ERR_OBJ_TYPE;
     }
 
-    OSEnterCriticalSection(cpu_sr);
+    OSEnterCriticalSection();
     if (pmutex->OSMutexOwnerTCB == NULL) {                  //!< Does any task own this mutex?
-        pInfo->OSOwnerTCB    = NULL;
         pInfo->OSOwnerPrio   = 0u;
     } else {
-        pInfo->OSOwnerTCB    = pmutex->OSMutexOwnerTCB;
         pInfo->OSOwnerPrio   = pmutex->OSMutexOwnerPrio;
     }
     pInfo->OSCeilingPrio     = pmutex->OSMutexCeilingPrio;
-    pInfo->OSWaitList        = pmutex->OSMutexWaitList;     //!< Copy wait list
-    OSExitCriticalSection(cpu_sr);
+    OSExitCriticalSection();
     
     return OS_ERR_NONE;
 }

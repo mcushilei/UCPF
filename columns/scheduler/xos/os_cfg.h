@@ -35,6 +35,7 @@
 #define OS_MAX_PRIO_LEVELS       64u   //!< Max. number of priority levels ...
                                        //!< ... MUST be >= 1 and <= 256!
 
+#define OS_MAX_QUEUES            16u   //!< Max. number of queues    in your application
 #define OS_MAX_SEMAPHORES        16u   //!< Max. number of semaphore in your application
 #define OS_MAX_MUTEXES           16u   //!< Max. number of mutex     in your application
 #define OS_MAX_FLAGS             16u   //!< Max. number of flag      in your application
@@ -69,7 +70,6 @@
 #define OS_MUTEX_EN               1u   //!< Enable (1) or Disable (0) code generation for MUTEX
 #define OS_MUTEX_DEL_EN           1u   //!< Include code for osMutexDelete()
 #define OS_MUTEX_QUERY_EN         1u   //!< Include code for osMutexQuery()
-#define OS_MUTEX_OVERLAP_EN       0u   //!< Enable (1) or Disable (0) mutex overlap usage
 
 
 //! SEMPAPHORES
@@ -78,6 +78,12 @@
 #define OS_SEM_QUERY_EN           1u   //!< Include code for osSemQuery()
 #define OS_SEM_SET_EN             1u   //!< Include code for OSSemSet()
 #define OS_SEM_PEND_ABORT_EN      1u   //!< Include code for osSemPendAbort()
+
+
+//! QUEUE
+#define OS_QUEUE_EN               1u   //!< Enable (1) or Disable (0) code generation for QUEUE
+#define OS_QUEUE_DEL_EN           1u   //!< Include code for osQueueDelete()
+#define OS_QUEUE_QUERY_EN         1u   //!< Include code for osQueueQuery()
 
 //#define SAFETY_CRITICAL_RELEASE
 

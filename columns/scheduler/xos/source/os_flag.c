@@ -1,5 +1,5 @@
 /*******************************************************************************
- *  Copyright(C)2017-2018 by Dreistein<mcu_shilei@hotmail.com>                *
+ *  Copyright(C)2017-2019 by Dreistein<mcu_shilei@hotmail.com>                *
  *                                                                            *
  *  This program is free software; you can redistribute it and/or modify it   *
  *  under the terms of the GNU Lesser General Public License as published     *
@@ -17,10 +17,11 @@
 
 
 //! \note do not move this pre-processor statement to other places
-#define  __OS_FLAG_C__
+#define __OS_FLAG_C__
 
 /*============================ INCLUDES ======================================*/
-#include ".\os.h"
+#include ".\os_private.h"
+#include ".\os_port.h"
 
 #if (OS_FLAG_EN > 0u) && (OS_MAX_FLAGS > 0u)
 
@@ -59,9 +60,6 @@ OS_ERR osFlagCreate(OS_HANDLE *pFlagHandle, BOOL initValue, BOOL manualReset)
 {
     OS_FLAG    *pflag;
     UINT16      flags = 0;
-#if OS_CRITICAL_METHOD == 3u
-    CPU_SR   cpu_sr = 0u;            //!< Allocate storage for CPU status register
-#endif
 
 
 #if OS_ARG_CHK_EN > 0u
@@ -81,13 +79,13 @@ OS_ERR osFlagCreate(OS_HANDLE *pFlagHandle, BOOL initValue, BOOL manualReset)
     }
     
     //! malloc ECB from pool.
-    OSEnterCriticalSection(cpu_sr);
+    OSEnterCriticalSection();
     pflag = OS_ObjPoolNew(&osFlagFreeList);
     if (pflag == NULL) {
-        OSExitCriticalSection(cpu_sr);
+        OSExitCriticalSection();
         return OS_ERR_OBJ_DEPLETED;
     }
-    OSExitCriticalSection(cpu_sr);
+    OSExitCriticalSection();
 
     //! set object type.
     //! initial flag's property.
@@ -134,14 +132,11 @@ OS_ERR osFlagCreate(OS_HANDLE *pFlagHandle, BOOL initValue, BOOL manualReset)
  *!                 OS_ERR_PEND_ABORT if osFlagDelete() was called with OS_DEL_ALWAYS.
  */
 #if OS_FLAG_DEL_EN > 0u
-OS_ERR osFlagDelete(OS_HANDLE *pFlagHandle, UINT8 opt)
+OS_ERR osFlagDelete(OS_HANDLE *pFlagHandle, UINT16 opt)
 {
     OS_FLAG    *pflag;
     BOOL        taskPend;
     BOOL        taskSched = FALSE;
-#if OS_CRITICAL_METHOD == 3u            //!< Allocate storage for CPU status register
-    CPU_SR   cpu_sr = 0u;
-#endif
 
 
 #if OS_ARG_CHK_EN > 0u
@@ -160,8 +155,8 @@ OS_ERR osFlagDelete(OS_HANDLE *pFlagHandle, UINT8 opt)
         return OS_ERR_OBJ_TYPE;
     }
 
-    OSEnterCriticalSection(cpu_sr);
-    if (pflag->OSFlagWaitList.Next != &pflag->OSFlagWaitList) {     //!< See if any tasks taskPend on this flag...
+    OSEnterCriticalSection();
+    if (!OS_LIST_IS_EMPTY(pflag->OSFlagWaitList)) {     //!< See if any tasks taskPend on this flag...
         taskPend    = TRUE;                                         //!< ...Yes
         taskSched   = TRUE;
     } else {
@@ -170,7 +165,7 @@ OS_ERR osFlagDelete(OS_HANDLE *pFlagHandle, UINT8 opt)
     switch (opt) {
         case OS_DEL_NOT_IN_USE:
             if (taskPend != FALSE) {
-                OSExitCriticalSection(cpu_sr);
+                OSExitCriticalSection();
                 return OS_ERR_TASK_WAITING;
             }
             break;
@@ -179,17 +174,17 @@ OS_ERR osFlagDelete(OS_HANDLE *pFlagHandle, UINT8 opt)
             break;
 
         default:
-             OSExitCriticalSection(cpu_sr);
+             OSExitCriticalSection();
              return OS_ERR_INVALID_OPT;
     }
     
-    while (pflag->OSFlagWaitList.Next != &pflag->OSFlagWaitList) {  //!< Ready ALL tasks task pend for this flag.
-        OS_WaitableObjRdyTask((OS_WAITABLE_OBJ *)pflag, OS_STAT_PEND_ABORT);
+    while (!OS_LIST_IS_EMPTY(pflag->OSFlagWaitList)) {  //!< Ready ALL tasks task pend for this flag.
+        OS_WaitableObjRdyTask((OS_WAITABLE_OBJ *)pflag, &pflag->OSFlagWaitList, OS_STAT_PEND_ABORT);
     }
     pflag->OSFlagObjHeader.OSObjType      = OS_OBJ_TYPE_UNUSED;
     pflag->OSFlagFlags    = 0u;
     OS_ObjPoolFree(&osFlagFreeList, pflag);
-    OSExitCriticalSection(cpu_sr);
+    OSExitCriticalSection();
     
     if (taskSched) {
         OS_SchedulerRunPrio();
@@ -227,9 +222,6 @@ OS_ERR osFlagPend(OS_HANDLE hFlag, UINT32 timeout)
     UINT16          ready;
     UINT16          consume;
     OS_ERR          err;
-#if OS_CRITICAL_METHOD == 3u            //!< Allocate storage for CPU status register
-    CPU_SR       cpu_sr = 0u;
-#endif
 
 
 #if OS_ARG_CHK_EN > 0u
@@ -247,24 +239,24 @@ OS_ERR osFlagPend(OS_HANDLE hFlag, UINT32 timeout)
         return OS_ERR_OBJ_TYPE;
     }
 
-    OSEnterCriticalSection(cpu_sr);
+    OSEnterCriticalSection();
     consume = pflag->OSFlagFlags & OS_FLAG_MANUAL_RESET_BIT;
     ready   = pflag->OSFlagFlags & OS_FLAG_STATUS_BIT;
     if (ready != 0u) {                          //!< See if flag has benn set.
         if (consume != 0u) {                    //!< Yes. See if we need to consume the flags.
             pflag->OSFlagFlags &= ~OS_FLAG_STATUS_BIT;       //!< Yes. Reset the flag.
         }
-        OSExitCriticalSection(cpu_sr);
+        OSExitCriticalSection();
         return OS_ERR_NONE;
     }
 
     if (timeout == 0u) {
-        OSExitCriticalSection(cpu_sr);
+        OSExitCriticalSection();
         return OS_ERR_TIMEOUT;
     }
 
-    OS_WaitableObjAddTask((OS_WAITABLE_OBJ *)pflag, &node, timeout);    //!< Suspend task until event occur or timeout
-    OSExitCriticalSection(cpu_sr);
+    OS_WaitableObjAddTask((OS_WAITABLE_OBJ *)pflag, &node, &pflag->OSFlagWaitList, timeout);    //!< Suspend task until event occur or timeout
+    OSExitCriticalSection();
     OS_SchedulerRunNext();
 
     switch (node.OSWaitNodeRes) {
@@ -304,9 +296,6 @@ OS_ERR osFlagPend(OS_HANDLE hFlag, UINT32 timeout)
 OS_ERR osFlagSet(OS_HANDLE hFlag)
 {
     OS_FLAG      *pflag = (OS_FLAG *)hFlag;
-#if OS_CRITICAL_METHOD == 3u            //!< Allocate storage for CPU status register
-    CPU_SR     cpu_sr = 0u;
-#endif
 
 
 #if OS_ARG_CHK_EN > 0u
@@ -318,17 +307,17 @@ OS_ERR osFlagSet(OS_HANDLE hFlag)
         return OS_ERR_OBJ_TYPE;
     }
 
-    OSEnterCriticalSection(cpu_sr);
-    pflag->OSFlagFlags |= OS_FLAG_STATUS_BIT;                   //!< Set the flags.
-    if (pflag->OSFlagWaitList.Next != &pflag->OSFlagWaitList) {         //!< See if any task is waiting for this flag.
-        while (pflag->OSFlagWaitList.Next != &pflag->OSFlagWaitList) {  //!< Yes, Ready ALL tasks waiting for this flag.
-            OS_WaitableObjRdyTask((OS_WAITABLE_OBJ *)pflag, OS_STAT_PEND_OK);
+    OSEnterCriticalSection();
+    pflag->OSFlagFlags |= OS_FLAG_STATUS_BIT;               //!< Set the flags.
+    if (!OS_LIST_IS_EMPTY(pflag->OSFlagWaitList)) {         //!< See if any task is waiting for this flag.
+        while (!OS_LIST_IS_EMPTY(pflag->OSFlagWaitList)) {  //!< Yes, Ready ALL tasks waiting for this flag.
+            OS_WaitableObjRdyTask((OS_WAITABLE_OBJ *)pflag, &pflag->OSFlagWaitList, OS_STAT_PEND_OK);
         }
         if (pflag->OSFlagFlags & OS_FLAG_MANUAL_RESET_BIT) {    //!< Is this a auto-reset flag?
             pflag->OSFlagFlags &= ~OS_FLAG_STATUS_BIT;          //!< Yes, Reset the flag.
         }
     }
-    OSExitCriticalSection(cpu_sr);
+    OSExitCriticalSection();
     OS_SchedulerRunPrio();
     
     return OS_ERR_NONE;
@@ -348,9 +337,6 @@ OS_ERR osFlagSet(OS_HANDLE hFlag)
 OS_ERR osFlagReset(OS_HANDLE hFlag)
 {
     OS_FLAG    *pflag = (OS_FLAG *)hFlag;
-#if OS_CRITICAL_METHOD == 3u            //!< Allocate storage for CPU status register
-    CPU_SR   cpu_sr = 0u;
-#endif
 
 
 #if OS_ARG_CHK_EN > 0u
@@ -362,9 +348,9 @@ OS_ERR osFlagReset(OS_HANDLE hFlag)
         return OS_ERR_OBJ_TYPE;
     }
 
-    OSEnterCriticalSection(cpu_sr);
+    OSEnterCriticalSection();
     pflag->OSFlagFlags &= ~OS_FLAG_STATUS_BIT;       //!< Reset the flags
-    OSExitCriticalSection(cpu_sr);
+    OSExitCriticalSection();
     
     return OS_ERR_NONE;
 }
@@ -387,9 +373,6 @@ OS_ERR osFlagQuery(OS_HANDLE hFlag, OS_FLAG_INFO *pInfo)
 {
     OS_FLAG    *pflag = (OS_FLAG *)hFlag;
     UINT16      flag;
-#if OS_CRITICAL_METHOD == 3u            //!< Allocate storage for CPU status register
-    CPU_SR   cpu_sr = 0u;
-#endif
 
 
 #if OS_ARG_CHK_EN > 0u
@@ -404,7 +387,7 @@ OS_ERR osFlagQuery(OS_HANDLE hFlag, OS_FLAG_INFO *pInfo)
         return OS_ERR_OBJ_TYPE;
     }
 
-    OSEnterCriticalSection(cpu_sr);
+    OSEnterCriticalSection();
     flag = pflag->OSFlagFlags;
     if (flag & OS_FLAG_MANUAL_RESET_BIT) {      //!< Is this a manual-rest flag?
         pInfo->OSFlagManualReset = FALSE;
@@ -416,8 +399,7 @@ OS_ERR osFlagQuery(OS_HANDLE hFlag, OS_FLAG_INFO *pInfo)
     } else {
         pInfo->OSFlagStatus = FALSE;
     }
-    pInfo->OSWaitList = pflag->OSFlagWaitList;  //!< Copy wait list
-    OSExitCriticalSection(cpu_sr);
+    OSExitCriticalSection();
     
     return OS_ERR_NONE;
 }

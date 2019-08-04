@@ -1,5 +1,5 @@
 /*******************************************************************************
- *  Copyright(C)2017-2018 by Dreistein<mcu_shilei@hotmail.com>                *
+ *  Copyright(C)2017-2019 by Dreistein<mcu_shilei@hotmail.com>                *
  *                                                                            *
  *  This program is free software; you can redistribute it and/or modify it   *
  *  under the terms of the GNU Lesser General Public License as published     *
@@ -15,17 +15,13 @@
  *  along with this program; if not, see http://www.gnu.org/licenses/.        *
 *******************************************************************************/
 
-/*!
- *! \Brief functions for task manage.
- *!
- */
-
 
 //! \note do not move this pre-processor statement to other places
-#define  __OS_TASK_C__
+#define __OS_TASK_C__
 
 /*============================ INCLUDES ======================================*/
-#include ".\os.h"
+#include ".\os_private.h"
+#include ".\os_port.h"
 
 /*============================ MACROS ========================================*/
 /*============================ MACROFIED FUNCTIONS ===========================*/
@@ -34,13 +30,12 @@
 static void os_task_del        (void);
 
 #if (OS_STAT_TASK_STK_CHK_EN > 0u)
-static void os_task_stk_clr    (CPU_STK         *pbos,
+static void os_task_stk_clr    (CPU_STK        *pbos,
                                 UINT32          size,
-                                UINT8           opt);
+                                UINT16          opt);
 #endif
 
-static void os_task_wrapper    (void           *ptask,
-                                void           *parg);
+static void os_task_return     (void           *arg);
 
 /*============================ LOCAL VARIABLES ===============================*/
 /*============================ GLOBAL VARIABLES ==============================*/
@@ -57,104 +52,71 @@ static void os_task_wrapper    (void           *ptask,
  *!
  *!              task     is a pointer to the task's code
  *!
- *!              parg     is a pointer to an optional data area which can be used to pass parameters to
- *!                        the task when the task first executes.  Where the task is concerned it thinks
- *!                        it was invoked and passed the argument 'parg' as follows:
- *!
- *!                            void task (void *parg)
- *!                            {
- *!                                for (;;) {
- *!                                    Task code;
- *!                                }
- *!                            }
- *!
- *!              prio      is the task's priority.  A unique priority MUST be assigned to each task and the
- *!                        lower the number, the higher the priority.
- *!
- *!              pstk      point to the LOWEST (valid) memory location of the stack.
- *!
- *!              stkSize   is the size of the stack in number of elements.  If CPU_STK is set to UINT8,
- *!                        'stkSize' corresponds to the number of bytes available.  If CPU_STK is set to
- *!                        UINT32, 'stkSize' contains the number of 32-bit entries available on the stack.
- *!
- *!              opt       contains additional information (or options) about the behavior of the task.  The
- *!                        LOWER 8-bits are reserved by OS while the upper 8 bits can be application
- *!                        specific.  See OS_TASK_OPT_??? in OS.H.  Current choices are:
- *!
- *!                        OS_TASK_OPT_STK_CHK      Stack checking to be allowed for the task
- *!                        OS_TASK_OPT_STK_CLR      Clear the stack when the task is created
- *!                        OS_TASK_OPT_SAVE_FP      If the CPU has floating-point registers, save them
- *!                                                 during a context switch.
  *!
  *! \Returns     OS_ERR_NONE            if the function was successful.
  *!              OS_ERR_INVALID_PRIO    if the priority you specify is higher that the maximum
  *!              OS_ERR_USE_IN_ISR      if you tried to create a task from an ISR.
  */
 
-OS_ERR  osTaskCreate(   OS_HANDLE  *pHandle,
-                        OS_TASK    *task,
-                        void       *parg,
-                        UINT8       prio,
-                        CPU_STK     *pstk,
-                        UINT32      stkSize,
-                        UINT8       opt)
+OS_ERR  osTaskCreate(   OS_HANDLE       *pHandle,
+                        OS_TASK_CFG     *cfg)
 {
     OS_TCB     *ptcb;
-    CPU_STK     *psp;
-#if OS_CRITICAL_METHOD == 3u            //!< Allocate storage for CPU status register
-    CPU_SR   cpu_sr = 0u;
-#endif
+    CPU_STK    *psp;
 
 
     if (osIntNesting > 0u) {            //!< See if called from ISR ...
         return OS_ERR_USE_IN_ISR;       //!< ... Should not create object from an ISR.
     }
 #if OS_ARG_CHK_EN > 0u
+    if (cfg == NULL) {
+        return OS_ERR_NULL_POINTER;
+    }
 #if OS_TASK_LOWEST_PRIO < 255u
-    if (prio > OS_TASK_LOWEST_PRIO) {   //!< Make sure priority is within allowable range
+    if (cfg->Priority > OS_TASK_LOWEST_PRIO) {   //!< Make sure priority is within allowable range
         return OS_ERR_INVALID_PRIO;
     }
 #endif
 #endif
     
     //! Get a TCB object.
-    OSEnterCriticalSection(cpu_sr);
+    OSEnterCriticalSection();
     ptcb = OS_ObjPoolNew(&osTCBFreeList);
     if (ptcb == NULL) {
-        OSExitCriticalSection(cpu_sr);
+        OSExitCriticalSection();
         return OS_ERR_OBJ_DEPLETED;
     }
-    OSExitCriticalSection(cpu_sr);
+    OSExitCriticalSection();
     
     //! initial TCB.
 #if (OS_STAT_TASK_STK_CHK_EN > 0u)
-    os_task_stk_clr(pstk, stkSize, opt);                //!< Clear the task's stack
+    os_task_stk_clr(cfg->Stack, cfg->StackSize, cfg->Options);
 #endif
-#if OS_STK_GROWTH_DOWN == 1u                            //!< Initialize the task's stack
-    if (stkSize != 0u) {
-        psp = OSTaskStkInit(pstk + stkSize - 1u, (void *)&os_task_wrapper, (void *)task, parg);
+#if OS_CPU_STK_GROWTH_DOWN == 1u
+    if (cfg->StackSize != 0u) {
+        psp = OSTaskStkInit(cfg->Stack + cfg->StackSize - 1u, (void *)&os_task_return, (void *)cfg->Entry, cfg->Argument);
     } else {
-        psp = OSTaskStkInit(pstk + stkSize,      (void *)&os_task_wrapper, (void *)task, parg);
+        psp = OSTaskStkInit(cfg->Stack + cfg->StackSize,      (void *)&os_task_return, (void *)cfg->Entry, cfg->Argument);
     }
 #else
-    psp = OSTaskStkInit(pstk, (void *)&os_task_wrapper, (void *)task, parg);
+    psp = OSTaskStkInit(cfg->Stack, (void *)&os_task_return, (void *)cfg->Entry, cfg->Argument);
 #endif
-    OS_TCBInit(ptcb, prio, psp, pstk, stkSize, opt);    //!< Initialize the TCB object.
+    OS_TCBInit(ptcb, cfg->Priority, psp, cfg->Stack, cfg->StackSize, cfg->Options);
     
 #if OS_HOOKS_EN > 0u
     OSTaskCreateHook(ptcb);
 #endif
 
     //! give this task's TCB to scheduler.
-    OSEnterCriticalSection(cpu_sr);
+    OSEnterCriticalSection();
     OS_SchedulerReadyTask(ptcb);
-    OSExitCriticalSection(cpu_sr);
+    OSExitCriticalSection();
     
     if (pHandle != NULL) {
         *pHandle = ptcb;
     }
     
-    if (osRunning != FALSE) {           //!< try scheduling only the os has been running.
+    if (osRunning != FALSE) {           //!< try scheduling only when the os has been running.
         OS_SchedulerRunPrio();
     }
     
@@ -170,17 +132,15 @@ static void os_unlock_mutex(OS_MUTEX *pmutex)
     
     pmutex->OSMutexCnt = 0u;
 
-#if OS_MUTEX_OVERLAP_EN > 0u
     os_list_del(&pmutex->OSMutexOvlpList);
-#else
-    osTCBCur->OSTCBOwnMutex = NULL;
-#endif
     
-    if (pmutex->OSMutexWaitList.Next != &pmutex->OSMutexWaitList) {                 //!< Any task waiting for the mutex?
-        ptcb = OS_WaitableObjRdyTask((OS_WAITABLE_OBJ *)pmutex, OS_STAT_PEND_OK);   //!< Yes, Make HPT waiting for mutex ready
+    if (!OS_LIST_IS_EMPTY(pmutex->OSMutexWaitList)) {               //!< Any task waiting for the mutex?
+        ptcb = OS_WaitableObjRdyTask((OS_WAITABLE_OBJ *)pmutex,     //!< Yes, Make HPT waiting for mutex ready
+                                    &pmutex->OSMutexWaitList,
+                                    OS_STAT_PEND_OK);
         pmutex->OSMutexOwnerTCB  = ptcb;
         pmutex->OSMutexOwnerPrio = ptcb->OSTCBPrio;
-    } else {                                                                        //!< No.
+    } else {                                                        //!< No.
         pmutex->OSMutexOwnerTCB  = NULL;
         pmutex->OSMutexOwnerPrio = 0u;
     }
@@ -192,7 +152,7 @@ static void os_unlock_mutex(OS_MUTEX *pmutex)
  *!
  *! \Description This function delete current running task. The deleted task is returned to the dormant
  *!              state and can be re-activated by creating the deleted task again. This function is
- *!              internal to OS and called by os_task_wrapper. Your task should be terminated by a return.
+ *!              internal to OS. Your task should be terminated by a return.
  *!              
  *!
  *! \Arguments   none
@@ -203,12 +163,9 @@ static void os_task_del(void)
 {
     OS_TCB         *ptcb;
     OS_MUTEX       *pmutex;
-#if OS_CRITICAL_METHOD == 3u
-    CPU_SR       cpu_sr = 0u;
-#endif
 
 
-    OSEnterCriticalSection(cpu_sr);
+    OSEnterCriticalSection();
     ptcb = osTCBCur;
     
     //! set free from any object that it suspend for.
@@ -220,24 +177,16 @@ static void os_task_del(void)
 
     //! to ensure task releases all mutex(es) that it has had got. This should be a fatal error???
 #if (OS_MUTEX_EN > 0u) && (OS_MAX_MUTEXES > 0u)
-#if OS_MUTEX_OVERLAP_EN > 0u
-    for (OS_LIST_NODE *list = ptcb->OSTCBOwnMutexList.Next; list != &ptcb->OSTCBOwnMutexList;) {
+    while (!OS_LIST_IS_EMPTY(ptcb->OSTCBOwnMutexList)) {
+        OS_LIST_NODE *list = ptcb->OSTCBOwnMutexList.Next;
         pmutex = OS_CONTAINER_OF(list, OS_MUTEX, OSMutexOvlpList);
-        list = list->Next;
         os_unlock_mutex(pmutex);
     }
-#else
-    pmutex = ptcb->OSTCBOwnMutex;
-    if (pmutex != NULL) {
-        pmutex->OSMutexCnt = 0u;
-        os_unlock_mutex(pmutex);
-    }
-#endif
 #endif
     
     OS_ObjPoolFree(&osTCBFreeList, ptcb);   //!< Return TCB object to free TCB pool.
     osTCBCur = NULL;
-    OSExitCriticalSection(cpu_sr);
+    OSExitCriticalSection();
     
     OS_SchedulerRunNext();
 }
@@ -263,9 +212,6 @@ static void os_task_del(void)
 OS_ERR osTaskChangePrio(OS_HANDLE taskHandle, UINT8 newprio)
 {
     OS_TCB     *ptcb = (OS_TCB *)taskHandle;
-#if OS_CRITICAL_METHOD == 3u
-    CPU_SR   cpu_sr = 0u;
-#endif
     
     
 #if OS_ARG_CHK_EN > 0u
@@ -278,34 +224,31 @@ OS_ERR osTaskChangePrio(OS_HANDLE taskHandle, UINT8 newprio)
     }
 #endif
 #endif
+    if (OS_OBJ_TYPE_TCB != OS_OBJ_TYPE_GET(ptcb->OSTCBObjHeader.OSObjType)) {
+        return OS_ERR_OBJ_TYPE;
+    }
 
-    OSEnterCriticalSection(cpu_sr);
+    OSEnterCriticalSection();
 #if (OS_MUTEX_EN > 0u) && (OS_MAX_MUTEXES > 0u)
-#   if OS_MUTEX_OVERLAP_EN > 0u
-    if (ptcb->OSTCBOwnMutexList.Next != &ptcb->OSTCBOwnMutexList) {
-        OS_MUTEX *pmutex = OS_CONTAINER_OF(ptcb->OSTCBOwnMutexList.Next, OS_MUTEX, OSMutexOvlpList);
-        pmutex->OSMutexOwnerPrio = newprio;
-        if (newprio < ptcb->OSTCBPrio) {
-            OS_ChangeTaskPrio(ptcb, newprio);
+    if (!OS_LIST_IS_EMPTY(ptcb->OSTCBOwnMutexList)) {   //!< See if the task ownes any mutex.
+                                                        //!< Yes. Update the priority store in the mutex(es).
+        for (OS_LIST_NODE *iterate = ptcb->OSTCBOwnMutexList.Next; iterate != &ptcb->OSTCBOwnMutexList; iterate = iterate->Next) {
+            OS_MUTEX *pmutex = OS_CONTAINER_OF(iterate, OS_MUTEX, OSMutexOvlpList);
+            pmutex->OSMutexOwnerPrio = newprio;
         }
-#   else
-    if (ptcb->OSTCBOwnMutex != NULL) {                  //!< See if the task has owned a mutex.
-        ptcb->OSTCBOwnMutex->OSMutexOwnerPrio = newprio;//!< Yes. Update the priority store in the mutex ...
-        if (newprio < ptcb->OSTCBPrio) {                //!< Change the priority only if the new one ...
-                                                        //! ... is higher than the task's current,
-            OS_ChangeTaskPrio(ptcb, newprio);           //! ... else the task will use the new priority
-        }                                               //! ... after it release the mutex.
-#   endif
+        if (newprio < ptcb->OSTCBPrio) {                //!< Re-shedule only if the new priority is higher than the task's current.
+            OS_ChangeTaskPrio(ptcb, newprio);           //! ... the task will use the new priority after it release the mutex.
+        }                                               //! ... because the anti-priority-reverse mechanism meight need to rise it's priority.
     } else {
 #else
     {
 #endif
         OS_ChangeTaskPrio(ptcb, newprio);
     }
-    OSExitCriticalSection(cpu_sr);
+    OSExitCriticalSection();
     
-    if (osRunning != FALSE) {                           //!< try scheduling only the os has been running.
-        OS_SchedulerRunPrio();
+    if (osRunning != FALSE) {                           //!< try scheduling only the os has been running ...
+        OS_SchedulerRunPrio();                          //!  in case this is called before os has started.
     }
     
     return OS_ERR_NONE;
@@ -318,29 +261,25 @@ OS_ERR osTaskChangePrio(OS_HANDLE taskHandle, UINT8 newprio)
  *! \Description This function is wrapper of a task.  It mainly handles the return of the task and deletes
  *!              it after the task function returns.
  *!
- *! \Arguments   ptask         is a pointer to the task function.
- *!
- *!              parg          is a pointer to a user supplied data area that will be passed to the task
- *!                            when the task first executes.
+ *! \Arguments   parg          this value is returned by the task.
  *!
  *! \Returns     none
  *!
  *! \Notes       This function is INTERNAL to OS and your application should not call it.
  */
 
-static void os_task_wrapper(void *ptask, void *parg)
+static void os_task_return(void *parg)
 {
-    (void)((OS_TASK *)ptask)(parg);
-    
 #if OS_HOOKS_EN > 0
-    OSTaskReturnHook(osTCBCur);     //!< Call hook to let user decide on what to do
+    OSTaskReturnHook(osTCBCur, parg);    //!< Call hook to let user decide on what to do
 #endif
 
 #if OS_TASK_DEL_EN > 0u
-    os_task_del();                  //!< Delete task if it returns!
+    os_task_del();                      //!< Delete task if it returns!
 #else
-    //! this may be a fatal error!
-    osTaskSleep(OS_INFINITE);
+    //! this should be a fatal error!
+    OSEnterCriticalSection();
+    while (1);
 #endif
 }
 
@@ -350,9 +289,9 @@ static void os_task_wrapper(void *ptask, void *parg)
  *! \Description This function is used to clear the stack of a task (i.e. write all zeros)
  *!
  *! \Arguments   pbos     is a pointer to the task's BOTTOM of stack.  If the configuration constant
- *!                       OS_STK_GROWTH_DOWN is set to 1, the stack is assumed to grow downward (i.e. from high
+ *!                       OS_CPU_STK_GROWTH_DOWN is set to 1, the stack is assumed to grow downward (i.e. from high
  *!                       memory to low memory).  'pbos' will thus point to the lowest (valid) memory
- *!                       location of the stack.  If OS_STK_GROWTH_DOWN is set to 0, 'pbos' will point to the
+ *!                       location of the stack.  If OS_CPU_STK_GROWTH_DOWN is set to 0, 'pbos' will point to the
  *!                       highest memory location of the stack and the stack will grow with increasing
  *!                       memory locations.  'pbos' MUST point to a valid 'free' data item.
  *!
@@ -368,7 +307,7 @@ static void os_task_wrapper(void *ptask, void *parg)
 #if (OS_STAT_TASK_STK_CHK_EN > 0u)
 static void os_task_stk_clr(CPU_STK  *pstk,
                             UINT32   size,
-                            UINT8    opt)
+                            UINT16   opt)
 {
     if ((opt & OS_TASK_OPT_STK_CHK) != 0x00u) {      //!< See if stack checking has been enabled
         if ((opt & OS_TASK_OPT_STK_CLR) != 0x00u) {  //!< See if stack needs to be cleared
