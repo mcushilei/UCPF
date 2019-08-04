@@ -32,3 +32,11 @@ high level
 |
 |
 low level 
+
+
+This framework is designed to run on a classical computer based on a Turing Machine model.
+Other computer architectures like FPGAs are not concerned.
+
+This framework is intended to be used on MCUs.
+
+Developing principle: Readable, Simple, Scalable.

@@ -1,5 +1,5 @@
 /*******************************************************************************
- *  Copyright(C)2018 by Dreistein<mcu_shilei@hotmail.com>                     *
+ *  Copyright(C)2018-2019 by Dreistein<mcu_shilei@hotmail.com>                *
  *                                                                            *
  *  This program is free software; you can redistribute it and/or modify it   *
  *  under the terms of the GNU Lesser General Public License as published     *
@@ -18,8 +18,8 @@
 //! \note do not move this pre-processor statement to other places
 #include "..\app_cfg.h"
 
-#ifndef __ARCH_BOARD_APP_CFG_H__
-#define __ARCH_BOARD_APP_CFG_H__
+#ifndef __BEAMS_BOARDS_APP_CFG_H__
+#define __BEAMS_BOARDS_APP_CFG_H__
 
 /*============================ INCLUDES ======================================*/
 /*============================ MACROS ========================================*/
@@ -29,5 +29,5 @@
 /*============================ PROTOTYPES ====================================*/
 
 
-#endif  //!< #ifndef __ARCH_BOARDS_APP_CFG_H__
+#endif  //!< #ifndef __BEAMS_BOARDS_APP_CFG_H__
 /* EOF */

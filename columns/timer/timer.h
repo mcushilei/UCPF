@@ -1,5 +1,5 @@
 /*******************************************************************************
-*  Copyright(C)2016-2018 by Dreistein<mcu_shilei@hotmail.com>                *
+*  Copyright(C)2016-2019 by Dreistein<mcu_shilei@hotmail.com>                *
 *                                                                            *
 *  This program is free software; you can redistribute it and/or modify it   *
 *  under the terms of the GNU Lesser General Public License as published     *
@@ -26,14 +26,15 @@
 /*============================ MACROS ========================================*/
 /*============================ MACROFIED FUNCTIONS ===========================*/
 /*============================ TYPES =========================================*/
-typedef void timer_routine_t(void);
+typedef void timer_routine_t(void *);
 
 typedef struct {
-	uint8_t         Flag;
-	uint32_t        Count;
-	uint32_t        Period;
-	timer_routine_t *pRoutine;
-	list_node_t     ListNode;
+	list_node_t         ListNode;
+	timer_routine_t    *pRoutine;
+    void               *RoutineArg;
+	uint32_t            Count;
+	uint32_t            Period;
+	uint8_t             Flag;
 } timer_t;
 
 /*============================ GLOBAL VARIABLES ==============================*/
@@ -44,7 +45,8 @@ extern bool timer_config(
 	timer_t        *timer,
 	uint32_t		initValue,
 	uint32_t		reloadValue,
-	timer_routine_t *pRoutine);
+	timer_routine_t *pRoutine,
+    void            *RoutineArg);
 extern void timer_start(timer_t *timer, uint32_t value);
 extern void timer_stop(timer_t *timer);
 extern bool timer_is_timeout(timer_t *timer);

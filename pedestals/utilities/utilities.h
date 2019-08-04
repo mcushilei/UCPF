@@ -43,6 +43,8 @@
  *          type.
  */
 #define TYPE_CAST(__V, __T)         (*(__T *)&(__V))
+            
+#define SIZE_OF(__type, __member)   (sizeof( ((__type *)0)->__member ))
 
 //! \brief  get compound type variable's address from one of its member's address.
 #define CONTAINER_OF(__ptr, __type, __member) ( \
@@ -102,24 +104,31 @@
 #define ABS(__I)            (((__I) ^ ((__I) >> 31)) - ((__I) >> 31))
             
 //! \brief LFSM(Little Finite State Machine) implement by 'goto' method;
-#define LFSM_BEGIN(__M)             do {\
-                                        __##__M##_begin__:\
+#define LFSM_BEGIN(__M)             __##__M##_begin__:\
+                                    {\
     
-#define LFSM_END(__M)                   __##__M##_end__:\
-                                        break;\
-                                    } while (0);
+#define LFSM_END(__M)               }\
+                                    __##__M##_end__:
 
 #define LFSM_CPL(__M)               goto __##__M##_end__;
 
-//! A state is one code block in C.
-#define LFSM_STATE_BEGIN(__S)       __##__S##_begin__:\
+#define LFSM_STATE_BEGIN(__S, ...)  \
+                                    __##__S##_ENTRY__:\
+                                    {\
+                                    ##__VA_ARGS__\
+                                    }\
+                                    __##__S##_begin__:\
                                     {
 
-//! It reinto this state if there is no state transfer.
+//! It just jumps at the start of this state if there is no state transfer.
 #define LFSM_STATE_END(__S)         }\
-                                    goto __##__S##_end__;
+                                    goto __##__S##_begin__;
 
-#define LFSM_STATE_TRANS_TO(__S)    goto __##__S##_begin__;
+#define LFSM_STATE_TRANS_TO(__S, ...)\
+                                    {\
+                                    ##__VA_ARGS__\
+                                    }\
+                                    goto __##__S##_ENTRY__;\
 
 /* LFSM example:
     LFSM_BEGIN(test_fsm)

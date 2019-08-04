@@ -45,6 +45,8 @@
 #   include ".\frameworks\led_panel\config\environment_cfg.h"
 #elif   defined(__PRJ_BEIJING_NENGYUAN__)
 #   include ".\frameworks\beijing_alternative_energy\config\environment_cfg.h"
+#elif   defined(__PRJ_MSP432_TEMPLATE__)
+#   include ".\frameworks\ti_msp432_template\config\environment_cfg.h"
 #else
 #   error "Unknow Project"
 #endif

@@ -15,8 +15,6 @@
  *  along with this program; if not, see http://www.gnu.org/licenses/.        *
 *******************************************************************************/
 
-//! Do not move this pre-processor statement to other places
-#define __FRAMEWORKS_TEMPLATE_FRAMEWORK_C__
 
 
 /*============================ INCLUDES ======================================*/
@@ -31,15 +29,15 @@
 /*============================ IMPLEMENTATION ================================*/
 bool framework_init(void)
 {
-    //！Put all devices on board to initial status.
+    //！Put all hardware devices to initial status.
     if (!board_init()) {
         return false;
     }
     
-    //! malloc hardware resouse used by your application. such as clock, interrupt, pin, etc
+    //! initialize hardware resouse used by your application. such as clock, interrupt, pin, etc
     PIN_CFG(
-        {0, 43, DRIVER_PIN_FUNC(3) | DRIVER_PIN_OUT_PUSHPULL},
-        {0, 44, DRIVER_PIN_FUNC(3) | DRIVER_PIN_OUT_PUSHPULL},
+        {0, 43, DRIVER_PIN_FUNC(3) | DRIVER_PIN_INP_ENABLE | DRIVER_PIN_OUT_PUSHPULL},
+        {0, 44, DRIVER_PIN_FUNC(3) | DRIVER_PIN_INP_ENABLE | DRIVER_PIN_OUT_PUSHPULL},
         
         {0, 22, DRIVER_PIN_22_UART0TX},
         {0, 23, DRIVER_PIN_23_UART0RX},

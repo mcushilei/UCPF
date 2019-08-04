@@ -15,19 +15,16 @@
  *  along with this program; if not, see http://www.gnu.org/licenses/.        *
 *******************************************************************************/
 
-//! Do not move this pre-processor statement to other places
-#define __DRIVER_ARM_M4_AMBIQ_APOLLO2_STIMER_C__
-
 
 
 
 /*============================ INCLUDES ======================================*/
 #include ".\app_cfg.h"
 #include "..\device.h"
-#include ".\stimer_public.h"
 #include ".\reg_stimer.h"
 #include "..\gpio\gpio.h"
 #include "..\sys\pm.h"
+#include ".\stimer.h"
 
 /*============================ MACROS ========================================*/
 /*============================ MACROFIED FUNCTIONS ===========================*/
@@ -120,8 +117,8 @@ void driver_stimer_counter_clear(void)
 //! @brief Set the compare value.
 //!
 //! @param ui32CmprInstance is the compare register instance number (0-7).
-//! @param ui32Delta is the value to add to the STimer counter and load into
-//!        the comparator register. It should be > 1
+//! @param ui32Delta        is the value to add to the STimer counter and load into
+//!                         the comparator register. It should be > 1
 //!
 //! NOTE: There is no way to set an absolute value into a comparator register.
 //!       Only deltas added to the STimer counter can be written to the compare
@@ -136,12 +133,9 @@ void driver_stimer_counter_clear(void)
 void driver_stimer_compare_delta_set(uint32_t ui32CmprInstance, uint32_t ui32Delta)
 {
     uint32_t cfgVal;
-    uint32_t ui32Critical = 0;
     
     if ( ui32CmprInstance > 7 ) {
-        
-        return;
-        
+        return;        
     }
 
     cfgVal = REG_STIMER.STCFG;
@@ -155,14 +149,12 @@ void driver_stimer_compare_delta_set(uint32_t ui32CmprInstance, uint32_t ui32Del
     //
     // Start a critical section.
     //
-    ui32Critical = driver_interrupt_master_disable();
     REG_STIMER.SCMPR[ui32CmprInstance] = ui32Delta;
     // Restore Compare Enable bit
     REG_STIMER.STCFG |= cfgVal & (REG_STIMER_STCFG_COMPARE_A_EN_ENABLE << ui32CmprInstance);
     //
     // End the critical section.
     //
-    driver_interrupt_master_set(ui32Critical);
 }
 
 //*****************************************************************************

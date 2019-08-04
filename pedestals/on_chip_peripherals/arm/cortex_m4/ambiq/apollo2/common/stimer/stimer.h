@@ -16,7 +16,6 @@
 *******************************************************************************/
 
 //! Do not move this pre-processor statement to other places
-#ifndef __DRIVER_ARM_M4_AMBIQ_APOLLO2_STIMER_C__
 #ifndef __DRIVER_ARM_M4_AMBIQ_APOLLO2_STIMER_H__
 #define __DRIVER_ARM_M4_AMBIQ_APOLLO2_STIMER_H__
 
@@ -24,7 +23,6 @@
 /*============================ INCLUDES ======================================*/
 #include ".\app_cfg.h"
 #include "..\device.h"
-#include ".\stimer_public.h"
 #include ".\reg_stimer.h"
 
 /*============================ MACROS ========================================*/
@@ -33,6 +31,23 @@
 /*============================ GLOBAL VARIABLES ==============================*/
 /*============================ PROTOTYPES ====================================*/
 
+extern uint32_t driver_stimer_config        (uint32_t ui32STimerConfig);
+extern uint32_t driver_stimer_counter_get   (void);
+extern void     driver_stimer_counter_clear (void);
+extern void     driver_stimer_compare_delta_set(uint32_t ui32CmprInstance, uint32_t ui32Delta);
+extern uint32_t driver_stimer_compare_get   (uint32_t ui32CmprInstance);
+extern void     driver_stimer_capture_start (uint32_t ui32CaptureNum,
+                            uint32_t ui32GPIONumber,
+                            bool bPolarity);
+extern void     driver_stimer_capture_stop  (uint32_t ui32CaptureNum);
+extern uint32_t driver_stimer_capture_get   (uint32_t ui32CaptureNum);
+extern void     driver_stimer_int_enable    (uint32_t ui32Interrupt);
+extern uint32_t driver_stimer_int_enable_get(void);
+extern void     driver_stimer_int_disable   (uint32_t ui32Interrupt);
+extern void     driver_stimer_int_set       (uint32_t ui32Interrupt);
+extern void     driver_stimer_int_clear     (uint32_t ui32Interrupt);
+extern uint32_t driver_stimer_int_status_get(bool bEnabledOnly);
+
+
 #endif  //!< #ifndef __DRIVER_ARM_M4_AMBIQ_APOLLO2_STIMER_H__
-#endif  //!< #ifndef __DRIVER_ARM_M4_AMBIQ_APOLLO2_STIMER_C__
 /* EOF */

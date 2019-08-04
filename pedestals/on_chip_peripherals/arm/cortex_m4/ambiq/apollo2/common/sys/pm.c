@@ -1,5 +1,5 @@
 /*******************************************************************************
- *  Copyright(C)2018 by Dreistein<mcu_shilei@hotmail.com>                     *
+ *  Copyright(C)2018-2019 by Dreistein<mcu_shilei@hotmail.com>                *
  *                                                                            *
  *  This program is free software; you can redistribute it and/or modify it   *
  *  under the terms of the GNU Lesser General Public License as published     *
@@ -15,8 +15,6 @@
  *  along with this program; if not, see http://www.gnu.org/licenses/.        *
 *******************************************************************************/
 
-//! Do not move this pre-processor statement to other places
-#define __DRIVER_ARM_M4_AMBIQ_APOLLO2_PM_C__
 
 
 /*============================ INCLUDES ======================================*/
@@ -25,8 +23,8 @@
 #include ".\reg_pwrctrl.h"
 #include ".\reg_mcuctrl.h"
 #include ".\reg_clkgen.h"
-#include ".\pm_public.h"
 #include ".\flash.h"
+#include ".\pm.h"
 
 /*============================ MACROS ========================================*/
 //*****************************************************************************

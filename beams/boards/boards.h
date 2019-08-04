@@ -1,5 +1,5 @@
 /*******************************************************************************
- *  Copyright(C)2018 by Dreistein<mcu_shilei@hotmail.com>                     *
+ *  Copyright(C)2018-2019 by Dreistein<mcu_shilei@hotmail.com>                *
  *                                                                            *
  *  This program is free software; you can redistribute it and/or modify it   *
  *  under the terms of the GNU Lesser General Public License as published     *
@@ -15,7 +15,6 @@
  *  along with this program; if not, see http://www.gnu.org/licenses/.        *
 *******************************************************************************/
 
-#ifndef __BEAMS_BOARDS_BOARDS_C__
 #ifndef __BEAMS_BOARDS_BOARDS_H__
 #define __BEAMS_BOARDS_BOARDS_H__
 
@@ -26,6 +25,8 @@
 #   include ".\apollo_evk\board.h"
 #elif   defined(BOARD_BEIDOU_GANG_V21)
 #   include ".\beidou_gang_v21\board.h"
+#elif   defined(__BOARD_MSP432_LAUNCHPAD__)
+#   include ".\msp432_alunchpad\board.h"
 #endif
 
 /*============================ MACROS ========================================*/
@@ -36,6 +37,5 @@
 /*============================ PROTOTYPES ====================================*/
 
 
-#endif  //!< __ARCH_BOARDS_BOARDS_H__
-#endif  //!< __ARCH_BOARDS_BOARDS_C__
+#endif  //!< __BEAMS_BOARDS_BOARDS_H__
 /* EOF */

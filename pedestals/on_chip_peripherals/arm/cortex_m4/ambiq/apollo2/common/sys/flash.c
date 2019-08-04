@@ -1,5 +1,5 @@
 /*******************************************************************************
- *  Copyright(C)2018 by Dreistein<mcu_shilei@hotmail.com>                     *
+ *  Copyright(C)2018-2019 by Dreistein<mcu_shilei@hotmail.com>                *
  *                                                                            *
  *  This program is free software; you can redistribute it and/or modify it   *
  *  under the terms of the GNU Lesser General Public License as published     *
@@ -15,16 +15,14 @@
  *  along with this program; if not, see http://www.gnu.org/licenses/.        *
 *******************************************************************************/
 
-//! Do not move this pre-processor statement to other places
-#define __DRIVER_ARM_M4_AMBIQ_APOLLO2_FLASH_C__
 
 
 /*============================ INCLUDES ======================================*/
 #include ".\app_cfg.h"
 #include "..\device.h"
-#include ".\flash_public.h"
 #include ".\reg_cachectrl.h"
 #include ".\pm.h"
+#include ".\flash.h"
 
 /*============================ MACROS ========================================*/
 /*============================ MACROFIED FUNCTIONS ===========================*/
@@ -40,11 +38,11 @@ const i_flash_t FLASH_OPT = {
     // The basics.
     //
     // flash_mass_erase()
-    ((int  (*)(uint32_t, uint32_t)) 0x0800004d),
+    ((int  (*)(uint32_t, uint32_t))                                 0x0800004d),
     // flash_page_erase()
-    ((int  (*)(uint32_t, uint32_t, uint32_t))  0x08000051),
+    ((int  (*)(uint32_t, uint32_t, uint32_t))                       0x08000051),
     // flash_program_main()
-    ((int  (*)(uint32_t, uint32_t *, uint32_t *, uint32_t))  0x08000055),
+    ((int  (*)(uint32_t, uint32_t *, uint32_t *, uint32_t))         0x08000055),
     // flash_program_info()
     ((int  (*)(uint32_t, uint32_t, uint32_t *, uint32_t, uint32_t)) 0x08000059),
 
@@ -53,33 +51,33 @@ const i_flash_t FLASH_OPT = {
     // mask interrupts while these very long operations proceed.
     //
     // flash_mass_erase_nb()
-    ((int   (*)(uint32_t, uint32_t)) 0x0800006d),
+    ((int   (*)(uint32_t, uint32_t))                                0x0800006d),
     // flash_page_erase_nb()
-    ((int   (*)(uint32_t, uint32_t, uint32_t)) 0x08000071),
+    ((int   (*)(uint32_t, uint32_t, uint32_t))                      0x08000071),
     // flash_nb_operation_complete()
-    ((bool  (*)(void)) 0x0800007d),
+    ((bool  (*)(void))                                              0x0800007d),
 
     //
     // Essentially these are recovery options.
     //
     // flash_erase_info()
-    ((int   (*)(uint32_t, uint32_t)) 0x08000081),
+    ((int   (*)(uint32_t, uint32_t))                                0x08000081),
     // flash_erase_main_plus_info()
-    ((int   (*)(uint32_t, uint32_t)) 0x08000089),
+    ((int   (*)(uint32_t, uint32_t))                                0x08000089),
     // flash_erase_main_plus_info_both_instances()
-    ((int   (*)(uint32_t)) 0x08000091),
+    ((int   (*)(uint32_t))                                          0x08000091),
     // flash_recovery()
-    ((void  (*)(uint32_t)) 0x08000099),
+    ((void  (*)(uint32_t))                                          0x08000099),
 
     //
     // Useful utilities.
     //
     // flash_util_read_word()
-    ((uint32_t (*)(uint32_t*)) 0x08000075),
+    ((uint32_t (*)(uint32_t*))                                      0x08000075),
     // flash_util_write_word()
-    ((void     (*)(uint32_t*, uint32_t)) 0x08000079),
+    ((void     (*)(uint32_t*, uint32_t))                            0x08000079),
     // delay_cycles()
-    ((void     (*)(uint32_t)) 0x0800009d),
+    ((void     (*)(uint32_t))                                       0x0800009d),
 
     //
     // The following functions pointers must never be called from user
@@ -87,17 +85,17 @@ const i_flash_t FLASH_OPT = {
     // which are usable from a debugger or debugger script.
     //
     // flash_program_main_sram()
-    ((void  (*)(void)) 0x0800005d),
+    ((void  (*)(void))                                              0x0800005d),
     // flash_program_info_sram()
-    ((void  (*)(void)) 0x08000061),
+    ((void  (*)(void))                                              0x08000061),
     // flash_erase_main_pages_sram()
-    ((void  (*)(void)) 0x08000065),
+    ((void  (*)(void))                                              0x08000065),
     // flash_mass_erase_sram()
-    ((void  (*)(void)) 0x08000069),
+    ((void  (*)(void))                                              0x08000069),
     // flash_erase_info_sram()
-    ((void  (*)(void)) 0x08000085),
+    ((void  (*)(void))                                              0x08000085),
     // flash_erase_main_plus_info_sram()
-    ((void  (*)(void)) 0x0800008d)
+    ((void  (*)(void))                                              0x0800008d)
 };
 
 /*============================ IMPLEMENTATION ================================*/

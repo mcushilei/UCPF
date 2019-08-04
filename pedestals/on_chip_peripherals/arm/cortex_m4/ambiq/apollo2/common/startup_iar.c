@@ -14,6 +14,7 @@
 #pragma weak DebugMon_Handler   = default_isr
 #pragma weak PendSV_Handler     = default_isr
 #pragma weak SysTick_Handler    = default_isr
+
 #pragma weak brownout_isr        = default_isr
 #pragma weak watchdog_isr        = default_isr
 #pragma weak clkgen_isr          = default_isr
@@ -111,7 +112,7 @@ extern void __iar_program_start(void);
 // Reserve space for the system stack.
 //
 //*****************************************************************************
-SECTION("CSTACK") ALIGN(8) static uint32_t stack[0x400];
+SECTION("CSTACK") ALIGN(8) static uint32_t stack[0x200];
 
 //*****************************************************************************
 //

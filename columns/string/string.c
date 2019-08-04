@@ -18,22 +18,10 @@
 
 /*============================ INCLUDES ======================================*/
 #include ".\app_cfg.h"
-#include <string.h>
+#include ".\string.h"
 
 /*============================ MACROS ========================================*/
 /*============================ MACROFIED FUNCTIONS ===========================*/
-#define CHAR_IS_HEX(__C)            (  ((__C) >= '0' && (__C) <= '9')       \
-                                    || ((__C) >= 'A' && (__C) <= 'F')       \
-                                    || ((__C) >= 'a' && (__C) <= 'f') )
-
-#define CHAR_IS_INT(__C)            ((__C) >= '0' && (__C) <= '9')
-
-#define CHAR_TO_INT(__C)            ((__C) - '0')
-#define CHAR_IS_SPACE(__C)          (' ' == (__C))
-
-#define CAHR_IS_UPPERCASE(__C)      ((__C) >= 'A' && (__C) <= 'Z')
-#define CAHR_IS_LOWERCASE(__C)      ((__C) >= 'a' && (__C) <= 'z')
-
 /*============================ TYPES =========================================*/
 /*============================ GLOBAL VARIABLES ==============================*/
 /*============================ LOCAL VARIABLES ===============================*/
@@ -408,7 +396,7 @@ char *strsep(char **ppStringRef, const char *pDelim)
 }
 
 
-int32_t itostr(int32_t value, char *integerString, int32_t radix)
+uint32_t itostr(int32_t value, char *integerString, int32_t radix)
 {
     const static unsigned char c[16] = "0123456789ABCDEF";
     uint32_t wValue = value;

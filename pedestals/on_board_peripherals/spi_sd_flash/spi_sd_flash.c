@@ -1,5 +1,5 @@
 /*******************************************************************************
- *  Copyright(C)2016 by Dreistein<mcu_shilei@hotmail.com>                     *
+ *  Copyright(C)2016-2019 by Dreistein<mcu_shilei@hotmail.com>                *
  *                                                                            *
  *  This program is free software; you can redistribute it and/or modify it   *
  *  under the terms of the GNU Lesser General Public License as published     *
@@ -18,6 +18,8 @@
 
 /*============================ INCLUDES ======================================*/
 #include ".\app_cfg.h"
+#include ".\spi_sd_flash_plug.h"
+#include ".\spi_sd_flash.h"
 
 /*============================ MACROS ========================================*/
 #define SD_FLASH_BLOCK_SIZE         (512u)   /* Block Size in Bytes */
@@ -251,19 +253,12 @@ typedef struct {
 } sd_card_properties_t;
 
 
-/*============================ GLOBAL VARIABLES ==============================*/
-/*============================ LOCAL VARIABLES ===============================*/
+/*============================ PRIVATE PROTOTYPES ============================*/
+/*============================ PRIVATE VARIABLES =============================*/
 static volatile uint32_t s_wTimer = 0;
 static sd_card_properties_t s_tCardProperties;
 
-/*============================ PROTOTYPES ====================================*/
-extern void     sd_spi_write_byte(uint8_t Data);
-extern uint8_t  sd_spi_read_byte(void);
-extern void     sd_spi_cs_clr(void);
-extern void     sd_spi_cs_set(void);
-extern uint8_t  sd_crc7_calculator(uint8_t chCRCValue, uint8_t chData);
-extern uint8_t  sd_crc16_calculator(uint16_t hwCRCValue, uint8_t chData);
-
+/*============================ PUBLIC VARIABLES ==============================*/
 /*============================ IMPLEMENTATION ================================*/
 static bool spi_sd_wait_busy(void)
 {

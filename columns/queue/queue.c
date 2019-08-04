@@ -92,16 +92,13 @@ bool queue_enqueue(void *obj, void *data)
 
             switch (queue->ItemSize) {
                 case sizeof(uint8_t):
-                    ((uint8_t *)(queue->Buffer))[
-                                 queue->Tail] = *(uint8_t *)data;
+                    ((uint8_t *)(queue->Buffer))[queue->Tail] = *(uint8_t *)data;
                     break;
                 case sizeof(uint16_t):
-                    ((uint16_t *)(queue->Buffer))[
-                                  queue->Tail] = *(uint16_t *)data;
+                    ((uint16_t *)(queue->Buffer))[queue->Tail] = *(uint16_t *)data;
                     break;
                 case sizeof(uint32_t):
-                    ((uint32_t *)(queue->Buffer))[
-                                  queue->Tail] = *(uint32_t *)data;
+                    ((uint32_t *)(queue->Buffer))[queue->Tail] = *(uint32_t *)data;
                     break;
                 default:
                     memory_copy((void *)((uintptr_t)queue->Buffer + queue->Tail * queue->ItemSize),

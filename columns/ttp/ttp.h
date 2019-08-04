@@ -23,8 +23,6 @@
 #include "..\queue\queue.h"
 
 /*============================ MACROS ========================================*/
-#define TTP_QUEUE                      queue_t
-
 /*============================ MACROFIED FUNCTIONS ===========================*/
 /*============================ TYPES =========================================*/
 typedef bool ttp_output_byte_t(uint8_t byte);
@@ -41,7 +39,7 @@ typedef struct {
     uint16_t    RcvChecksum;
     uint8_t     RcvPort;
     uint8_t     RcvQueueBuffer[TTP_PAYLOAD_MAX_SIZE + 6];
-    TTP_QUEUE   RcvQueue;
+    queue_t     RcvQueue;
 
     uint8_t     SndState;
     uint16_t    SndWritePoint;

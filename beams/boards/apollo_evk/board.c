@@ -1,5 +1,5 @@
 /*******************************************************************************
- *  Copyright(C)2018 by Dreistein<mcu_shilei@hotmail.com>                     *
+ *  Copyright(C)2018-2019 by Dreistein<mcu_shilei@hotmail.com>                *
  *                                                                            *
  *  This program is free software; you can redistribute it and/or modify it   *
  *  under the terms of the GNU Lesser General Public License as published     *
@@ -15,8 +15,7 @@
  *  along with this program; if not, see http://www.gnu.org/licenses/.        *
 *******************************************************************************/
 
-//! Do not move this pre-processor statement to other places
-#define __ARCH_BOARD_APOLLO_EVK_BOARD_C__
+
 
 
 /*============================ INCLUDES ======================================*/
@@ -52,6 +51,8 @@ WEAK bool ON_HW_INIT(void)
 
 bool board_init(void)
 {
+    DISABLE_GLOBAL_INTERRUPT();
+    
     //
     // Set the clock frequency.
     //

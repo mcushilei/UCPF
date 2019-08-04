@@ -26,7 +26,8 @@
 /*============================ TYPES =========================================*/
 typedef struct {
     void        *Buffer;
-    size_t       Size;           //!< buffer size.
+    size_t       Size;           //!< buffer size: the number of item it can store. 
+                                 //   It must be the value of 2 to he power n.
     size_t       ItemSize;       //!< item size.
     size_t       Out;            //!< point to space filled.
     size_t       In;             //!< point to space empty.

@@ -87,7 +87,7 @@ static void timer_timeout_processs(timer_t *timer)
     }
     timer->Flag |= BIT(0);
     if (timer->pRoutine != NULL) {
-        timer->pRoutine();
+        timer->pRoutine(timer->RoutineArg);
     }
 }
 
@@ -150,7 +150,8 @@ bool timer_config(
     timer_t        *timer,
     uint32_t        initValue,
     uint32_t        reloadValue,
-    timer_routine_t *pRoutine)
+	timer_routine_t *pRoutine,
+    void            *RoutineArg)
 {
     initValue     = (initValue   + TIMER_TICK_CYCLE - 1u) / TIMER_TICK_CYCLE;
     timer->Period = (reloadValue + TIMER_TICK_CYCLE - 1u) / TIMER_TICK_CYCLE;

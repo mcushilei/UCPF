@@ -342,13 +342,46 @@
 #define REG_STIMER_SNVR2_VALUE_M                  0xFFFFFFFF
 #define REG_STIMER_SNVR2_VALUE(n)                 (((uint32_t)(n) << 0) & 0xFFFFFFFF)
 
+//*****************************************************************************
+//
+// STIMER_STMINTEN - System Timer STMINTEN Register
+//
+//*****************************************************************************
+
+#define REG_STIMER_INT_CAPTURED                         12u
+#define REG_STIMER_INT_CAPTUREC                         11u
+#define REG_STIMER_INT_CAPTUREB                         10u
+#define REG_STIMER_INT_CAPTUREA                         9u
+#define REG_STIMER_INT_OVERFLOW                         8u
+#define REG_STIMER_INT_COMPAREH                         7u
+#define REG_STIMER_INT_COMPAREG                         6u
+#define REG_STIMER_INT_COMPAREF                         5u
+#define REG_STIMER_INT_COMPAREE                         4u
+#define REG_STIMER_INT_COMPARED                         3u
+#define REG_STIMER_INT_COMPAREC                         2u
+#define REG_STIMER_INT_COMPAREB                         1u
+#define REG_STIMER_INT_COMPAREA                         0u
+
+#define REG_STIMER_INT_CAPTURED_M                         (1u << 12)
+#define REG_STIMER_INT_CAPTUREC_M                         (1u << 11)
+#define REG_STIMER_INT_CAPTUREB_M                         (1u << 10)
+#define REG_STIMER_INT_CAPTUREA_M                         (1u << 9)
+#define REG_STIMER_INT_OVERFLOW_M                         (1u << 8)
+#define REG_STIMER_INT_COMPAREH_M                         (1u << 7)
+#define REG_STIMER_INT_COMPAREG_M                         (1u << 6)
+#define REG_STIMER_INT_COMPAREF_M                         (1u << 5)
+#define REG_STIMER_INT_COMPAREE_M                         (1u << 4)
+#define REG_STIMER_INT_COMPARED_M                         (1u << 3)
+#define REG_STIMER_INT_COMPAREC_M                         (1u << 2)
+#define REG_STIMER_INT_COMPAREB_M                         (1u << 1)
+#define REG_STIMER_INT_COMPAREA_M                         (1u << 0)
 
 
 /*============================ MACROFIED FUNCTIONS ===========================*/
 /*============================ TYPES =========================================*/
 
 typedef volatile struct {
-    REG32_RSVD(63)
+    REG32_RSVD(64)
     reg32_t STCFG;
     reg32_t STTMR;
     reg32_t CAPTURE_CONTROL;

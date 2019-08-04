@@ -1,5 +1,5 @@
 /*******************************************************************************
- *  Copyright(C)2015 by Dreistein<mcu_shilei@hotmail.com>                     *
+ *  Copyright(C)2015-2019 by Dreistein<mcu_shilei@hotmail.com>                *
  *                                                                            *
  *  This program is free software; you can redistribute it and/or modify it   *
  *  under the terms of the GNU Lesser General Public License as published     *
@@ -22,12 +22,16 @@
 /*============================ INCLUDES ======================================*/
 #include ".\app_cfg.h"
 #include <string.h>
+#include <ctype.h>
 
 /*============================ MACROS ========================================*/
 /*============================ MACROFIED FUNCTIONS ===========================*/
 #define CHAR_IS_HEX(__C)            (  ((__C) >= '0' && (__C) <= '9')       \
                                     || ((__C) >= 'A' && (__C) <= 'F')       \
                                     || ((__C) >= 'a' && (__C) <= 'f') )
+
+#define CAHR_IS_UPPERCASE(__C)      ((__C) >= 'A' && (__C) <= 'Z')
+#define CAHR_IS_LOWERCASE(__C)      ((__C) >= 'a' && (__C) <= 'z')
 
 #define CHAR_IS_INT(__CHAR)         ((__CHAR) >= '0' && (__CHAR) <= '9')
 

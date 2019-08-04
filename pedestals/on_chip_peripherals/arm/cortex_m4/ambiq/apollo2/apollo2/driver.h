@@ -28,6 +28,7 @@
 #include "..\common\uart\uart.h"
 #include "..\common\vcomp\vcomp.h"
 #include "..\common\rtc\rtc.h"
+#include "..\common\stimer\stimer.h"
 
 /*============================ MACROS ========================================*/
 /*============================ MACROFIED FUNCTIONS ===========================*/

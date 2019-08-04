@@ -45,6 +45,8 @@
 #   include ".\frameworks\led_panel\config\plateform_cfg.h"
 #elif   defined(__PRJ_BEIJING_NENGYUAN__)
 #   include ".\frameworks\beijing_alternative_energy\config\plateform_cfg.h"
+#elif   defined(__PRJ_MSP432_TEMPLATE__)
+#   include ".\frameworks\ti_msp432_template\config\plateform_cfg.h"
 #else
 #   error "Unknow Project"
 #endif
@@ -65,10 +67,16 @@
 #   define __STM32F205__                    //!< MCU Part Number 
 #elif   defined(__TI_TM4C129__)
 #   define __CPU_ARM__                      //!< arm series
-#   define __CORTEX_M4__                    //!< cortex-m4 core with FPU
+#   define __CORTEX_M4F__                   //!< cortex-m4 core with FPU
 #   define __TI__                           //!< TI
 #   define __TM4C__                         //!< TM4C series
 #   define __TM4C129__                      //!< TM4C129
+#elif   defined(__TI_MSP432P401R__)
+#   define __CPU_ARM__                      //!< arm series
+#   define __CORTEX_M4F__                   //!< cortex-m4 core with FPU
+#   define __TI__                           //!< TI
+#   define __MSP432__                       //!< TM4C series
+#   define __MSP432P401R__                  //!< TM4C129
 #elif   defined(__TI_TMS320X2812__)
 #	define __CPU_TMS320__                 	//!< TMS320 series
 #	define __C28X__                         //!< C28x core
