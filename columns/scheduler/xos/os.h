@@ -33,7 +33,7 @@
 
 
 #define OS_TASK_ENTRY(__TASK)               void * __TASK(void *arg)
-#define OS_TASK_CREATE(__PHANDLE, __ENTRY, __ARG,  __STACK_SIZE, __RIO, __OPT)  \
+#define OS_TASK_CREATE(__PHANDLE, __NAME, __ENTRY, __ARG,  __STACK_SIZE, __RIO, __OPT)  \
 do {                                                                            \
     ALIGN(8) static OS_CPU_STK  __ENTRY##_stack[__STACK_SIZE];                  \
     OS_TASK_CFG taskCfg = {                                                     \

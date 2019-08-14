@@ -59,77 +59,6 @@ bool memory_copy(void *d, const void *s, size_t n)
     return true;
 }
 
-//! this function is not transplantable.
-#if defined(__CPU_ARM__)
-bool memory_set(void *m, unsigned int v, size_t n)
-{
-    if (m == NULL) {
-        return false;
-    }
-    
-    if (n < 20) {
-        uint8_t *p = (uint8_t *)m;
-        for (; n; --n) {
-            *p = v;
-            p++;
-        }
-    } else {
-        uint32_t i;
-
-        v = v & 0xFFu;
-        v = v | (v << 8) | (v << 16) | (v << 24);
-
-        //! fill prefix-gap.
-        i = 4u - (((uint32_t)m) & 0x03u);
-        if (i > n) {
-            i = n;
-        }
-        if (i & 0x03u) {
-            uint8_t *p = (uint8_t *)m;
-            m = (uint8_t *)m + i;
-            n -= i;
-            for (; i; --i) {
-                *p = v;
-                p++;
-            }
-        }
-
-        //! fill word.
-        i = n >> 2;
-        if (i) {
-            uint32_t *p = (uint32_t *)m;
-            m = (uint32_t *)m + i;
-            n &= 0x03u;
-            for (; i; --i) {
-                *p = v;
-                p++;
-            }
-        } while (0);
-
-        //! fill surfix-gap.
-        if (n) {
-            uint8_t *p = (uint8_t *)m;
-            for (; n; --n) {
-                *p = v;
-                p++;
-            }
-        }
-    }
-
-    return true;
-}
-#else
-bool memory_set(void *m, unsigned int v, size_t n)
-{
-    if (m == NULL) {
-        return false;
-    }
-    
-    memset(m, v, n);
-    
-    return true;
-}
-#endif
 
 unsigned int hex_str2uint(const char *str)
 {
@@ -464,7 +393,8 @@ uint32_t itostr(int32_t value, char *integerString, int32_t radix)
         } else if ('%' == *__PFORMAT) {                                         \
             char buf[11];                                                       \
             char fill = ' ';                                                    \
-            unsigned int i = 0, pl = 0;                                         \
+            int i = 0, pw = 0;                                                  \
+            int pl = -1;                                                        \
                                                                                 \
             __PFORMAT++;                                                        \
             if (*__PFORMAT >= '0' && *__PFORMAT <= '9') {                       \
@@ -476,6 +406,16 @@ uint32_t itostr(int32_t value, char *integerString, int32_t radix)
                 while (*__PFORMAT >= '0' && *__PFORMAT <= '9') {                \
                     pl = pl * 10 + (*__PFORMAT - '0');                          \
                     ++__PFORMAT;                                                \
+                }                                                               \
+            }                                                                   \
+            if ('.' == *__PFORMAT) {                                            \
+                __PFORMAT++;                                                    \
+                pl = 0;                                                         \
+                if (*__PFORMAT >= '0' && *__PFORMAT <= '9') {                   \
+                    while (*__PFORMAT >= '0' && *__PFORMAT <= '9') {            \
+                        pl = pl * 10 + (*__PFORMAT - '0');                      \
+                        ++__PFORMAT;                                            \
+                    }                                                           \
                 }                                                               \
             }                                                                   \
             if ('\0' == *__PFORMAT) {                                           \
@@ -497,17 +437,24 @@ uint32_t itostr(int32_t value, char *integerString, int32_t radix)
                     }                                                           \
                                                                                 \
                     i = string_length(s);                                       \
-                    if (pl < i) {                                               \
+                    if (pl >= 0) {                                              \
+                        pl = pl < i ? pl : i;                                   \
+                    } else {                                                    \
                         pl = i;                                                 \
                     }                                                           \
                                                                                 \
-                    pl -= i;                                                    \
-                    for (i = 0; i < pl; ++i) {                                  \
+                    if (pw < pl) {                                              \
+                        pw = pl;                                                \
+                    }                                                           \
+                                                                                \
+                    pw -= pl;                                                   \
+                    for (i = 0; i < pw; ++i) {                                  \
                         __PRINT_OUT(fill);                                      \
                     }                                                           \
                                                                                 \
-                    for (; *s; s++) {                                           \
+                    for (; pl; pl--) {                                          \
                         __PRINT_OUT(*s);                                        \
+                        s++;                                                    \
                     }                                                           \
                     break;                                                      \
                 }                                                               \
@@ -636,7 +583,7 @@ uint32_t itostr(int32_t value, char *integerString, int32_t radix)
 
 extern int user_printf_output_char(char cChar);
 
-void string_printf(const char *formatString, unsigned int argument)
+void string_printf(const char *formatString, void *argument)
 {
     if (formatString == NULL) {
         return;
@@ -658,7 +605,7 @@ void string_printf(const char *formatString, unsigned int argument)
 unsigned int string_printf_to_buffer(char          *buffer,
                                      unsigned int   bufferLength,
                                      const char    *formatString,
-                                     unsigned int   argument)
+                                     void          *argument)
 {
     unsigned int wCnt = 0;
 
