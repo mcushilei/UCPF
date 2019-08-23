@@ -23,39 +23,16 @@
 #include ".\source\os.h"
 
 /*============================ MACROS ========================================*/
-
-
-#define OS_CRITICAL_SECTION(...) do {       \
-    osEnterCriticalSection();               \
-    __VA_ARGS__                             \
-    osExitCriticalSection();                \
-} while (0);
-
-
-#define OS_TASK_ENTRY(__TASK)               void * __TASK(void *arg)
-#define OS_TASK_CREATE(__PHANDLE, __NAME, __ENTRY, __ARG,  __STACK_SIZE, __RIO, __OPT)  \
-do {                                                                            \
-    ALIGN(8) static OS_CPU_STK  __ENTRY##_stack[__STACK_SIZE];                  \
-    OS_TASK_CFG taskCfg = {                                                     \
-        __ENTRY,                                                                \
-        __ARG,                                                                  \
-        __ENTRY##_stack,                                                        \
-        __STACK_SIZE,                                                           \
-        __OPT,                                                                  \
-        __RIO,                                                                  \
-    };                                                                          \
-    osTaskCreate( __PHANDLE, &taskCfg);                                         \
-} while (0)
-
-
-#define OS_TASK_SLEEP(__T)                  osTaskSleep(__T)
+#define OS_CRITICAL_SECTION_DEFINE()    
+#define OS_CRITICAL_SECTION_BEGIN()         osEnterCriticalSection()
+#define OS_CRITICAL_SECTION_END()           osExitCriticalSection()
 
 
 #define OS_QUEUE_TYPE                       OS_HANDLE
-#define OS_QUEUE_CREATE(__QUEUE, __BUFFER, __bufferSize) osQueueCreate(&(__QUEUE), __BUFFER, __bufferSize)
-#define OS_QUEUE_DELETE(__QUEUE)                    osQueueDelete(__QUEUE, OS_DEL_ALWAYS)
-#define OS_QUEUE_WRITE(__QUEUE, __pBuffer, __T)     osQueueWrite(__QUEUE, __pBuffer, __T)
-#define OS_QUEUE_READ(__QUEUE, __ppBuffer, __T)     osQueueRead(__QUEUE, __ppBuffer, __T)
+#define OS_QUEUE_CREATE(__Q, __BUF, __L)    osQueueCreate(&(__Q), __BUF, __L)
+#define OS_QUEUE_DELETE(__Q)                osQueueDelete(__Q, OS_DEL_ALWAYS)
+#define OS_QUEUE_WRITE(__Q, __BUF, __T)     osQueueWrite(__Q, __BUF, __T)
+#define OS_QUEUE_READ(__Q, __BUF, __T)      osQueueRead(__Q, __BUF, __T)
 
 
 #define OS_SEMAPHORE_TYPE                   OS_HANDLE
@@ -78,6 +55,13 @@ do {                                                                            
 #define OS_FLAG_SET(__FLAG)                 osFlagSet(__FLAG)
 #define OS_FLAG_RESET(__FLAG)               osFlagReset(__FLAG)
 #define OS_FLAG_WAIT(__FLAG, __T)           osFlagPend(__FLAG, __T)
+
+
+#define OS_TASK_CREATE(__HANDLE, __NAME, __ENTRY, __ARG,  __STACK_SIZE, __RIO, __OPT)   \
+    osTaskCreate( &(__HANDLE), __ENTRY, __ARG,  NULL, __STACK_SIZE, __OPT, __RIO );
+#define OS_TASK_ENTRY(__TASK)               void *__TASK(void *pArg)
+#define OS_TASK_ARG                         (pArg)
+#define OS_TASK_SLEEP(__T)                  osTaskSleep(__T)
 
 
 

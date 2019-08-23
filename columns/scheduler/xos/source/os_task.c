@@ -16,8 +16,6 @@
 *******************************************************************************/
 
 
-//! \note do not move this pre-processor statement to other places
-#define __OS_TASK_C__
 
 /*============================ INCLUDES ======================================*/
 #include ".\os_private.h"
@@ -48,18 +46,50 @@ static void os_task_return     (void           *arg);
  *!              be created prior to the start of multitasking or by a running task.  A task cannot be
  *!              created by an ISR.
  *!
- *! \Arguments   pHandle  is a pointer to the task's handle
  *!
- *!              task     is a pointer to the task's code
+ *!              the thread entry function shall like this:
+ *!                 int task (void *parg)
+ *!                 {
+ *!                     if () {
+ *!                        return -1;
+ *!                     }
+ *!                     
+ *!                     for (;;) {
+ *!                        Task code;
+ *!                     }
+ *!                     
+ *!                     return 0;
+ *!                 }
  *!
+ *! \Arguments   pHandle    is a pointer to the task's handle
+ *!
+ *! \Arguments   Stack      point to the array stack[].
+ *!
+ *! \Arguments   StackSize  The size of the stack. The value is the length of the stack[], NOT sizeof(stack).
+ *!
+ *! \Arguments   Options    contains additional information (or options) about the behavior of the task.  The
+ *!                         LOWER 8-bits are reserved by OS while the upper 8 bits can be application
+ *!                         specific.  See OS_TASK_OPT_??? in OS.H.  Current choices are:
+ *!
+ *!                         OS_TASK_OPT_STK_CHK     Stack checking to be allowed for the task
+ *!                         OS_TASK_OPT_STK_CLR     Clear the stack when the task is created
+ *!                         OS_TASK_OPT_SAVE_FP     If the CPU has floating-point registers, save them
+ *!                                                 during a context switch.
+ *!
+ *! \Arguments   Priority   The value should not freater than OS_TASK_LOWEST_PRIO.
  *!
  *! \Returns     OS_ERR_NONE            if the function was successful.
  *!              OS_ERR_INVALID_PRIO    if the priority you specify is higher that the maximum
  *!              OS_ERR_USE_IN_ISR      if you tried to create a task from an ISR.
  */
 
-OS_ERR  osTaskCreate(   OS_HANDLE       *pHandle,
-                        OS_TASK_CFG     *cfg)
+OS_ERR  osTaskCreate(   OS_HANDLE      *pHandle,
+                        OS_TASK        *entry,
+                        void           *argument,
+                        CPU_STK        *stack,
+                        UINT32          stackSize,
+                        UINT16          options,
+                        UINT8           priority)
 {
     OS_TCB     *ptcb;
     CPU_STK    *psp;
@@ -69,11 +99,11 @@ OS_ERR  osTaskCreate(   OS_HANDLE       *pHandle,
         return OS_ERR_USE_IN_ISR;       //!< ... Should not create object from an ISR.
     }
 #if OS_ARG_CHK_EN > 0u
-    if (cfg == NULL) {
+    if (entry == NULL) {
         return OS_ERR_NULL_POINTER;
     }
 #if OS_TASK_LOWEST_PRIO < 255u
-    if (cfg->Priority > OS_TASK_LOWEST_PRIO) {   //!< Make sure priority is within allowable range
+    if (priority > OS_TASK_LOWEST_PRIO) {   //!< Make sure priority is within allowable range
         return OS_ERR_INVALID_PRIO;
     }
 #endif
@@ -90,18 +120,18 @@ OS_ERR  osTaskCreate(   OS_HANDLE       *pHandle,
     
     //! initial TCB.
 #if (OS_STAT_TASK_STK_CHK_EN > 0u)
-    os_task_stk_clr(cfg->Stack, cfg->StackSize, cfg->Options);
+    os_task_stk_clr(stack, stackSize, options);
 #endif
 #if OS_CPU_STK_GROWTH_DOWN == 1u
-    if (cfg->StackSize != 0u) {
-        psp = OSTaskStkInit(cfg->Stack + cfg->StackSize - 1u, (void *)&os_task_return, (void *)cfg->Entry, cfg->Argument);
+    if (stackSize != 0u) {
+        psp = OSTaskStkInit(stack + stackSize - 1u, (void *)&os_task_return, (void *)entry, argument);
     } else {
-        psp = OSTaskStkInit(cfg->Stack + cfg->StackSize,      (void *)&os_task_return, (void *)cfg->Entry, cfg->Argument);
+        psp = OSTaskStkInit(stack + stackSize,      (void *)&os_task_return, (void *)entry, argument);
     }
 #else
-    psp = OSTaskStkInit(cfg->Stack, (void *)&os_task_return, (void *)cfg->Entry, cfg->Argument);
+    psp = OSTaskStkInit(stack, (void *)&os_task_return, (void *)entry, argument);
 #endif
-    OS_TCBInit(ptcb, cfg->Priority, psp, cfg->Stack, cfg->StackSize, cfg->Options);
+    OS_TCBInit(ptcb, priority, psp, stack, stackSize, options);
     
 #if OS_HOOKS_EN > 0u
     OSTaskCreateHook(ptcb);

@@ -689,16 +689,14 @@ void osStatInit(void)
 #if OS_STAT_EN > 0u
 static void os_init_statistics_task(void)
 {
-    OS_TASK_CFG taskCfg = {
-        os_task_statistics,
-        NULL,
-        osTaskStatStk,
-        OS_TASK_STAT_STK_SIZE,
-        OS_TASK_OPT_STK_CHK | OS_TASK_OPT_STK_CLR,
-        OS_TASK_STAT_PRIO,
-    };
 
-    osTaskCreate(NULL, &taskCfg);
+    osTaskCreate(NULL,
+                 os_task_statistics,
+                NULL,
+                osTaskStatStk,
+                OS_TASK_STAT_STK_SIZE,
+                OS_TASK_OPT_STK_CHK | OS_TASK_OPT_STK_CLR,
+                OS_TASK_STAT_PRIO);
 }
 #endif
 
@@ -713,16 +711,14 @@ static void os_init_statistics_task(void)
  */
 static void os_init_idle_task(void)
 {
-    OS_TASK_CFG taskCfg = {
-        os_task_idle,
-        NULL,
-        osTaskIdleStk,
-        OS_TASK_IDLE_STK_SIZE,
-        OS_TASK_OPT_STK_CHK | OS_TASK_OPT_STK_CLR,
-        OS_TASK_IDLE_PRIO,
-    };
 
-    osTaskCreate(NULL, &taskCfg);
+    osTaskCreate(NULL,
+                 os_task_idle,
+                NULL,
+                osTaskIdleStk,
+                OS_TASK_IDLE_STK_SIZE,
+                OS_TASK_OPT_STK_CHK | OS_TASK_OPT_STK_CLR,
+                OS_TASK_IDLE_PRIO);
 }
 
 /*!

@@ -1,5 +1,5 @@
 /*******************************************************************************
- *  Copyright(C)2015-2019 by Dreistein<mcu_shilei@hotmail.com>                *
+ *  Copyright(C)2019 by Dreistein<mcu_shilei@hotmail.com>                     *
  *                                                                            *
  *  This program is free software; you can redistribute it and/or modify it   *
  *  under the terms of the GNU Lesser General Public License as published     *
@@ -15,12 +15,8 @@
  *  along with this program; if not, see http://www.gnu.org/licenses/.        *
 *******************************************************************************/
 
-
-//! \note do not move this pre-processor statement to other places
-#include "..\app_cfg.h"
-
-#ifndef __OS_PORTS_ARM_CORTEX_M3_APP_CFG_H__
-#define __OS_PORTS_ARM_CORTEX_M3_APP_CFG_H__
+#ifndef __XOS_SOURCE_PORT_H__
+#define __XOS_SOURCE_PORT_H__
 
 /*============================ INCLUDES ======================================*/
 /*============================ MACROS ========================================*/
@@ -28,7 +24,29 @@
 /*============================ TYPES =========================================*/
 /*============================ GLOBAL VARIABLES ==============================*/
 /*============================ PROTOTYPES ====================================*/
+extern CPU_STK *OSTaskStkInit(CPU_STK *ptos, void *wrap, void *task, void *parg);
+extern void     OSStartTheFirstThread(void);
+extern void     OSCtxSw(void);
+extern void     OSIntCtxSw(void);
+extern void     OSEnterCriticalSection(void);
+extern void     OSExitCriticalSection(void);
+extern CPU_REG  OSDisableInterrupt(void);
+extern void     OSResumeInterrupt(CPU_REG level);
 
+#if OS_HOOKS_EN > 0
+extern void OSInitHookBegin(void);
+extern void OSInitHookEnd(void);
+extern void OSTaskCreateHook(OS_TCB *ptcb);
+extern void OSTaskReturnHook(OS_TCB *ptcb, void *arg);
+extern void OSTaskIdleHook(void);
+extern void OSTaskStatHook(void);
+extern void OSTaskSwHook(void);
+extern void OSTCBInitHook(OS_TCB *ptcb);
+extern void OSTimeTickHook(void);
+#endif
+
+#if OS_DEBUG_EN > 0u
+extern void OSDebugInit(void);
+#endif
 
 #endif
-/* EOF */

@@ -60,7 +60,7 @@
 #define OS_TASK_SW_HOOK_EN        1u   //!< Include code for OSTaskSwHook()
 
 
-//! EVENT FLAGS
+//! FLAGS
 #define OS_FLAG_EN                1u   //!< Enable (1) or Disable (0) code generation for FLAG
 #define OS_FLAG_DEL_EN            1u   //!< Include code for osFlagDelete()
 #define OS_FLAG_QUERY_EN          1u   //!< Include code for osFlagQuery()

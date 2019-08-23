@@ -1,6 +1,8 @@
 
 #include ".\app_cfg.h"
-#include ".\os_cpu_cfg.h"
+#include ".\os_cpu_h.h"
+
+
 
 /*
 *********************************************************************************************************
@@ -18,9 +20,9 @@ uint32_t OSCriticalNesting = 0;                      //!<  关中断计数器（
 *              stack frame of the task being created.  This function is highly processor specific.
 *
 * Arguments  : ptos          is a pointer to the TOP of stack. It is assumed that 'ptos' points to
-*                            a 'FREE' wrap on the task stack.
+*                            the first accessable memory location.
 *
-*              wrap          is a pointer to function will be called when task return. You can omit this
+*              pret          is a pointer to function will be called when task return. You can omit this
 *                            if you do not implement this.
 *
 *              task          is a pointer to the task code
@@ -36,114 +38,69 @@ uint32_t OSCriticalNesting = 0;                      //!<  关中断计数器（
 *********************************************************************************************************
 */
 
-CPU_STK *OSTaskStkInit(CPU_STK *ptos, void *wrap, void *task, void *parg)
+CPU_STK *OSTaskStkInit(CPU_STK *ptos, void *pret, void *task, void *parg)
 {
     CPU_STK *stk;
 
 
     stk       = ptos;                               //!< Load stack pointer
+    
+    //! Create a stack frame as entering into an interrupt.
 
-                                                    //!< Registers stacked as if auto-saved on exception
-    *(stk)    = (uint32_t)0x01000000u;              //!< xPSR
-    *(--stk)  = (uint32_t)wrap;                     //!< PC: wrap point of task
-    *(--stk)  = (uint32_t)0xFFFFFFFFu;              //!< R14 (LR)
-    *(--stk)  = (uint32_t)0x12121212u;              //!< R12
-    *(--stk)  = (uint32_t)0x03030303u;              //!< R3
-    *(--stk)  = (uint32_t)0x02020202u;              //!< R2
-    *(--stk)  = (uint32_t)parg;                     //!< R1: argument of task
-    *(--stk)  = (uint32_t)task;                     //!< R0: task function
+                                                    //!< ARM Cortex-M has a full-descending stack.
+    *(  stk)  = (uint32_t)0x01000000;               //!< xPSR
+    *(--stk)  = (uint32_t)task;                     //!< PC: the task entry.
+    *(--stk)  = (uint32_t)pret;                     //!< R14 (LR)
+    *(--stk)  = (uint32_t)0x0C0C0C0C;               //!< R12
+    *(--stk)  = (uint32_t)0x03030303;               //!< R3
+    *(--stk)  = (uint32_t)0x02020202;               //!< R2
+    *(--stk)  = (uint32_t)0x01010101;               //!< R1
+    *(--stk)  = (uint32_t)parg;                     //!< R0: the argument passed to task.
 
-                                                    //!< Remaining registers saved on task's stack
-    *(--stk)  = (uint32_t)0x11111111u;              //!< R11
-    *(--stk)  = (uint32_t)0x10101010u;              //!< R10
-    *(--stk)  = (uint32_t)0x09090909u;              //!< R9
-    *(--stk)  = (uint32_t)0x08080808u;              //!< R8
-    *(--stk)  = (uint32_t)0x07070707u;              //!< R7
-    *(--stk)  = (uint32_t)0x06060606u;              //!< R6
-    *(--stk)  = (uint32_t)0x05050505u;              //!< R5
-    *(--stk)  = (uint32_t)0x04040404u;              //!< R4
+    *(--stk)  = (uint32_t)0xFFFFFFFD;               //!< EXEC_RETURN: to select whether PSP or MSP to use and specify the CPU mode.
+                                                    //!  Refer to DUI0552A on page 2-27, table 2-17.
+
+    *(--stk)  = (uint32_t)0x0B0B0B0B;               //!< R11
+    *(--stk)  = (uint32_t)0x0A0A0A0A;               //!< R10
+    *(--stk)  = (uint32_t)0x09090909;               //!< R9
+    *(--stk)  = (uint32_t)0x08080808;               //!< R8
+    *(--stk)  = (uint32_t)0x07070707;               //!< R7
+    *(--stk)  = (uint32_t)0x06060606;               //!< R6
+    *(--stk)  = (uint32_t)0x05050505;               //!< R5
+    *(--stk)  = (uint32_t)0x04040404;               //!< R4
     
     return stk;
 }
 
-
-
-
-
-static uint32_t SVC0_Process(uint32_t R0, uint32_t R1, uint32_t R2, uint32_t R3);
-static uint32_t SVC1_Process(uint32_t R0, uint32_t R1, uint32_t R2, uint32_t R3);
-static uint32_t SVC2_Process(uint32_t R0, uint32_t R1, uint32_t R2, uint32_t R3);
-
-typedef uint32_t fnSVCHandle_t(uint32_t, uint32_t, uint32_t, uint32_t);
-
-static fnSVCHandle_t * const SVC_ProcessFunArray[] = {
-    SVC0_Process, SVC1_Process, SVC2_Process,
-};
-
-void SVC_Process(uint32_t *pstack)
+void OSEnterCriticalSection(void)
 {
-    uint32_t svc_number = 0;
-    uint32_t svc_r0 = 0;
-    uint32_t svc_r1 = 0;
-    uint32_t svc_r2 = 0;
-    uint32_t svc_r3 = 0;
-    uint32_t retVal = 0;
-    
-    svc_number = ((uint8_t *)pstack[6])[-2];
-    svc_r0     = ((uint32_t) pstack[0]);
-    svc_r1     = ((uint32_t) pstack[1]);
-    svc_r2     = ((uint32_t) pstack[2]);
-    svc_r3     = ((uint32_t) pstack[3]);
-    
-    if (svc_number < 
-       (sizeof(SVC_ProcessFunArray) / sizeof(SVC_ProcessFunArray[0]))) {
-        retVal = SVC_ProcessFunArray[svc_number](svc_r0, svc_r1, svc_r2, svc_r3);
-    }
-    
-    pstack[0] = retVal;
+	__set_BASEPRI( OS_CPU_CFG_HIGHEST_INTERRUPT_PRIORITY_USED );
+	__DSB();
+	__ISB();
+    OSCriticalNesting++;
 }
 
-//! reserved.
-uint32_t SVC0_Process(uint32_t R0, uint32_t R1, uint32_t R2, uint32_t R3)
+void OSExitCriticalSection(void)
 {
-    return 0;
+	OSCriticalNesting--;
+	if ( OSCriticalNesting == 0u ) {
+		__set_BASEPRI( 0 );
+	}
 }
 
-uint32_t SVC1_Process(uint32_t R0, uint32_t R1, uint32_t R2, uint32_t R3)
+CPU_REG OSDisableInterrupt(void)
 {
-    extern void TASK_SW(void);
-    extern void ENTER_CRITICAL(void);
-    extern void EXIT_CRITICAL(void);
-    
-    switch (R0) {
-        case 0:
-            TASK_SW();
-            break;
-        case 1:
-            ENTER_CRITICAL();
-            break;
-        case 2:
-            EXIT_CRITICAL();
-            break;
-        default:
-            break;
-    }
-    
-    return 0;
+    CPU_REG current = __get_BASEPRI();
+    __set_BASEPRI( OS_CPU_CFG_HIGHEST_INTERRUPT_PRIORITY_CALLED_FROM );
+	__DSB();
+	__ISB();
+    return current;
 }
 
-uint32_t SVC2_Process(uint32_t R0, uint32_t R1, uint32_t R2, uint32_t R3)
+void OSResumeInterrupt(CPU_REG level)
 {
-    extern uint32_t SET_INTERRUPT_MASK(uint32_t);
-    
-    switch (R0) {
-        case 0:
-            break;
-        case 1:
-            return SET_INTERRUPT_MASK(R1);
-        default:
-            break;
-    }
-    
-    return 0;
+	__set_BASEPRI( level );
+	__DSB();
+	__ISB();
 }
+

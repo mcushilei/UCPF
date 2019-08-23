@@ -105,57 +105,6 @@ typedef void           *OS_HANDLE;
 typedef UINT16          OS_ERR;
 
 
-/*!
- *! \Brief  THREAD CONFIGRATION
- */
-typedef struct {
-/*!
- *!   the thread entry function shall like this:
- *!   int task (void *parg)
- *!   {
- *!       if () {
- *!          return -1;
- *!       }
- *!       
- *!       for (;;) {
- *!          Task code;
- *!       }
- *!       
- *!       return 0;
- *!   }
- */
-    OS_TASK        *Entry;
-    void           *Argument;
-
-/*!
- *! Stack     point to the array stack[].
- *!
- *! StackSize The size of the stack. The value is the length of the stack[], not sizeof(stack).
- *!
- */
-    CPU_STK        *Stack;
-    UINT32          StackSize;
-     
-/*!
- *! Options     contains additional information (or options) about the behavior of the task.  The
- *!             LOWER 8-bits are reserved by OS while the upper 8 bits can be application
- *!             specific.  See OS_TASK_OPT_??? in OS.H.  Current choices are:
- *!
- *!             OS_TASK_OPT_STK_CHK      Stack checking to be allowed for the task
- *!             OS_TASK_OPT_STK_CLR      Clear the stack when the task is created
- *!             OS_TASK_OPT_SAVE_FP      If the CPU has floating-point registers, save them
- *!                                      during a context switch.
- */
-    UINT16          Options;
-
-/*!
- *! Priority  The value should not freater than OS_TASK_LOWEST_PRIO.
- *!
- */
-    UINT8           Priority;
-    
-} OS_TASK_CFG;
-
 
 /*!
  *! \Brief  FLAG INFO TYPE
@@ -314,7 +263,12 @@ OS_ERR      osQueueQuery            (OS_HANDLE      hQueue,
  *! \Brief  TASK MANAGEMENT
  */
 OS_ERR      osTaskCreate           (OS_HANDLE      *pHandle,
-                                    OS_TASK_CFG    *cfg);
+                                    OS_TASK        *Entry,
+                                    void           *argument,
+                                    CPU_STK        *stack,
+                                    UINT32          stackSize,
+                                    UINT16          options,
+                                    UINT8           priority);
 
 #if OS_TASK_CHANGE_PRIO_EN > 0u
 OS_ERR      osTaskChangePrio       (OS_HANDLE       handle,
