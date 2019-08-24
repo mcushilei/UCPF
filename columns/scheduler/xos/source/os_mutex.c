@@ -82,7 +82,7 @@ OS_ERR osMutexCreate(OS_HANDLE *pMutexHandle, UINT8 ceilingPrio)
 
     //! malloc an ECB from pool.
     OSEnterCriticalSection();
-    pmutex = OS_ObjPoolNew(&osMutexFreeList);
+    pmutex = pool_new(&osMutexFreePool);
     if (pmutex == NULL) {
         OSExitCriticalSection();
         return OS_ERR_OBJ_DEPLETED;
@@ -98,9 +98,9 @@ OS_ERR osMutexCreate(OS_HANDLE *pMutexHandle, UINT8 ceilingPrio)
     pmutex->OSMutexCnt          = 0u;
     pmutex->OSMutexCeilingPrio  = ceilingPrio;
     pmutex->OSMutexOwnerPrio    = 0u;
-    os_list_init_head(&pmutex->OSMutexOvlpList);
+    list_init(&pmutex->OSMutexOvlpList);
     pmutex->OSMutexOwnerTCB     = NULL;
-    os_list_init_head(&pmutex->OSMutexWaitList);
+    list_init(&pmutex->OSMutexWaitList);
     
     *pMutexHandle = pmutex;
     
@@ -197,7 +197,7 @@ OS_ERR osMutexDelete(OS_HANDLE *pMutexHandle, UINT16 opt)
     //! remove the owner if there is one.
     powner = pmutex->OSMutexOwnerTCB;
     if (powner != NULL) {
-        os_list_del(&pmutex->OSMutexOvlpList);
+        list_remove(&pmutex->OSMutexOvlpList);
         if (pmutex->OSMutexOwnerPrio != powner->OSTCBPrio) {        //!< If this task's prio has been changed,
             OS_ChangeTaskPrio(powner, pmutex->OSMutexOwnerPrio);    //!< Yes, restore task's prio.
             taskSched = TRUE;
@@ -205,7 +205,7 @@ OS_ERR osMutexDelete(OS_HANDLE *pMutexHandle, UINT16 opt)
     }
     
     //! Ready ALL tasks are suspending for this mutex.
-    while (!OS_LIST_IS_EMPTY(pmutex->OSMutexWaitList)) {
+    while (!LIST_IS_EMPTY(pmutex->OSMutexWaitList)) {
         OS_WaitableObjRdyTask((OS_WAITABLE_OBJ *)pmutex, &pmutex->OSMutexWaitList, OS_STAT_PEND_ABORT);
     }
     
@@ -214,7 +214,7 @@ OS_ERR osMutexDelete(OS_HANDLE *pMutexHandle, UINT16 opt)
     pmutex->OSMutexCeilingPrio  = 0u;
     pmutex->OSMutexOwnerPrio    = 0u;
     pmutex->OSMutexOwnerTCB     = NULL;
-    OS_ObjPoolFree(&osMutexFreeList, pmutex);
+    pool_free(&osMutexFreePool, pmutex);
     OSExitCriticalSection();
     
     if (taskSched) {
@@ -281,7 +281,7 @@ OS_ERR osMutexPend(OS_HANDLE hMutex, UINT32 timeout)
     OSEnterCriticalSection();
     if (pmutex->OSMutexOwnerTCB == NULL) {              //!< Has mutex been possessed by any other task?...
                                                         //!  ...No.
-        os_list_add(&pmutex->OSMutexOvlpList, osTCBCur->OSTCBOwnMutexList.Prev);
+        list_insert(&pmutex->OSMutexOvlpList, osTCBCur->OSTCBOwnMutexList.Prev);
         pmutex->OSMutexCnt       = 0u;
         pmutex->OSMutexOwnerPrio = osTCBCur->OSTCBPrio;
         pmutex->OSMutexOwnerTCB  = osTCBCur;
@@ -387,15 +387,15 @@ OS_ERR osMutexPost(OS_HANDLE hMutex)
         OS_ChangeTaskPrio(osTCBCur, pmutex->OSMutexOwnerPrio);  //!< ... Yes, restore task's prio.
         taskSched = TRUE;
     }
-    os_list_del(&pmutex->OSMutexOvlpList);
+    list_remove(&pmutex->OSMutexOvlpList);
     
-    if (!OS_LIST_IS_EMPTY(pmutex->OSMutexWaitList)) {           //!< Is any task waiting for the mutex?...
+    if (!LIST_IS_EMPTY(pmutex->OSMutexWaitList)) {           //!< Is any task waiting for the mutex?...
         ptcb = OS_WaitableObjRdyTask((OS_WAITABLE_OBJ *)pmutex, //!< ... Yes, Make the HPT waiting for the mutex ready
                                      &pmutex->OSMutexWaitList,
                                      OS_STAT_PEND_OK);
         pmutex->OSMutexOwnerTCB  = ptcb;
         pmutex->OSMutexOwnerPrio = ptcb->OSTCBPrio;
-        os_list_add(&pmutex->OSMutexOvlpList, ptcb->OSTCBOwnMutexList.Prev);
+        list_insert(&pmutex->OSMutexOvlpList, ptcb->OSTCBOwnMutexList.Prev);
         taskSched = TRUE;
     } else {                                                    //!< ... No.
         pmutex->OSMutexOwnerTCB  = NULL;

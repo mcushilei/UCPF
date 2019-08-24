@@ -22,6 +22,7 @@
 /*============================ INCLUDES ======================================*/
 #include ".\os_private.h"
 #include ".\os_port.h"
+#include <string.h>
 
 /*============================ MACROS ========================================*/
 /*============================ MACROFIED FUNCTIONS ===========================*/
@@ -46,9 +47,9 @@ void OS_SchedulerInit(void)
 
 
     for (i = 0u; i < OS_MAX_PRIO_LEVELS; i++) {
-        os_list_init_head(&osRdyList[i]);
+        list_init(&osRdyList[i]);
     }
-    OS_MemClr((char *)&osRdyBitmap, sizeof(osRdyBitmap));
+    memset((char *)&osRdyBitmap, 0, sizeof(osRdyBitmap));
 
     osTCBCur      = NULL;
     osTCBNextRdy  = NULL;
@@ -69,7 +70,7 @@ void OS_SchedulerInit(void)
  */
 void OS_SchedulerReadyTask(OS_TCB *ptcb)
 {
-    os_list_add(&ptcb->OSTCBList, osRdyList[ptcb->OSTCBPrio].Prev); //!< add task to the end of ready task list.
+    list_insert(&ptcb->OSTCBList, osRdyList[ptcb->OSTCBPrio].Prev); //!< add task to the end of ready task list.
     OS_BitmapSet(&osRdyBitmap, ptcb->OSTCBPrio);                    //!< set the flay to indicate that there are some threads ready to run.
 }
 
@@ -93,7 +94,7 @@ void OS_SchedulerUnreadyTask(OS_TCB *ptcb)
     
     prio = ptcb->OSTCBPrio;
     
-    os_list_del(&ptcb->OSTCBList);
+    list_remove(&ptcb->OSTCBList);
     if (osRdyList[prio].Prev == &osRdyList[prio]) { //!< Is osRdyList empty?
         OS_BitmapClr(&osRdyBitmap, prio);           //!< Yes, clear the ready flag of this priority.
     }
@@ -122,9 +123,9 @@ void OS_SchedulerPrio(void)
     if (prio != osTCBCur->OSTCBPrio) {
         node = osRdyList[prio].Next;
         //! move this task to the end of the ready queue.
-        os_list_del(node);
-        os_list_add(node, osRdyList[prio].Prev);
-        osTCBNextRdy = OS_CONTAINER_OF(node, OS_TCB, OSTCBList);
+        list_remove(node);
+        list_insert(node, osRdyList[prio].Prev);
+        osTCBNextRdy = CONTAINER_OF(node, OS_TCB, OSTCBList);
     }
 }
 
@@ -150,9 +151,9 @@ void OS_SchedulerNext(void)
     prio = OS_BitmapGetHigestPrio(&osRdyBitmap);
     node = osRdyList[prio].Next;
     //! move this task to the end of the ready queue.
-    os_list_del(node);
-    os_list_add(node, osRdyList[prio].Prev);
-    osTCBNextRdy = OS_CONTAINER_OF(node, OS_TCB, OSTCBList);
+    list_remove(node);
+    list_insert(node, osRdyList[prio].Prev);
+    osTCBNextRdy = CONTAINER_OF(node, OS_TCB, OSTCBList);
 }
 
 /*!

@@ -18,7 +18,16 @@
 #ifndef __XOS_SOURCE_PORT_H__
 #define __XOS_SOURCE_PORT_H__
 
+/*
+ *  \brief
+ *
+ *  the variables, functions declared here would be imported from the 'ports'.
+ */
+
+
 /*============================ INCLUDES ======================================*/
+#include "..\ports\ports.h"
+
 /*============================ MACROS ========================================*/
 /*============================ MACROFIED FUNCTIONS ===========================*/
 /*============================ TYPES =========================================*/
@@ -32,6 +41,12 @@ extern void     OSEnterCriticalSection(void);
 extern void     OSExitCriticalSection(void);
 extern CPU_REG  OSDisableInterrupt(void);
 extern void     OSResumeInterrupt(CPU_REG level);
+
+#if OS_HEAP_MEM_EN > 0
+extern void     OSHeapInit(void);
+extern void    *OSHeapAlloc(size_t size);
+extern void     OSHeapFree(void *mem);
+#endif
 
 #if OS_HOOKS_EN > 0
 extern void OSInitHookBegin(void);

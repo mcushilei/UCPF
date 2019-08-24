@@ -99,6 +99,11 @@ OS_ERR  osTaskCreate(   OS_HANDLE      *pHandle,
         return OS_ERR_USE_IN_ISR;       //!< ... Should not create object from an ISR.
     }
 #if OS_ARG_CHK_EN > 0u
+#if OS_TASK_STACK_ON_HEAP_EN == 0
+    if (stack == NULL) {
+        return OS_ERR_NULL_POINTER;
+    }
+#endif
     if (entry == NULL) {
         return OS_ERR_NULL_POINTER;
     }
@@ -111,11 +116,23 @@ OS_ERR  osTaskCreate(   OS_HANDLE      *pHandle,
     
     //! Get a TCB object.
     OSEnterCriticalSection();
-    ptcb = OS_ObjPoolNew(&osTCBFreeList);
+    ptcb = pool_new(&osTCBFreePool);
     if (ptcb == NULL) {
         OSExitCriticalSection();
-        return OS_ERR_OBJ_DEPLETED;
+        return OS_ERR_OUT_OF_MEMORY;
     }
+    options &= ~OS_TASK_OPT_STK_HEAP;
+#if OS_TASK_STACK_ON_HEAP_EN > 0
+    if (stack == NULL) {
+        stack = OSHeapAlloc(stackSize * sizeof(CPU_STK));
+        if (stack == NULL) {
+            pool_free(&osTCBFreePool, ptcb);
+            OSExitCriticalSection();
+            return OS_ERR_OUT_OF_MEMORY;
+        }
+        options |= OS_TASK_OPT_STK_HEAP;
+    }
+#endif
     OSExitCriticalSection();
     
     //! initial TCB.
@@ -126,7 +143,7 @@ OS_ERR  osTaskCreate(   OS_HANDLE      *pHandle,
     if (stackSize != 0u) {
         psp = OSTaskStkInit(stack + stackSize - 1u, (void *)&os_task_return, (void *)entry, argument);
     } else {
-        psp = OSTaskStkInit(stack + stackSize,      (void *)&os_task_return, (void *)entry, argument);
+        psp = OSTaskStkInit(stack, (void *)&os_task_return, (void *)entry, argument);
     }
 #else
     psp = OSTaskStkInit(stack, (void *)&os_task_return, (void *)entry, argument);
@@ -162,9 +179,9 @@ static void os_unlock_mutex(OS_MUTEX *pmutex)
     
     pmutex->OSMutexCnt = 0u;
 
-    os_list_del(&pmutex->OSMutexOvlpList);
+    list_remove(&pmutex->OSMutexOvlpList);
     
-    if (!OS_LIST_IS_EMPTY(pmutex->OSMutexWaitList)) {               //!< Any task waiting for the mutex?
+    if (!LIST_IS_EMPTY(pmutex->OSMutexWaitList)) {               //!< Any task waiting for the mutex?
         ptcb = OS_WaitableObjRdyTask((OS_WAITABLE_OBJ *)pmutex,     //!< Yes, Make HPT waiting for mutex ready
                                     &pmutex->OSMutexWaitList,
                                     OS_STAT_PEND_OK);
@@ -207,14 +224,19 @@ static void os_task_del(void)
 
     //! to ensure task releases all mutex(es) that it has had got. This should be a fatal error???
 #if (OS_MUTEX_EN > 0u) && (OS_MAX_MUTEXES > 0u)
-    while (!OS_LIST_IS_EMPTY(ptcb->OSTCBOwnMutexList)) {
+    while (!LIST_IS_EMPTY(ptcb->OSTCBOwnMutexList)) {
         OS_LIST_NODE *list = ptcb->OSTCBOwnMutexList.Next;
-        pmutex = OS_CONTAINER_OF(list, OS_MUTEX, OSMutexOvlpList);
+        pmutex = CONTAINER_OF(list, OS_MUTEX, OSMutexOvlpList);
         os_unlock_mutex(pmutex);
     }
 #endif
     
-    OS_ObjPoolFree(&osTCBFreeList, ptcb);   //!< Return TCB object to free TCB pool.
+#if OS_TASK_STACK_ON_HEAP_EN > 0
+    if (ptcb->OSTCBOpt & OS_TASK_OPT_STK_HEAP) {
+        OSHeapFree(ptcb->OSTCBStkBase);
+    }
+#endif
+    pool_free(&osTCBFreePool, ptcb);   //!< Return TCB object to free TCB pool.
     osTCBCur = NULL;
     OSExitCriticalSection();
     
@@ -260,10 +282,10 @@ OS_ERR osTaskChangePrio(OS_HANDLE taskHandle, UINT8 newprio)
 
     OSEnterCriticalSection();
 #if (OS_MUTEX_EN > 0u) && (OS_MAX_MUTEXES > 0u)
-    if (!OS_LIST_IS_EMPTY(ptcb->OSTCBOwnMutexList)) {   //!< See if the task ownes any mutex.
+    if (!LIST_IS_EMPTY(ptcb->OSTCBOwnMutexList)) {   //!< See if the task ownes any mutex.
                                                         //!< Yes. Update the priority store in the mutex(es).
         for (OS_LIST_NODE *iterate = ptcb->OSTCBOwnMutexList.Next; iterate != &ptcb->OSTCBOwnMutexList; iterate = iterate->Next) {
-            OS_MUTEX *pmutex = OS_CONTAINER_OF(iterate, OS_MUTEX, OSMutexOvlpList);
+            OS_MUTEX *pmutex = CONTAINER_OF(iterate, OS_MUTEX, OSMutexOvlpList);
             pmutex->OSMutexOwnerPrio = newprio;
         }
         if (newprio < ptcb->OSTCBPrio) {                //!< Re-shedule only if the new priority is higher than the task's current.
@@ -339,12 +361,15 @@ static void os_task_stk_clr(CPU_STK  *pstk,
                             UINT32   size,
                             UINT16   opt)
 {
-    if ((opt & OS_TASK_OPT_STK_CHK) != 0x00u) {      //!< See if stack checking has been enabled
-        if ((opt & OS_TASK_OPT_STK_CLR) != 0x00u) {  //!< See if stack needs to be cleared
-            while (size > 0u) {
-                size--;
-                *pstk++ = (CPU_STK)0;
-            }
+    if ((opt & OS_TASK_OPT_STK_CHK) != 0u) {        //!< stack checking has been enabled.
+        while (size > 0u) {
+            size--;
+            *pstk++ = (CPU_STK)0;
+        }
+    } else if ((opt & OS_TASK_OPT_STK_CLR) != 0u) { //!< stack needs to be cleared.
+        while (size > 0u) {
+            size--;
+            *pstk++ = (CPU_STK)0;
         }
     }
 }

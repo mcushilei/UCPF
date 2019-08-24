@@ -80,7 +80,7 @@ OS_ERR osFlagCreate(OS_HANDLE *pFlagHandle, BOOL initValue, BOOL manualReset)
     
     //! malloc ECB from pool.
     OSEnterCriticalSection();
-    pflag = OS_ObjPoolNew(&osFlagFreeList);
+    pflag = pool_new(&osFlagFreePool);
     if (pflag == NULL) {
         OSExitCriticalSection();
         return OS_ERR_OBJ_DEPLETED;
@@ -94,7 +94,7 @@ OS_ERR osFlagCreate(OS_HANDLE *pFlagHandle, BOOL initValue, BOOL manualReset)
                           | OS_OBJ_TYPE_WAITABLE_MSK
                           | OS_OBJ_PRIO_TYPE_SET(OS_OBJ_PRIO_TYPE_LIST);
     pflag->OSFlagFlags    = flags;
-    os_list_init_head(&pflag->OSFlagWaitList);
+    list_init(&pflag->OSFlagWaitList);
     
     *pFlagHandle = pflag;
     
@@ -156,7 +156,7 @@ OS_ERR osFlagDelete(OS_HANDLE *pFlagHandle, UINT16 opt)
     }
 
     OSEnterCriticalSection();
-    if (!OS_LIST_IS_EMPTY(pflag->OSFlagWaitList)) {     //!< See if any tasks taskPend on this flag...
+    if (!LIST_IS_EMPTY(pflag->OSFlagWaitList)) {     //!< See if any tasks taskPend on this flag...
         taskPend    = TRUE;                                         //!< ...Yes
         taskSched   = TRUE;
     } else {
@@ -178,12 +178,12 @@ OS_ERR osFlagDelete(OS_HANDLE *pFlagHandle, UINT16 opt)
              return OS_ERR_INVALID_OPT;
     }
     
-    while (!OS_LIST_IS_EMPTY(pflag->OSFlagWaitList)) {  //!< Ready ALL tasks task pend for this flag.
+    while (!LIST_IS_EMPTY(pflag->OSFlagWaitList)) {  //!< Ready ALL tasks task pend for this flag.
         OS_WaitableObjRdyTask((OS_WAITABLE_OBJ *)pflag, &pflag->OSFlagWaitList, OS_STAT_PEND_ABORT);
     }
     pflag->OSFlagObjHeader.OSObjType      = OS_OBJ_TYPE_UNUSED;
     pflag->OSFlagFlags    = 0u;
-    OS_ObjPoolFree(&osFlagFreeList, pflag);
+    pool_free(&osFlagFreePool, pflag);
     OSExitCriticalSection();
     
     if (taskSched) {
@@ -309,8 +309,8 @@ OS_ERR osFlagSet(OS_HANDLE hFlag)
 
     OSEnterCriticalSection();
     pflag->OSFlagFlags |= OS_FLAG_STATUS_BIT;               //!< Set the flags.
-    if (!OS_LIST_IS_EMPTY(pflag->OSFlagWaitList)) {         //!< See if any task is waiting for this flag.
-        while (!OS_LIST_IS_EMPTY(pflag->OSFlagWaitList)) {  //!< Yes, Ready ALL tasks waiting for this flag.
+    if (!LIST_IS_EMPTY(pflag->OSFlagWaitList)) {         //!< See if any task is waiting for this flag.
+        while (!LIST_IS_EMPTY(pflag->OSFlagWaitList)) {  //!< Yes, Ready ALL tasks waiting for this flag.
             OS_WaitableObjRdyTask((OS_WAITABLE_OBJ *)pflag, &pflag->OSFlagWaitList, OS_STAT_PEND_OK);
         }
         if (pflag->OSFlagFlags & OS_FLAG_MANUAL_RESET_BIT) {    //!< Is this a auto-reset flag?

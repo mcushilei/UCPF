@@ -15,7 +15,6 @@
  *  along with this program; if not, see http://www.gnu.org/licenses/.        *
 *******************************************************************************/
 
-
 //! \note do not move this pre-processor statement to other places
 #define __OS_CORE_C__
 
@@ -25,11 +24,13 @@
 
 /*============================ MACROS ========================================*/
 /*============================ MACROFIED FUNCTIONS ===========================*/
+#ifndef OS_COUNT_LEADING_ZERO
 #define OS_COUNT_LEADING_ZERO(__B)      (osLZTbl[__B])
+#endif
 
 /*============================ TYPES =========================================*/
 /*============================ PROTOTYPES ====================================*/
-static  void    os_init_free_obj_list(void);
+static  void    os_init_obj_pool(void);
 
 static  void    os_init_misc(void);
 
@@ -89,10 +90,14 @@ void osInit(void)
 #if OS_HOOKS_EN > 0
     OSInitHookBegin();                                  //!< Call port specific initialization code
 #endif
-
+    
+#if OS_HEAP_MEM_EN > 0
+    OSHeapInit();
+#endif
+    
     os_init_misc();                                     //!< Initialize miscellaneous variables
 
-    os_init_free_obj_list();                            //!< Initialize the free list of OS_TCBs
+    os_init_obj_pool();                            //!< Initialize the free list of OS_TCBs
 
     OS_SchedulerInit();                                 //!< Initialize the Ready List
 
@@ -138,118 +143,36 @@ static void os_init_misc(void)
     osTaskStatRunning       = FALSE;                    //!< Statistic task is not ready
 #endif
     
-    os_list_init_head(&osWaitList);
-    os_list_init_head(&osWaitRunoverList);
+    list_init(&osWaitList);
+    list_init(&osWaitRunoverList);
 }
 
-/*!
- *! \Brief       INITIALIZE THE FREE LIST OF TASK CONTROL BLOCKS
- *!
- *! \Description This function is called by osInit() to initialize the free list of task control blocks.
- *!
- *! \Arguments   ppObj      pointer to a pointer of memory pool.
- *!
- *!              pMem       the memory of pool.
- *!
- *!              num        How many memory blocks the pool contained.
- *!
- *!              objSize    the size of blocks in bytes.
- *!
- *! \Returns     none
- */
-static bool os_obj_pool_init(OS_LIST_NODE **ppObj, void *pMem, UINT16 num, UINT16 objSize)
+static void os_init_obj_pool(void)
 {
-    OS_LIST_NODE *list;
-    
-    for (; num; num--) {
-        list = (OS_LIST_NODE *)pMem;
-        *ppObj = list;
-        list->Next = NULL;
-        list->Prev = NULL;
-        ppObj = &list->Next;
-        pMem = (char *)pMem + objSize;
-    }
-
-    return true;
-}
-
-/*!
- *! \Brief       RECYCLE AN OBJECT
- *!
- *! \Description This function recycle an object to memory pool.
- *!
- *! \Arguments   ppObj      pointer to a pointer of memory pool.
- *!
- *!              pobj       pointer to an object.
- *!
- *! \Returns     TRUE       the operation is successful.
- *!
- *! \Notes       1) This function assumes that interrupts are DISABLED.
- *!              2) This function is INTERNAL to OS and your application should not call it.
- */
-bool OS_ObjPoolFree(OS_LIST_NODE **ppObj, void *pobj)
-{    
-    ((OS_LIST_NODE *)pobj)->Next = *ppObj;
-    ((OS_LIST_NODE *)pobj)->Prev = NULL;
-    *ppObj = (OS_LIST_NODE *)pobj;
-
-    return true;
-}
-
-/*!
- *! \Brief       MALLOC AN OBJECT
- *!
- *! \Description This function malloc an object from memory pool.
- *!
- *! \Arguments   ppObj      pointer to a pointer of memory pool.
- *!
- *! \Returns     NULL       You pass an invalid memory pool or memory pool has been empty.
- *!              !NULL      The pointer to an object.
- *!
- *! \Notes       1) This function assumes that interrupts are DISABLED.
- *!              2) This function is INTERNAL to OS and your application should not call it.
- */
-void *OS_ObjPoolNew(OS_LIST_NODE **ppObj)
-{
-    OS_LIST_NODE *pobj;
-
-    if (*ppObj == NULL) {
-        return NULL;
-    }
-
-    pobj   = *ppObj;
-    *ppObj = pobj->Next; 
-    pobj->Next = NULL;
-
-    return pobj;
-}
-
-
-static void os_init_free_obj_list(void)
-{
-    OS_MemClr((char *)osTCBFreeTbl, sizeof(osTCBFreeTbl));
-    os_obj_pool_init(&osTCBFreeList, osTCBFreeTbl, sizeof(osTCBFreeTbl) / sizeof(OS_TCB), sizeof(OS_TCB));
+    memset((char *)osTCBFreeTbl, 0, sizeof(osTCBFreeTbl));
+    pool_init(&osTCBFreePool, UBOUND(osTCBFreeTbl), osTCBFreeTbl, sizeof(OS_TCB));
 
 #if (OS_QUEUE_EN)
-    OS_MemClr((char *)osQueueFreeTbl, sizeof(osQueueFreeTbl));
-    os_obj_pool_init(&osQueueFreeList, osQueueFreeTbl, sizeof(osQueueFreeTbl) / sizeof(OS_QUEUE), sizeof(OS_QUEUE));
+    memset((char *)osQueueFreeTbl, 0, sizeof(osQueueFreeTbl));
+    pool_init(&osQueueFreePool, UBOUND(osQueueFreeTbl), osQueueFreeTbl, sizeof(OS_QUEUE));
 #endif
 
 #if (OS_SEM_EN)
-    OS_MemClr((char *)osSemFreeTbl, sizeof(osSemFreeTbl));
-    os_obj_pool_init(&osSemFreeList, osSemFreeTbl, sizeof(osSemFreeTbl) / sizeof(OS_SEM), sizeof(OS_SEM));
+    memset((char *)osSemFreeTbl, 0, sizeof(osSemFreeTbl));
+    pool_init(&osSemFreePool, UBOUND(osSemFreeTbl), osSemFreeTbl, sizeof(OS_SEM));
 #endif
 
 #if (OS_MUTEX_EN)
-    OS_MemClr((char *)osMutexFreeTbl, sizeof(osMutexFreeTbl));
-    os_obj_pool_init(&osMutexFreeList, osMutexFreeTbl, sizeof(osMutexFreeTbl) / sizeof(OS_MUTEX), sizeof(OS_MUTEX));
+    memset((char *)osMutexFreeTbl, 0, sizeof(osMutexFreeTbl));
+    pool_init(&osMutexFreePool, UBOUND(osMutexFreeTbl), osMutexFreeTbl, sizeof(OS_MUTEX));
 #endif
 
 #if (OS_FLAG_EN)
-    OS_MemClr((char *)osFlagFreeTbl, sizeof(osFlagFreeTbl));
-    os_obj_pool_init(&osFlagFreeList, osFlagFreeTbl, sizeof(osFlagFreeTbl) / sizeof(OS_FLAG), sizeof(OS_FLAG));
+    memset((char *)osFlagFreeTbl, 0, sizeof(osFlagFreeTbl));
+    pool_init(&osFlagFreePool, UBOUND(osFlagFreeTbl), osFlagFreeTbl, sizeof(OS_FLAG));
 #endif
 }
+
 /*!
  *! \Brief       ENTER ISR
  *!
@@ -424,7 +347,7 @@ static void OS_WaitNodeInsert(OS_WAITABLE_OBJ *pobj, OS_LIST_NODE *plist, OS_WAI
     if (OS_OBJ_PRIO_TYPE_GET(pobj->OSWaitObjHeader.OSObjType) == OS_OBJ_PRIO_TYPE_PRIO_LIST) {
         //! find the node whose priority is lower than current's.
         for (addTo = plist->Next; addTo != plist; addTo = addTo->Next) {
-            OS_WAIT_NODE *node = OS_CONTAINER_OF(addTo, OS_WAIT_NODE, OSWaitNodeList);
+            OS_WAIT_NODE *node = CONTAINER_OF(addTo, OS_WAIT_NODE, OSWaitNodeList);
             if (pnode->OSWaitNodeTCB->OSTCBPrio < node->OSWaitNodeTCB->OSTCBPrio) {
                 break;
             }
@@ -432,14 +355,15 @@ static void OS_WaitNodeInsert(OS_WAITABLE_OBJ *pobj, OS_LIST_NODE *plist, OS_WAI
     } else {
         addTo = plist;
     }
-    os_list_add(&pnode->OSWaitNodeList, addTo->Prev);    //!< add wait node to the end of wait NODE list.
+    list_insert(&pnode->OSWaitNodeList, addTo->Prev);    //!< add wait node to the end of wait NODE list.
 }
+
 void OS_WaitNodeRemove(OS_TCB *ptcb)
 {
     OS_WAIT_NODE *pnode = ptcb->OSTCBWaitNode;
     
 
-    os_list_del(&pnode->OSWaitNodeList);    //!< remove from wait NODE list.
+    list_remove(&pnode->OSWaitNodeList);    //!< remove from wait NODE list.
     ptcb->OSTCBWaitNode = NULL;
 }
 
@@ -484,7 +408,7 @@ static void OS_WaitListInsert(OS_TCB *ptcb)
 
     //! is this list empty?
     if (pList->Next == pList) {     //! yes.
-        os_list_add(&ptcb->OSTCBList, pList);
+        list_insert(&ptcb->OSTCBList, pList);
     } else {                        //! no.
         OS_TCB          *tcb;
         OS_LIST_NODE    *iterate;
@@ -495,13 +419,13 @@ static void OS_WaitListInsert(OS_TCB *ptcb)
                 break;
             }
         }
-        os_list_add(&ptcb->OSTCBList, iterate->Prev);
+        list_insert(&ptcb->OSTCBList, iterate->Prev);
     }
 }
 
 static void OS_WaitListRemove(OS_TCB *ptcb)
 {
-    os_list_del(&ptcb->OSTCBList);      //!< remove from wait list.
+    list_remove(&ptcb->OSTCBList);      //!< remove from wait list.
     ptcb->OSTCBDly = 0u;
 }
 
@@ -624,7 +548,7 @@ OS_ERR osTaskSleep(UINT32 ticks)
     node.OSWaitNodeECB = NULL;
     node.OSWaitNodeRes = OS_STAT_PEND_OK;
     node.OSWaitNodeListHead = NULL;
-    os_list_init_head(&node.OSWaitNodeList);
+    list_init(&node.OSWaitNodeList);
     
     OSEnterCriticalSection();
     osTCBCur->OSTCBDly      = ticks;
@@ -808,7 +732,7 @@ static void *os_task_statistics(void *parg)
 #if (OS_STAT_TASK_STK_CHK_EN > 0u)
         OSEnterCriticalSection();
         for (list = osWaitList.Next; list != &osWaitList; list = list->Next) {
-            ptcb = OS_CONTAINER_OF(list, OS_TCB, OSTCBList);
+            ptcb = CONTAINER_OF(list, OS_TCB, OSTCBList);
             OS_TaskStkChk(ptcb);
         }
         OSExitCriticalSection();
@@ -859,20 +783,22 @@ void OS_TCBInit(OS_TCB  *ptcb,
     ptcb->OSTCBObjHeader.OSObjType = OS_OBJ_TYPE_SET(OS_OBJ_TYPE_TCB);
     
     ptcb->OSTCBStkPtr       = psp;                      //!< Load Stack Pointer in TCB
+#if OS_TASK_PROFILE_EN > 0u || OS_TASK_STACK_ON_HEAP_EN > 0
+    ptcb->OSTCBStkBase      = pstk;
+#endif
     
     ptcb->OSTCBWaitNode     = NULL;                     //!< Task is not pending on anay object.
     
-    os_list_init_head(&ptcb->OSTCBList);
+    list_init(&ptcb->OSTCBList);
     
 #if (OS_MUTEX_EN > 0u) && (OS_MAX_MUTEXES > 0u)
-    os_list_init_head(&ptcb->OSTCBOwnMutexList);
+    list_init(&ptcb->OSTCBOwnMutexList);
 #endif
 
     ptcb->OSTCBOpt          = opt;                      //!< Store task options
     ptcb->OSTCBPrio         = prio;                     //!< Load task priority into TCB
     
 #if OS_TASK_PROFILE_EN > 0u                             //!< Initialize profiling variables
-    ptcb->OSTCBStkBase      = pstk;
     ptcb->OSTCBStkSize      = stkSize;
     ptcb->OSTCBStkUsed      = 0u;
     ptcb->OSTCBCtxSwCtr     = 0u;
@@ -909,7 +835,7 @@ void OS_TaskStkChk(OS_TCB *ptcb)
 
 
     OSEnterCriticalSection();
-    if ((ptcb->OSTCBOpt & OS_TASK_OPT_STK_CHK) == 0u) { //!< Make sure stack checking option is set
+    if ((ptcb->OSTCBOpt & OS_TASK_OPT_STK_CHK) == 0u) { //!< Make sure stack checking option is set.
         OSExitCriticalSection();
         return;
     }
@@ -924,7 +850,7 @@ void OS_TaskStkChk(OS_TCB *ptcb)
 
     nfree = 0u;
 #if OS_CPU_STK_GROWTH_DOWN == 1u
-    for (; *pstk == 0u && pstk != pBotStk; pstk++) {                             //!< calculate the number of zero entries on the stk
+    for (; *pstk == 0u && pstk != pBotStk; pstk++) {    //!< calculate the number of zero entries on the stack.
         nfree++;
     }
 #else
@@ -932,7 +858,7 @@ void OS_TaskStkChk(OS_TCB *ptcb)
         nfree++;
     }
 #endif
-    size -= nfree;                  //!< calculate number of entries used on the stk
+    size -= nfree;  //!< calculate number of entries used on the stack.
     if (size > ptcb->OSTCBStkUsed) {
         ptcb->OSTCBStkUsed = size;
     }
@@ -969,7 +895,7 @@ void OS_WaitableObjAddTask( OS_WAITABLE_OBJ    *pobj,
     pnode->OSWaitNodeECB        = pobj;
     pnode->OSWaitNodeListHead   = plist;
     pnode->OSWaitNodeRes        = OS_STAT_PEND_OK;
-    os_list_init_head(&pnode->OSWaitNodeList);
+    list_init(&pnode->OSWaitNodeList);
     OS_WaitNodeInsert(pobj, plist, pnode);
     
     osTCBCur->OSTCBWaitNode = pnode;                    //!< Store node in task's TCB
@@ -1006,7 +932,7 @@ OS_TCB *OS_WaitableObjRdyTask(OS_WAITABLE_OBJ *pobj, OS_LIST_NODE *plist, UINT8 
     OS_TCB         *ptcb;
 
     
-    pnode   = OS_CONTAINER_OF(plist->Next, OS_WAIT_NODE, OSWaitNodeList);
+    pnode   = CONTAINER_OF(plist->Next, OS_WAIT_NODE, OSWaitNodeList);
     ptcb    = pnode->OSWaitNodeTCB;
         
     OS_WaitNodeRemove(ptcb);                //!< Remove this task from event's wait-node list
@@ -1053,15 +979,15 @@ void OS_ChangeTaskPrio(OS_TCB *ptcb, UINT8 newprio)
                 OS_LIST_NODE *pList = pnode->OSWaitNodeListHead;
                 OS_WAIT_NODE *waitNode;
                 
-                os_list_del(&pnode->OSWaitNodeList);                                                    //!< ...remove wait node from old priority.
+                list_remove(&pnode->OSWaitNodeList);                                                    //!< ...remove wait node from old priority.
                                                                                                         //!  then find and put on the new position.
                 for (listNode = pList->Next; listNode != pList; listNode = listNode->Next) {
-                    waitNode = OS_CONTAINER_OF(listNode, OS_WAIT_NODE, OSWaitNodeList);
+                    waitNode = CONTAINER_OF(listNode, OS_WAIT_NODE, OSWaitNodeList);
                     if (newprio < waitNode->OSWaitNodeTCB->OSTCBPrio) {
                         break;
                     }
                 }
-                os_list_add(&pnode->OSWaitNodeList, listNode->Prev);
+                list_insert(&pnode->OSWaitNodeList, listNode->Prev);
             }
         }
         ptcb->OSTCBPrio = newprio;              //!< Set new task priority
@@ -1075,16 +1001,11 @@ void OS_ChangeTaskPrio(OS_TCB *ptcb, UINT8 newprio)
 
 void OS_BitmapSet(OS_PRIO_BITMAP *pmap, UINT8 prio)
 {
-    UINT8          y;
+    UINT16         y;
     OS_BITMAP_UINT bitx, bity;
     
-#if OS_MAX_PRIO_LEVELS <= 64u                        //!< See if we support up to 64 tasks
-    y = (prio >> 3) & 0x07u;
-    bitx = 1u << (prio & 0x07u);
-#else
     y = (prio >> 4) & 0x0Fu;
     bitx = 1u << (prio & 0x0Fu);
-#endif
     bity = 1u << y;
     
     pmap->Y    |= bity;
@@ -1093,16 +1014,11 @@ void OS_BitmapSet(OS_PRIO_BITMAP *pmap, UINT8 prio)
 
 void OS_BitmapClr(OS_PRIO_BITMAP *pmap, UINT8 prio)
 {
-    UINT8          y;
+    UINT16         y;
     OS_BITMAP_UINT bitx, bity;
     
-#if OS_MAX_PRIO_LEVELS <= 64u                        //!< See if we support up to 64 tasks
-    y = (prio >> 3) & 0x07u;
-    bitx = 1u << (prio & 0x07u);
-#else
     y = (prio >> 4) & 0x0Fu;
     bitx = 1u << (prio & 0x0Fu);
-#endif
     bity = 1u << y;
 
     pmap->X[y] &= (OS_BITMAP_UINT)~bitx;
@@ -1118,12 +1034,7 @@ UINT8 OS_BitmapGetHigestPrio(OS_PRIO_BITMAP *pmap)
     OS_BITMAP_UINT valX;
 
 
-    //! find the highest priority of ready task.
-#if OS_MAX_PRIO_LEVELS <= 64u               //!< See if we support up to 64 tasks
-    y       = OS_COUNT_LEADING_ZERO(pmap->Y);
-    valX  = pmap->X[y];
-    prio    = (y * 8u) + OS_COUNT_LEADING_ZERO(valX);
-#else                                       //!< We support up to 256 tasks
+    //! find the highest priority of ready task. We support up to 256 levels.
     if ((pmap->Y & 0xFFu) != 0u) {
         y =      OS_COUNT_LEADING_ZERO(pmap->Y & 0xFFu);
     } else {
@@ -1135,62 +1046,8 @@ UINT8 OS_BitmapGetHigestPrio(OS_PRIO_BITMAP *pmap)
     } else {
         prio = (y * 16u) + 8u + OS_COUNT_LEADING_ZERO((valX >> 8u) & 0xFFu);
     }
-#endif
     
     return prio;
-}
-
-/*!
- *! \Brief       CLEAR A SECTION OF MEMORY
- *!
- *! \Description This function is called by other OS services to clear a contiguous block of RAM.
- *!
- *! \Arguments   pdest    is the start of the RAM to clear (i.e. write 0x00 to)
- *!
- *!              size     is the number of bytes to clear.
- *!
- *! \Returns     none
- *!
- *! \Notes       1) This function is INTERNAL to OS and your application should not call it.
- *!              2) Note that we can only clear up to 0xFFFFFFFF bytes of RAM at once.
- *!              3) The clear is done one byte at a time since this will work on any processor irrespective
- *!                 of the alignment of the destination.
- */
-void OS_MemClr(char *pdest, UINT32 size)
-{
-    while (size > 0u) {
-        *pdest++ = 0u;
-        size--;
-    }
-}
-
-/*!
- *! \Brief       COPY A BLOCK OF MEMORY
- *!
- *! \Description This function is called by other OS services to copy a block of memory from one
- *!              location to another.
- *!
- *! \Arguments   pdest    is a pointer to the 'destination' memory block
- *!
- *!              psrc     is a pointer to the 'source'      memory block
- *!
- *!              size     is the number of bytes to copy.
- *!
- *! \Returns     none
- *!
- *! \Notes       1) This function is INTERNAL to OS and your application should not call it.  There is
- *!                 no provision to handle overlapping memory copy.  However, that's not a problem since this
- *!                 is not a situation that will happen.
- *!              2) Note that we can only copy up to 0xFFFFFFFF bytes of RAM at once.
- *!              3) The copy is done one byte at a time since this will work on any processor irrespective
- *!                 of the alignment of the source and destination.
- */
-void OS_MemCopy(char *pdest, char *psrc, UINT32 size)
-{
-    while (size > 0u) {
-        *pdest++ = *psrc++;
-        size--;
-    }
 }
 
 /*!

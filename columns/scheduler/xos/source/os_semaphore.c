@@ -65,7 +65,7 @@ OS_ERR osSemCreate(OS_HANDLE *pSemHandle, UINT16 initCnt)
 
     //! malloc a ECB from pool.
     OSEnterCriticalSection();
-    psem = OS_ObjPoolNew(&osSemFreeList);
+    psem = pool_new(&osSemFreePool);
     if (psem == NULL) {
         OSExitCriticalSection();
         return OS_ERR_OBJ_DEPLETED;
@@ -79,7 +79,7 @@ OS_ERR osSemCreate(OS_HANDLE *pSemHandle, UINT16 initCnt)
                                     | OS_OBJ_TYPE_WAITABLE_MSK
                                     | OS_OBJ_PRIO_TYPE_SET(OS_OBJ_PRIO_TYPE_PRIO_LIST);
     psem->OSSemToken    = initCnt;
-    os_list_init_head(&psem->OSSemWaitList);
+    list_init(&psem->OSSemWaitList);
     
     *pSemHandle = psem;
     
@@ -162,11 +162,11 @@ OS_ERR osSemDelete(OS_HANDLE *pSemHandle, UINT16 opt)
             return OS_ERR_INVALID_OPT;
     }
     
-    while (!OS_LIST_IS_EMPTY(psem->OSSemWaitList)) {  //!< Ready ALL suspended tasks.
+    while (!LIST_IS_EMPTY(psem->OSSemWaitList)) {  //!< Ready ALL suspended tasks.
         OS_WaitableObjRdyTask((OS_WAITABLE_OBJ *)psem, &psem->OSSemWaitList, OS_STAT_PEND_ABORT);
     }
     psem->OSSemObjHead.OSObjType = OS_OBJ_TYPE_UNUSED;
-    OS_ObjPoolFree(&osSemFreeList, psem);
+    pool_free(&osSemFreePool, psem);
     OSExitCriticalSection();
     
     if (taskPend) {
@@ -277,7 +277,7 @@ OS_ERR osSemPend(OS_HANDLE hSemaphore, UINT32 timeout)
 OS_ERR osSemPost(OS_HANDLE hSemaphore, UINT16 cnt)
 {
     OS_SEM     *psem = (OS_SEM *)hSemaphore;
-    UINT8       err;
+    OS_ERR      err;
 
 
 #if OS_ARG_CHK_EN > 0u
@@ -296,8 +296,8 @@ OS_ERR osSemPost(OS_HANDLE hSemaphore, UINT16 cnt)
     OSEnterCriticalSection();
     if (cnt <= (65535u - psem->OSSemToken)) {    //!< Make sure semaphore will not overflow
         psem->OSSemToken += cnt;                 //!< Increment semaphore count to register event
-        if (!OS_LIST_IS_EMPTY(psem->OSSemWaitList)) {     //!< See if any tasks waiting for semaphore
-            while (!OS_LIST_IS_EMPTY(psem->OSSemWaitList)) {
+        if (!LIST_IS_EMPTY(psem->OSSemWaitList)) {     //!< See if any tasks waiting for semaphore
+            while (!LIST_IS_EMPTY(psem->OSSemWaitList)) {
                 psem->OSSemToken--;                                   //!< decrement semaphore count...
                 OS_WaitableObjRdyTask((OS_WAITABLE_OBJ *)psem, &psem->OSSemWaitList, OS_STAT_PEND_OK);    //!< ...and ready HPT waiting on event
             }
@@ -336,7 +336,7 @@ OS_ERR osSemPost(OS_HANDLE hSemaphore, UINT16 cnt)
 OS_ERR osSemPendAbort(OS_HANDLE hSemaphore)
 {
     OS_SEM     *psem = (OS_SEM *)hSemaphore;
-    UINT8       err;
+    OS_ERR      err;
 
 
 #if OS_ARG_CHK_EN > 0u
@@ -349,8 +349,8 @@ OS_ERR osSemPendAbort(OS_HANDLE hSemaphore)
     }
 
     OSEnterCriticalSection();
-    if (!OS_LIST_IS_EMPTY(psem->OSSemWaitList)) {           //!< See if any task waiting on semaphore?
-        while (!OS_LIST_IS_EMPTY(psem->OSSemWaitList)) {    //!< Yes, ready ALL tasks waiting on semaphore
+    if (!LIST_IS_EMPTY(psem->OSSemWaitList)) {           //!< See if any task waiting on semaphore?
+        while (!LIST_IS_EMPTY(psem->OSSemWaitList)) {    //!< Yes, ready ALL tasks waiting on semaphore
             OS_WaitableObjRdyTask((OS_WAITABLE_OBJ *)psem, &psem->OSSemWaitList, OS_STAT_PEND_ABORT);
         }
         OSExitCriticalSection();
@@ -402,7 +402,7 @@ OS_ERR osSemSet(OS_HANDLE hSemaphore, UINT16 cnt)
 
     err = OS_ERR_NONE;
     OSEnterCriticalSection();
-    if (!OS_LIST_IS_EMPTY(psem->OSSemWaitList)) {       //!< See if task(s) waiting?
+    if (!LIST_IS_EMPTY(psem->OSSemWaitList)) {       //!< See if task(s) waiting?
         err = OS_ERR_TASK_WAITING;
     } else {
         psem->OSSemToken = cnt;                           //!< No, OK to set the value

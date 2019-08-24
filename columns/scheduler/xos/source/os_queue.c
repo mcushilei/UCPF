@@ -20,6 +20,7 @@
 /*============================ INCLUDES ======================================*/
 #include ".\os_private.h"
 #include ".\os_port.h"
+#include <string.h>
 
 #if (OS_QUEUE_EN > 0u) && (OS_MAX_QUEUES > 0u)
 
@@ -30,7 +31,7 @@
 /*============================ LOCAL VARIABLES ===============================*/
 /*============================ GLOBAL VARIABLES ==============================*/
 /*============================ IMPLEMENTATION ================================*/
-OS_ERR osQueueCreate(OS_HANDLE *hQueue, void *buffer, UINT16 queueSize)
+OS_ERR osQueueCreate(OS_HANDLE *hQueue, void *buffer, UINT16 queueSize, size_t elementSize)
 {
     OS_QUEUE   *pqueue;
 
@@ -39,8 +40,13 @@ OS_ERR osQueueCreate(OS_HANDLE *hQueue, void *buffer, UINT16 queueSize)
     if (hQueue == NULL) {
         return OS_ERR_INVALID_HANDLE;
     }
-    if (0u == queueSize || NULL == buffer) {
-        return OS_ERR_PDATA_NULL;
+#if OS_QUEUE_BUFFER_ON_HEAP_EN == 0
+    if (NULL == buffer) {
+        return OS_ERR_NULL_POINTER;
+    }
+#endif
+    if (0u == queueSize) {
+        return OS_ERR_NULL_POINTER;
     }
 #endif
     if (osIntNesting > 0u) {            //!< See if called from ISR ...
@@ -48,11 +54,23 @@ OS_ERR osQueueCreate(OS_HANDLE *hQueue, void *buffer, UINT16 queueSize)
     }
 
     OSEnterCriticalSection();
-    pqueue = OS_ObjPoolNew(&osQueueFreeList);
+    pqueue = pool_new(&osQueueFreePool);
     if (pqueue == NULL) {
         OSExitCriticalSection();
-        return OS_ERR_OBJ_DEPLETED;
+        return OS_ERR_OUT_OF_MEMORY;
     }
+    pqueue->OSQueueOpt = 0;
+#if OS_QUEUE_BUFFER_ON_HEAP_EN > 0
+    if (NULL == buffer) {
+        buffer = OSHeapAlloc(elementSize * queueSize);
+        if (buffer == NULL) {
+            pool_free(&osQueueFreePool, pqueue);
+            OSExitCriticalSection();
+            return OS_ERR_OUT_OF_MEMORY;
+        }
+        pqueue->OSQueueOpt |= OS_QUEUE_BUFFER_ON_HEAP;
+    }
+#endif
     OSExitCriticalSection();
 
     //! Set object type.
@@ -61,8 +79,9 @@ OS_ERR osQueueCreate(OS_HANDLE *hQueue, void *buffer, UINT16 queueSize)
     pqueue->OSQueueObjHead.OSObjType =  OS_OBJ_TYPE_SET(OS_OBJ_TYPE_QUEUE)
                                      | OS_OBJ_TYPE_WAITABLE_MSK
                                      | OS_OBJ_PRIO_TYPE_SET(OS_OBJ_PRIO_TYPE_LIST);
-    os_list_init_head(&pqueue->OSQueueEnqueueWaitList);
-    os_list_init_head(&pqueue->OSQueueDequeueWaitList);
+    list_init(&pqueue->OSQueueEnqueueWaitList);
+    list_init(&pqueue->OSQueueDequeueWaitList);
+    pqueue->OSQueueElementSize  = elementSize;
     pqueue->OSQueueBuffer       = buffer;
     pqueue->OSQueueSize         = queueSize;
     pqueue->OSQueueHead         = 0;
@@ -76,7 +95,7 @@ OS_ERR osQueueCreate(OS_HANDLE *hQueue, void *buffer, UINT16 queueSize)
     return OS_ERR_NONE;
 }
 
-
+#if OS_QUEUE_DEL_EN > 0
 OS_ERR osQueueDelete(OS_HANDLE *hQueue, UINT16 opt)
 {
     OS_QUEUE   *pqueue = (OS_QUEUE *)*hQueue;
@@ -97,7 +116,7 @@ OS_ERR osQueueDelete(OS_HANDLE *hQueue, UINT16 opt)
 
 
     OSEnterCriticalSection();
-    if (!OS_LIST_IS_EMPTY(pqueue->OSQueueEnqueueWaitList) || !OS_LIST_IS_EMPTY(pqueue->OSQueueDequeueWaitList)) {     //!< check wait list if it's empty.
+    if (!LIST_IS_EMPTY(pqueue->OSQueueEnqueueWaitList) || !LIST_IS_EMPTY(pqueue->OSQueueDequeueWaitList)) {     //!< check wait list if it's empty.
         taskPend    = TRUE;
     } else {
         taskPend    = FALSE;
@@ -117,15 +136,20 @@ OS_ERR osQueueDelete(OS_HANDLE *hQueue, UINT16 opt)
             OSExitCriticalSection();
             return OS_ERR_INVALID_OPT;
     }
-    while (!OS_LIST_IS_EMPTY(pqueue->OSQueueEnqueueWaitList)) {  //!< Ready ALL suspended tasks.
+    while (!LIST_IS_EMPTY(pqueue->OSQueueEnqueueWaitList)) {  //!< Ready ALL suspended tasks.
         OS_WaitableObjRdyTask((OS_WAITABLE_OBJ *)pqueue, &pqueue->OSQueueEnqueueWaitList, OS_STAT_PEND_ABORT);
     }
-    while (!OS_LIST_IS_EMPTY(pqueue->OSQueueDequeueWaitList)) {  //!< Ready ALL suspended tasks.
+    while (!LIST_IS_EMPTY(pqueue->OSQueueDequeueWaitList)) {  //!< Ready ALL suspended tasks.
         OS_WaitableObjRdyTask((OS_WAITABLE_OBJ *)pqueue, &pqueue->OSQueueDequeueWaitList, OS_STAT_PEND_ABORT);
     }
     
     pqueue->OSQueueObjHead.OSObjType = OS_OBJ_TYPE_UNUSED;
-    OS_ObjPoolFree(&osQueueFreeList, pqueue);
+#if OS_QUEUE_BUFFER_ON_HEAP_EN == 0
+    if (pqueue->OSQueueOpt & OS_QUEUE_BUFFER_ON_HEAP) {
+        OSHeapFree(pqueue->OSQueueBuffer);
+    }
+#endif
+    pool_free(&osQueueFreePool, pqueue);
     OSExitCriticalSection();
     
     if (taskPend) {
@@ -134,8 +158,9 @@ OS_ERR osQueueDelete(OS_HANDLE *hQueue, UINT16 opt)
     
     return OS_ERR_NONE;
 }
+#endif
 
-OS_ERR osQueueWrite(OS_HANDLE hQueue, void const *buffer, UINT32 timeout)
+OS_ERR osQueueWrite(OS_HANDLE hQueue, const void *buffer, UINT32 timeout)
 {
     OS_QUEUE       *pqueue = (OS_QUEUE *)hQueue;
     OS_WAIT_NODE    node;
@@ -147,12 +172,9 @@ OS_ERR osQueueWrite(OS_HANDLE hQueue, void const *buffer, UINT32 timeout)
         return OS_ERR_INVALID_HANDLE;
     }
     if (NULL == buffer) {
-        return OS_ERR_PDATA_NULL;
+        return OS_ERR_NULL_POINTER;
     }
 #endif
-    if (osIntNesting > 0u) {            //!< See if called from an ISR.
-        return OS_ERR_USE_IN_ISR;
-    }
     if (osLockNesting > 0u) {           //!< See if called with scheduler locked.
         return OS_ERR_PEND_LOCKED;
     }
@@ -194,14 +216,14 @@ OS_ERR osQueueWrite(OS_HANDLE hQueue, void const *buffer, UINT32 timeout)
         pqueue->OSQueueWriteToken--;    
     }
 
-    pqueue->OSQueueBuffer[pqueue->OSQueueTail] = buffer;
+    memcpy((char *)pqueue->OSQueueBuffer + pqueue->OSQueueElementSize * pqueue->OSQueueTail, buffer, pqueue->OSQueueElementSize);
     pqueue->OSQueueTail++;
     if (pqueue->OSQueueTail >= pqueue->OSQueueSize) {
         pqueue->OSQueueTail = 0;
     }
     pqueue->OSQueueLength++;
     pqueue->OSQueueReadToken++;
-    if (!OS_LIST_IS_EMPTY(pqueue->OSQueueDequeueWaitList)) { //!< Is any task waiting for reading?
+    if (!LIST_IS_EMPTY(pqueue->OSQueueDequeueWaitList)) { //!< Is any task waiting for reading?
         pqueue->OSQueueReadToken--;
         OS_WaitableObjRdyTask((OS_WAITABLE_OBJ *)pqueue, &pqueue->OSQueueDequeueWaitList, OS_STAT_PEND_OK);
         OSExitCriticalSection();
@@ -225,7 +247,7 @@ OS_ERR osQueueRead(OS_HANDLE hQueue, void *buffer, UINT32 timeout)
         return OS_ERR_INVALID_HANDLE;
     }
     if (NULL == buffer) {
-        return OS_ERR_PDATA_NULL;
+        return OS_ERR_NULL_POINTER;
     }
 #endif
     if (osIntNesting > 0u) {            //!< See if called from an ISR.
@@ -271,14 +293,14 @@ OS_ERR osQueueRead(OS_HANDLE hQueue, void *buffer, UINT32 timeout)
         pqueue->OSQueueReadToken--;  
     }
 
-    *(void const **)buffer = pqueue->OSQueueBuffer[pqueue->OSQueueHead];
+    memcpy(buffer, (char *)pqueue->OSQueueBuffer + pqueue->OSQueueElementSize * pqueue->OSQueueHead, pqueue->OSQueueElementSize);
     pqueue->OSQueueHead++;
     if (pqueue->OSQueueHead >= pqueue->OSQueueSize) {
         pqueue->OSQueueHead = 0;
     }
     pqueue->OSQueueLength--;
     pqueue->OSQueueWriteToken++;
-    if (!OS_LIST_IS_EMPTY(pqueue->OSQueueEnqueueWaitList)) { //!< Is any task waiting for writing?
+    if (!LIST_IS_EMPTY(pqueue->OSQueueEnqueueWaitList)) { //!< Is any task waiting for writing?
         pqueue->OSQueueWriteToken--;
         OS_WaitableObjRdyTask((OS_WAITABLE_OBJ *)pqueue, &pqueue->OSQueueEnqueueWaitList, OS_STAT_PEND_OK);
         OSExitCriticalSection();
@@ -301,7 +323,7 @@ OS_ERR osQueueQuery(OS_HANDLE hQueue, OS_QUEUE_INFO *pInfo)
         return OS_ERR_INVALID_HANDLE;
     }
     if (pInfo == NULL) {
-        return OS_ERR_PDATA_NULL;
+        return OS_ERR_NULL_POINTER;
     }
 #endif
     if (OS_OBJ_TYPE_GET(pqueue->OSQueueObjHead.OSObjType) != OS_OBJ_TYPE_QUEUE) {    //!< Validate object's type

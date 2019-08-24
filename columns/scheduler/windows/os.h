@@ -20,19 +20,29 @@
 #define __OS_WINDOWS_OS_H__
 
 /*============================ INCLUDES ======================================*/
-#include ".\app_cfg.h"
+#include "./app_cfg.h"
 
 /*============================ MACROS ========================================*/
 /*============================ MACROFIED FUNCTIONS ===========================*/
-#define OS_CRITICAL_SECTION_DEFINE(...)    
-#define OS_CRITICAL_SECTION_BEGIN(...)      EnterCriticalSection(&__globalCriticalSection)
-#define OS_CRITICAL_SECTION_END(...)        LeaveCriticalSection(&__globalCriticalSection)
+#define OS_CRITICAL_SECTION_DEFINE()    
+#define OS_CRITICAL_SECTION_BEGIN()         EnterCriticalSection(&__globalCriticalSection)
+#define OS_CRITICAL_SECTION_END()           LeaveCriticalSection(&__globalCriticalSection)
 
-#define OS_CRITICAL_SECTION(...)            do {        \
-    EnterCriticalSection(&__globalCriticalSection);     \
-    __VA_ARGS__                                         \
-    LeaveCriticalSection(&__globalCriticalSection);     \
-} while (0);
+
+#define OS_TIMER_TYPE                       OS_HANDLE
+#define OS_TIMER_CREATE(__T, __INIT, __RELOAD, __ROUTINE, __ARG)\
+    osTimerCreat(&__T, __INIT, __RELOAD, __ROUTINE, __ARG)
+#define OS_TIMER_DELETE(__T)                osTimerDelete(__T)
+#define OS_TIMER_START(__T, __TIME)         osTimerStart(__T, __TIME)
+#define OS_TIMER_STOP(__T)                  osTimerStop(__T)
+
+
+#define OS_QUEUE_TYPE                       OS_HANDLE
+#define OS_QUEUE_CREATE(__Q, __L, __SIZE)   osQueueCreate(&__Q, __L, __SIZE)
+#define OS_QUEUE_DELETE(__Q)                osSemDelete(__Q)
+#define OS_QUEUE_WRITE(__Q, __BUF, __TIME)  osQueueWrite(__Q, __BUF, __TIME)
+#define OS_QUEUE_READ(__Q, __BUF, __TIME)   osQueueRead(__Q, __BUF, __TIME)
+
 
 #define OS_SEMAPHORE_TYPE                   OS_HANDLE
 #define OS_SEMAPHORE_CREATE(__SEM, __CNT)   osSemCreate(&__SEM, __CNT)
@@ -56,100 +66,93 @@
 #define OS_FLAG_WAIT(__FLAG, __TIME)        osFlagPend(__FLAG, __TIME)
 
 
+#define OS_TASK_CREATE(__HANDLE, __NAME, __ENTRY, __ARG,  __STACK_SIZE, __RIO, __OPT)  \
+    osTaskCreat(&(__HANDLE), __ENTRY, (void *)(__ARG))
+#define OS_TASK_ENTRY(__TASK)               DWORD WINAPI __TASK(void *pArg)
+#define OS_TASK_ARG                         (pArg)
+#define OS_TASK_SLEEP(__T)                  osTaskDelay(__T)
 
-#define OS_TASK_ENTRY(__TASK)               DWORD WINAPI (__TASK)(void *pArg)
 
-#define OS_TASK_SLEEP(__T)                  osTaskDelay(OS_MS2TICK(__T))
-
-
-#define MS_PER_TICK                         (10u)
-#define OS_MS2TICK(__T)                     ((__T) / MS_PER_TICK)
 #define OS_INFINITE                         INFINITE
 
 /*============================ TYPES =========================================*/
 enum {
     OS_ERR_NONE                     = 0u,
 
-    OS_ERR_EVENT_TYPE               = 1u,
-    OS_ERR_PDATA_NULL               = 2u,
-    OS_ERR_INVALID_HANDLE           = 3u,
-    OS_ERR_INVALID_OPT              = 4u,
-    OS_ERR_DEL_ISR                  = 5u,
-    OS_ERR_CREATE_ISR               = 6u,
-    OS_ERR_INVALID_TASK_HANDLE      = 7u,
+    OS_ERR_INVALID_HANDLE,
+    OS_ERR_INVALID_OBJ,
+    OS_ERR_INVALID_OPT,
+    OS_ERR_OUT_OF_MEMORY,
 
     OS_ERR_TIMEOUT                  = 30u,
-    OS_ERR_PEND_ISR                 = 31u,
-    OS_ERR_PEND_LOCKED              = 32u,
-    OS_ERR_PEND_ABORT               = 33u,
-    OS_ERR_POST_ISR                 = 34u,
-    OS_ERR_TASK_WAITING             = 35u,
+    OS_ERR_IN_ISR,
+    OS_ERR_IN_LOCKED,
+    OS_ERR_IN_CRITICAL_SECTION,
+    
+    OS_ERR_PEND_ABORT               = 40u,
 
-    OS_ERR_TASK_DEPLETED            = 60u,
-    OS_ERR_TASK_OPT                 = 61u,
-    OS_ERR_TASK_EXIST               = 62u,
-    OS_ERR_TASK_NOT_EXIST           = 63u,
-    OS_ERR_INVALID_PRIO             = 64u,
-
-    OS_ERR_FLAG_DEPLETED            = 80u,
-
-    OS_ERR_EVENT_DEPLETED           = 90u,
-    OS_ERR_SEM_OVF                  = 91u,
+    OS_ERR_SEM_OVERFLOW             = 91u,
     OS_ERR_NOT_MUTEX_OWNER          = 92u,
-    OS_ERR_HAS_OWN_MUTEX            = 93u,
 };
 
 typedef uint8_t OS_ERR;
 typedef HANDLE  OS_HANDLE;
 
+typedef struct {
+    HANDLE  WriteSem;
+    HANDLE  ReadSem;
+
+    size_t  QueueHead;
+    size_t  QueueTail;
+    size_t  QueueSize;
+    size_t  QueueLength;
+    size_t  QueueElementSize;
+    void    *QueueBuffer;
+} os_queue_t;
+
+
 /*============================ PUBLIC VARIABLES ==============================*/
 extern CRITICAL_SECTION __globalCriticalSection;
 
 /*============================ PUBLIC PROTOTYPES =============================*/
-extern void     osInit             (void);
+extern bool   osInit        (void);
 
-extern void     osTaskDelay        (UINT32          timeMS);
-
-extern OS_ERR   osFlagCreate       (OS_HANDLE      *pFlagHandle,
-                                    BOOLEAN         init,
-                                    BOOLEAN         manual);
-
-extern OS_ERR   osFlagDelete       (OS_HANDLE       hFlag,
-                                    UINT8           opt);
-
-extern OS_ERR   osFlagPend         (OS_HANDLE       hFlag,
-                                    UINT32          timeout);
-
-extern OS_ERR   osFlagSet          (OS_HANDLE       hFlag);
-
-extern OS_ERR   osFlagReset        (OS_HANDLE       hFlag);
+extern OS_ERR osTaskDelay   (UINT32 timeMS);
+extern OS_ERR osTaskCreat   (OS_HANDLE *pTaskHandle, void *entry, void *arg);
 
 
-extern OS_ERR   osMutexCreate      (OS_HANDLE      *pMutexHandle,
-                                    UINT8           ceilingPrio);
-
-extern OS_ERR   osMutexDelete      (OS_HANDLE       hMutex,
-                                    UINT8           opt);
-
-extern OS_ERR   osMutexPend        (OS_HANDLE       hMutex,
-                                    UINT32          timeout);
-
-extern OS_ERR   osMutexPost        (OS_HANDLE       hMutex);
+extern OS_ERR osFlagCreate  (OS_HANDLE *pFlagHandle, BOOLEAN init, BOOLEAN manual);
+extern OS_ERR osFlagDelete  (OS_HANDLE hFlag, UINT8 opt);
+extern OS_ERR osFlagPend    (OS_HANDLE hFlag, UINT32 timeMS);
+extern OS_ERR osFlagSet     (OS_HANDLE hFlag);
+extern OS_ERR osFlagReset   (OS_HANDLE hFlag);
 
 
-extern OS_ERR   osSemCreate        (OS_HANDLE      *pSemaphoreHandle,
-                                    UINT16          cnt);
-
-extern OS_ERR   osSemDelete        (OS_HANDLE       hSemaphore,
-                                    UINT8           opt);
-
-extern OS_ERR   osSemPend          (OS_HANDLE       hSemaphore,
-                                    UINT32          timeout);
+extern OS_ERR osMutexCreate (OS_HANDLE *pMutexHandle, UINT8 ceilingPrio);
+extern OS_ERR osMutexDelete (OS_HANDLE hMutex, UINT8 opt);
+extern OS_ERR osMutexPend   (OS_HANDLE hMutex, UINT32 timeMS);
+extern OS_ERR osMutexPost   (OS_HANDLE hMutex);
 
 
-extern OS_ERR   osSemPost          (OS_HANDLE       hSemaphore,
-                                    UINT16          cnt);
+extern OS_ERR osSemCreate   (OS_HANDLE *pSemaphoreHandle, UINT16 cnt);
+extern OS_ERR osSemDelete   (OS_HANDLE hSemaphore, UINT8 opt);
+extern OS_ERR osSemPend     (OS_HANDLE hSemaphore, UINT32 timeMS);
+extern OS_ERR osSemPost     (OS_HANDLE hSemaphore, UINT16 cnt);
 
+
+extern OS_ERR osQueueCreate (OS_HANDLE *pQueueHandle, size_t size, size_t elementSize);
+extern OS_ERR osQueueDelete (OS_HANDLE hQueue);
+extern OS_ERR osQueueWrite  (OS_HANDLE hQueue, void *buffer, UINT32 timeMS);
+extern OS_ERR osQueueRead   (OS_HANDLE hQueue, void *buffer, UINT32 timeMS);
+
+
+extern OS_ERR osTimerCreat  (OS_HANDLE *pTimerHandle, uint32_t initValue, uint32_t reloadValue, void *pRoutine, void *RoutineArg);
+extern OS_ERR osTimerDelete (OS_HANDLE hTimer);
+extern OS_ERR osTimerStart  (OS_HANDLE hTimer, uint32_t timeMS);
+extern OS_ERR osTimerStop   (OS_HANDLE hTimer);
+
+
+extern void osRebootSystem(void);
 
 #endif
 /* EOF */

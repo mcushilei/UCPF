@@ -25,9 +25,11 @@ extern "C" {
 #endif
 
 
-#include ".\os_cfg.h"
-#include "..\ports\ports.h"
-#include ".\os.h"
+#include "./os_cfg.h"
+#include "../ports/ports.h"
+#include "../../../list/list.h"
+#include "../../../pool/pool.h"
+#include "./os.h"
 
 /*!
  *! MISCELLANEOUS
@@ -54,16 +56,9 @@ extern "C" {
 #define OS_TASK_IDLE_PRIO           (OS_MAX_PRIO_LEVELS - 1u)           //!< IDLE task priority
 #define OS_TASK_STAT_PRIO           (OS_MAX_PRIO_LEVELS - 1u)           //!< Statistic task priority
 
-#if OS_MAX_PRIO_LEVELS <= 64u
-#   define OS_BITMAP_TBL_SIZE       ((OS_MAX_PRIO_LEVELS + 7u) / 8u)    //!< Size of bitmap table
-#else
-#   define OS_BITMAP_TBL_SIZE       ((OS_MAX_PRIO_LEVELS + 15u) / 16u)  //!< Size of bitmap table
-#endif
+#define OS_BITMAP_TBL_SIZE          ((OS_MAX_PRIO_LEVELS + 15u) / 16u)  //!< Size of bitmap table
 
     
-#define OS_CONTAINER_OF(__ptr, __type, __member) (  \
-        (__type*)( (char*)(__ptr) - offsetof(__type, __member) ))
-
 /*!
  *! TASK PEND STATUS (Status codes for OSTCBStatPend)
  */
@@ -107,21 +102,20 @@ enum {
 #define OS_OBJ_PRIO_TYPE_SET(__OT)  ((UINT16)( ((UINT16)(__OT) << 3) & OS_OBJ_TYPE_MSK ))
 #define OS_OBJ_PRIO_TYPE_GET(__OT)  ((UINT16)( ((UINT16)(__OT) & OS_OBJ_TYPE_MSK) >> 3 ))
 
+
+
+#define OS_QUEUE_BUFFER_STATIC      (0x0000)
+#define OS_QUEUE_BUFFER_ON_HEAP     (0x0001)
     
 /*!
  *! \Brief  ELEMENTARY TYPE
  */
 
-#if OS_MAX_PRIO_LEVELS <= 64u
-typedef UINT8                   OS_BITMAP_UINT;
-#else
 typedef UINT16                  OS_BITMAP_UINT;
-#endif
 
 
-
-typedef struct os_list_node     OS_LIST_NODE;
-typedef struct os_mem_pool      OS_MEM_POOL;
+typedef struct list_node_t      OS_LIST_NODE;
+typedef struct pool_t           OS_MEM_POOL;
 typedef struct os_prio_bitmap   OS_PRIO_BITMAP;
 typedef struct os_waitable_obj  OS_WAITABLE_OBJ;
 typedef struct os_tcb           OS_TCB;
@@ -139,13 +133,8 @@ typedef struct os_wait_node     OS_WAIT_NODE;
 typedef union {
     UINT16              OSObjType;
     UINT32              OSObj32;
+    void               *OSObjPointer;
 } OS_OBJ_HEAD;
-
-//! list type
-struct os_list_node {
-    OS_LIST_NODE       *Prev;
-    OS_LIST_NODE       *Next;
-};
 
 //! memory pool.
 struct os_mem_pool {
@@ -182,6 +171,8 @@ struct os_waitable_obj {
 struct os_queue {
     OS_OBJ_HEAD         OSQueueObjHead;
 
+    UINT16              OSQueueOpt;
+    
     UINT16              OSQueueWriteToken;
     UINT16              OSQueueReadToken;
     
@@ -189,10 +180,11 @@ struct os_queue {
     OS_LIST_NODE        OSQueueDequeueWaitList;     //!< List of wait-node of task waiting on it.
 
     void const *       *OSQueueBuffer;
+    size_t              OSQueueElementSize;
+    UINT16              OSQueueSize;                //!< The amount of items that the queue can contain.
     UINT16              OSQueueHead;
     UINT16              OSQueueTail;
     UINT16              OSQueueLength;              //!< The amount of items in queue.
-    UINT16              OSQueueSize;                //!< The amount of items that the queue can contain.
 };
 #endif
 
@@ -252,7 +244,10 @@ struct os_tcb {
     
     //! Caution: always keeping 8 bytes offsets from here!
     CPU_STK            *OSTCBStkPtr;                //!< Stack point
-
+#if OS_TASK_PROFILE_EN > 0u || OS_TASK_STACK_ON_HEAP_EN > 0
+    CPU_STK            *OSTCBStkBase;               //!< Base address of the task stack
+#endif
+    
     OS_WAIT_NODE       *OSTCBWaitNode;
 
     OS_LIST_NODE        OSTCBList;                  //!< TCB list for scheduler.
@@ -267,7 +262,6 @@ struct os_tcb {
 
     
 #if OS_TASK_PROFILE_EN > 0u
-    CPU_STK            *OSTCBStkBase;               //!< Base address of the task stack
     UINT16              OSTCBStkSize;               //!< Size of task stack (in number of stack elements)
     UINT16              OSTCBStkUsed;               //!< Number of BYTES used from the stack
     UINT32              OSTCBCtxSwCtr;              //!< Number of times the task was switched in
@@ -282,26 +276,26 @@ struct os_tcb {
  *! \Brief  GLOBAL VARIABLES
  */
 #if (OS_QUEUE_EN > 0u) && (OS_MAX_QUEUES > 0u)
-OS_EXT  OS_LIST_NODE   *osQueueFreeList;                        //!< Pointer to list of free semaphore control blocks
+OS_EXT  OS_MEM_POOL     osQueueFreePool;                        //!< Pointer to list of free semaphore control blocks
 OS_EXT  OS_QUEUE        osQueueFreeTbl[OS_MAX_QUEUES];          //!< Table of semaphore control blocks
 #endif
 
 #if (OS_SEM_EN > 0u) && (OS_MAX_SEMAPHORES > 0u)
-OS_EXT  OS_LIST_NODE   *osSemFreeList;                          //!< Pointer to list of free semaphore control blocks
+OS_EXT  OS_MEM_POOL     osSemFreePool;                          //!< Pointer to list of free semaphore control blocks
 OS_EXT  OS_SEM          osSemFreeTbl[OS_MAX_SEMAPHORES];       //!< Table of semaphore control blocks
 #endif
 
 #if (OS_MUTEX_EN > 0u) && (OS_MAX_MUTEXES > 0u)
-OS_EXT  OS_LIST_NODE   *osMutexFreeList;                        //!< Pointer to list of free mutex control blocks
+OS_EXT  OS_MEM_POOL     osMutexFreePool;                        //!< Pointer to list of free mutex control blocks
 OS_EXT  OS_MUTEX        osMutexFreeTbl[OS_MAX_MUTEXES];         //!< Table of mutex control blocks
 #endif
 
 #if (OS_FLAG_EN > 0u) && (OS_MAX_FLAGS > 0u)
-OS_EXT  OS_LIST_NODE   *osFlagFreeList;                         //!< Pointer to list of free flag control blocks
+OS_EXT  OS_MEM_POOL     osFlagFreePool;                         //!< Pointer to list of free flag control blocks
 OS_EXT  OS_FLAG         osFlagFreeTbl[OS_MAX_FLAGS];            //!< Table of flag control blocks
 #endif
 
-OS_EXT  OS_LIST_NODE   *osTCBFreeList;                                  //!< List of free TCBs
+OS_EXT  OS_MEM_POOL     osTCBFreePool;                                  //!< List of free TCBs
 OS_EXT  OS_TCB          osTCBFreeTbl[OS_MAX_TASKS + OS_N_SYS_TASKS];    //!< Table of free TCBs
 
 
@@ -338,23 +332,6 @@ OS_EXT  CPU_STK         osTaskIdleStk[OS_TASK_IDLE_STK_SIZE];   //!< Idle task s
  *! INTERNAL FUNCTION PROTOTYPES
  *! (Your application MUST NOT call these functions)
  */
-
-/*!
- *! OS LIST INTERFACE
- */
-void        os_list_init_head      (OS_LIST_NODE   *list);
-
-void        os_list_add            (OS_LIST_NODE   *node,
-                                    OS_LIST_NODE   *head);
-
-void        os_list_del            (OS_LIST_NODE   *entry);
-
-bool        OS_ObjPoolFree         (OS_LIST_NODE  **ppObj,
-                                    void           *pObj);
-
-void       *OS_ObjPoolNew          (OS_LIST_NODE  **ppObj);
-
-#define OS_LIST_IS_EMPTY(list)  ((list).Next == &(list))
 
 /*!
  *! OS SCHEDULE INTERFACE
@@ -401,14 +378,6 @@ void        OS_BitmapClr           (OS_PRIO_BITMAP *pmap,
                                     UINT8           prio);
 
 UINT8       OS_BitmapGetHigestPrio (OS_PRIO_BITMAP *pmap);
-
-void        OS_MemClr              (char           *pdest,
-                                    UINT32          size);
-
-void        OS_MemCopy             (char           *pdest,
-                                    char           *psrc,
-                                    UINT32          size);
-
 
 #ifdef __cplusplus
 }

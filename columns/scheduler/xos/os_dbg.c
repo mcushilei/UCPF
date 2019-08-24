@@ -86,20 +86,20 @@ const UINT16 OSHooksEn          = OS_HOOKS_EN;
 const UINT32 OSDataSize =
 #if (OS_SEM_EN > 0u) && (OS_MAX_SEMAPHORES > 0u)
                           + sizeof(osSemFreeTbl)
-                          + sizeof(osSemFreeList)
+                          + sizeof(osSemFreePool)
 #endif
 
 #if (OS_MUTEX_EN > 0u) && (OS_MAX_MUTEXES > 0u)
                           + sizeof(osMutexFreeTbl)
-                          + sizeof(osMutexFreeList)
+                          + sizeof(osMutexFreePool)
 #endif
                               
 #if (OS_FLAG_EN > 0u) && (OS_MAX_FLAGS > 0u)
                           + sizeof(osFlagFreeTbl)
-                          + sizeof(osFlagFreeList)
+                          + sizeof(osFlagFreePool)
 #endif
                           + sizeof(osTCBFreeTbl)
-                          + sizeof(osTCBFreeList)
+                          + sizeof(osTCBFreePool)
                           + sizeof(osWaitList)
                           + sizeof(osWaitRunoverList)
                           + sizeof(osRdyBitmap)

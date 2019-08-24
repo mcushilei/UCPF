@@ -54,7 +54,7 @@ extern "C" {
 #define OS_TASK_OPT_NONE            (0x0000u)    //!< NO option selected
 #define OS_TASK_OPT_STK_CHK         (0x0001u)    //!< Enable stack checking for the task
 #define OS_TASK_OPT_STK_CLR         (0x0002u)    //!< Clear the stack when the task is create
-#define OS_TASK_OPT_STK_STATIC      (0x0000u)    //!< the stack is allocced in sttaic memory.
+#define OS_TASK_OPT_STK_STATIC      (0x0000u)    //!< the stack is allocced in static memory.
 #define OS_TASK_OPT_STK_HEAP        (0x0004u)    //!< the stack is allocced in heap memory.
 #define OS_TASK_OPT_SAVE_FP         (0x0010u)    //!< Save the contents of any floating-point registers
 #define OS_TASK_OPT_USED_BY_OS      (0xF800u)    //!< these bits are used by the os itself. any bit set by the user will have no effect.
@@ -73,6 +73,7 @@ enum {
     OS_ERR_INVALID_OPT              = 0x04u,
     OS_ERR_USE_IN_ISR               = 0x05u,
     OS_ERR_OBJ_DEPLETED             = 0x06u,
+    OS_ERR_OUT_OF_MEMORY            = 0x06u,
     OS_ERR_INVALID_SLEEP_TIME,
 
     OS_ERR_TIMEOUT                  = 0x30u,
@@ -240,13 +241,14 @@ OS_ERR      osSemQuery             (OS_HANDLE       hSemaphore,
 #if (OS_QUEUE_EN > 0u) && (OS_MAX_QUEUES > 0u)
 OS_ERR      osQueueCreate           (OS_HANDLE     *hQueue,
                                      void          *buffer,
-                                     UINT16         queueSize);
+                                     UINT16         queueSize,
+                                     size_t         elementSize);
 
 OS_ERR      osQueueDelete           (OS_HANDLE     *hQueue,
                                      UINT16         opt);
 
 OS_ERR      osQueueWrite            (OS_HANDLE      hQueue,
-                                     void const    *buffer,
+                                     const void    *buffer,
                                      UINT32         timeout);
 
 OS_ERR      osQueueRead             (OS_HANDLE      hQueue,

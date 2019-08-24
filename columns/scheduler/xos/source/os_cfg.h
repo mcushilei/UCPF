@@ -23,7 +23,7 @@
 #include "..\os_cfg.h"
 
 /*
- *  LOOK FOR MISSING AND ERROR #define CONSTANTS
+ *  \brief  LOOK FOR MISSING AND ERROR #define CONSTANTS
  *
  *  This section is used to generate ERROR messages at compile time if certain #define constants are
  *  MISSING or ERROR in OS_CFG.H.  This allows you to quickly determine the source of the error.
@@ -78,6 +78,18 @@
 #   endif
 #   ifndef  OS_SEM_SET_EN
 #       error "OS_CFG.H, Missing OS_SEM_SET_EN: Include code for osSemSet()"
+#   endif
+#endif
+
+//! QUEUE
+#ifndef OS_QUEUE_EN
+#   error "OS_CFG.H, Missing OS_QUEUE_EN: Enable (1) or Disable (0) code generation for QUEUES"
+#else
+#   ifndef  OS_QUEUE_DEL_EN
+#       error "OS_CFG.H, Missing OS_QUEUE_DEL_EN: Include code for osQueueDelete()"
+#   endif
+#   ifndef  OS_QUEUE_QUERY_EN
+#       error "OS_CFG.H, Missing OS_QUEUE_QUERY_EN: Include code for osQueueQuery()"
 #   endif
 #endif
 
@@ -176,6 +188,11 @@
 #   error "OS_CFG.H, Missing OS_STAT_TASK_STK_CHK_EN: Check task stacks from statistics task"
 #endif
 
+     
+#ifndef OS_HEAP_MEM_EN
+#   error "OS_CFG.H, Missing OS_HEAP_MEM_EN: Inlcude code for heap management"
+#endif
+
 //! SAFETY CRITICAL USE
 #ifdef SAFETY_CRITICAL_RELEASE
 #   if    OS_ARG_CHK_EN == 0u
@@ -204,6 +221,14 @@
 #       if OS_SEM_DEL_EN > 0u
 #           error "OS_CFG.H, OS_SEM_DEL_EN must be disabled for safety-critical release code"
 #       endif
+#   endif
+#   if    OS_QUEUE_EN > 0u
+#       if OS_QUEUE_DEL_EN > 0u
+#           error "OS_CFG.H, OS_QUEUE_DEL_EN must be disabled for safety-critical release code"
+#       endif
+#   endif
+#   if  OS_HEAP_MEM_EN > 0
+#       error "OS_CFG.H, OS_HEAP_MEM_EN must be disabled for safety-critical release code"
 #   endif
 #   if    OS_CRITICAL_METHOD != 3u
 #       error "OS_CPU.H, OS_CRITICAL_METHOD must be type 3 for safety-critical release code"
