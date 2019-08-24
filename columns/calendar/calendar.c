@@ -1,5 +1,5 @@
 /*******************************************************************************
- *  Copyright(C)2017 by Dreistein<mcu_shilei@hotmail.com>                     *
+ *  Copyright(C)2017-2019 by Dreistein<mcu_shilei@hotmail.com>                *
  *                                                                            *
  *  This program is free software; you can redistribute it and/or modify it   *
  *  under the terms of the GNU Lesser General Public License as published     *
@@ -362,7 +362,7 @@ static void correct_time(time24_t *pTime)
     pTime->Second %= 60u;
 }
 
-uint32_t time_to_seconds(time24_t *pTime)
+uint32_t time_to_seconds(const time24_t *pTime)
 {
     uint32_t t, s;
     
@@ -376,6 +376,7 @@ uint32_t time_to_seconds(time24_t *pTime)
     return s;
 }
 
+//! return days in case 'seconds' is more than the seconds in a day.
 uint32_t seconds_to_time(time24_t *pTime, uint32_t seconds)
 {
     uint32_t days;
@@ -395,7 +396,7 @@ uint32_t seconds_to_time(time24_t *pTime, uint32_t seconds)
 }
 
 //! calculate pEnd - pStart.
-int32_t count_seconds_between(time24_t *pStart, time24_t *pEnd)
+int32_t count_seconds_between(const time24_t *pStart, const time24_t *pEnd)
 {
     int32_t s1, s2;
 

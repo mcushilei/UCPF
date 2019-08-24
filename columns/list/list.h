@@ -1,5 +1,5 @@
 /*******************************************************************************
- *  Copyright(C)2015-2018 by Dreistein<mcu_shilei@hotmail.com>                *
+ *  Copyright(C)2015-2019 by Dreistein<mcu_shilei@hotmail.com>                *
  *                                                                            *
  *  This program is free software; you can redistribute it and/or modify it   *
  *  under the terms of the GNU Lesser General Public License as published     *
@@ -23,19 +23,19 @@
 
 /*============================ MACROS ========================================*/
 /*============================ MACROFIED FUNCTIONS ===========================*/
-#define LIST_IS_EMPTY(__PNODE)      ( (__PNODE)->Next == (__PNODE) )
+#define LIST_IS_EMPTY(__NODE)       ( (__NODE).Next == &(__NODE) )
 
 /*============================ TYPES =========================================*/
 DEF_STRUCTURE(list_node_t)
-    list_node_t       *Next;
     list_node_t       *Prev;
+    list_node_t       *Next;
 END_DEF_STRUCTURE(list_node_t)
 
 /*============================ PUBLIC VARIABLES ==============================*/
 /*============================ PUBLIC PROTOTYPES =============================*/
 extern void list_init   (list_node_t *head);
 extern void list_insert (list_node_t *node, list_node_t *ahead);
-extern void list_remove (list_node_t *entry);
+extern void list_remove (list_node_t *node);
 
 #endif
 /* EOF */

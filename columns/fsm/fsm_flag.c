@@ -171,12 +171,12 @@ fsm_err_t fsm_flag_set  (fsm_handle_t hObject)
     
     FSM_SAFE_ATOM_CODE(
         pFlag->EventFlag |= FSM_EVENT_SINGNAL_BIT;
-        if (LIST_IS_EMPTY(&pFlag->TaskQueue)) {
+        if (LIST_IS_EMPTY(pFlag->TaskQueue)) {
             if (!(pFlag->EventFlag & FSM_EVENT_MANUAL_RESET_BIT)) {
                 pFlag->EventFlag &= ~FSM_EVENT_SINGNAL_BIT;
             }
             //! wake up all blocked tasks.
-            while (!LIST_IS_EMPTY(&pFlag->TaskQueue)) {
+            while (!LIST_IS_EMPTY(pFlag->TaskQueue)) {
                 fsm_waitable_obj_rdy_task(hObject, FSM_TASK_STATUS_PEND_OK);
             }
         }

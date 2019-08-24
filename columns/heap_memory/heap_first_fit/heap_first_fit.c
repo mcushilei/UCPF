@@ -21,6 +21,7 @@
 /*============================ INCLUDES ======================================*/
 #include ".\app_cfg.h"
 #include ".\heap_first_fit.h"
+#include <string.h>
 
 /*============================ MACROS ========================================*/
 /*============================ MACROFIED FUNCTIONS ===========================*/
@@ -36,13 +37,16 @@ struct heap_block_link_t {
 };
 
 /*============================ PRIVATE PROTOTYPES ============================*/
+#ifndef HEAP_MEM_ALIGNMENT
 #define HEAP_MEM_ALIGNMENT               (3)             //! in power of 2.
+#endif
 
-#ifndef HEAP_MEM_CRITICAL_SECTION_BEGIN()
+#ifndef HEAP_MEM_CRITICAL_SECTION_BEGIN
 #define HEAP_MEM_CRITICAL_SECTION_BEGIN()
 #endif
 
-#ifndef HEAP_MEM_CRITICAL_SECTION_END()
+
+#ifndef HEAP_MEM_CRITICAL_SECTION_END
 #define HEAP_MEM_CRITICAL_SECTION_END()
 #endif
 

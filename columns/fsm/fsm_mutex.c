@@ -158,7 +158,7 @@ fsm_err_t fsm_mutex_release(fsm_handle_t hObject)
     pMutex->MutexOwner = NULL;
     
     //! wake up the first blocked task.
-    if (!LIST_IS_EMPTY(&pMutex->TaskQueue)) {
+    if (!LIST_IS_EMPTY(pMutex->TaskQueue)) {
         pTask = fsm_waitable_obj_rdy_task(hObject, FSM_TASK_STATUS_PEND_OK);
         pMutex->MutexOwner = pTask;
     }

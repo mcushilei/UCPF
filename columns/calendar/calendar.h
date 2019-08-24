@@ -1,5 +1,5 @@
 /*******************************************************************************
- *  Copyright(C)2017 by Dreistein<mcu_shilei@hotmail.com>                     *
+ *  Copyright(C)2017-2019 by Dreistein<mcu_shilei@hotmail.com>                *
  *                                                                            *
  *  This program is free software; you can redistribute it and/or modify it   *
  *  under the terms of the GNU Lesser General Public License as published     *
@@ -53,9 +53,9 @@ extern uint32_t count_leap_years_between(uint32_t year1, uint32_t year2);
 extern int32_t  count_days_between(const date_t *pStart, const date_t *pEnd);
 extern bool     date_plus_days(date_t *pDate, int32_t deltaDays);
 
-extern uint32_t time_to_seconds(time24_t *pTime);
+extern uint32_t time_to_seconds(const time24_t *pTime);
 extern uint32_t seconds_to_time(time24_t *pTime, uint32_t seconds);
-extern int32_t  count_seconds_between(time24_t *pStart, time24_t *pEnd);
+extern int32_t  count_seconds_between(const time24_t *pStart, const time24_t *pEnd);
 
 #endif  //! #ifndef __CALENDAR_H__
 /* EOF */

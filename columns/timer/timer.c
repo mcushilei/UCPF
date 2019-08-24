@@ -73,7 +73,7 @@ static void timer_list_insert(timer_t *timer)
         pList = &timerListNextDay;
     }
 
-    if (LIST_IS_EMPTY(pList)) {
+    if (LIST_IS_EMPTY(*pList)) {
         list_insert(&timer->ListNode, pList);
     } else {
         timer_t *pTimer;
@@ -122,7 +122,7 @@ void timer_tick(void)
     //! to see if it has run over.
     if (scanHandOld > scanHand) { //! yes.            
         //! all timer in timerListToday has timeout. so, empty it.
-        if (!LIST_IS_EMPTY(&timerListToday)) {
+        if (!LIST_IS_EMPTY(timerListToday)) {
             for (list_node_t *pNode = timerListToday.Next; pNode != &timerListToday; ) {
                 timer_t *pTimer = CONTAINER_OF(pNode, timer_t, ListNode);
                 pNode = pNode->Next;
@@ -132,7 +132,7 @@ void timer_tick(void)
         }
 
         //! move timerListNextDay to timerListToday.
-        if (!LIST_IS_EMPTY(&timerListNextDay)) {
+        if (!LIST_IS_EMPTY(timerListNextDay)) {
             list_node_t *pHead = timerListNextDay.Next;
             list_node_t *pTail = timerListNextDay.Prev;
             timerListNextDay.Next = &timerListNextDay;
@@ -144,7 +144,7 @@ void timer_tick(void)
         }
     }
 
-    if (!LIST_IS_EMPTY(&timerListToday)) {
+    if (!LIST_IS_EMPTY(timerListToday)) {
         //! to see if there is any timer overflow in timerListToday.
         for (list_node_t *pNode = timerListToday.Next; pNode != &timerListToday; ) {
             timer_t *pTimer = CONTAINER_OF(pNode, timer_t, ListNode);
@@ -223,7 +223,7 @@ bool timer_is_timeout(timer_t *timer)
 
 bool timer_is_running(timer_t *timer)
 {
-    if (LIST_IS_EMPTY(&timer->ListNode)) {
+    if (LIST_IS_EMPTY(timer->ListNode)) {
         return false;
     }
     return true;

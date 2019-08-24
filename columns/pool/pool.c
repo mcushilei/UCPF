@@ -1,5 +1,5 @@
 /*******************************************************************************
- *  Copyright(C)2015-2018 by Dreistein<mcu_shilei@hotmail.com>                *
+ *  Copyright(C)2015-2019 by Dreistein<mcu_shilei@hotmail.com>                *
  *                                                                            *
  *  This program is free software; you can redistribute it and/or modify it   *
  *  under the terms of the GNU Lesser General Public License as published     *
@@ -37,114 +37,89 @@ END_DEF_STRUCTURE(pool_block_t)
 /*============================ IMPLEMENTATION ================================*/
 /*! \brief  init an empty pool.
  */
-bool pool_init(void *obj, pool_uint_t blockSize)
-{    
-    pool_t *pool = (pool_t *)obj;
-
-    //! block size should be mulitple size of pointer.
-    if (NULL == obj || 0u == blockSize || 0u != (blockSize % sizeof(void *))) {
+bool pool_init(pool_t *pool, pool_uint_t level, void *mem, size_t blockSize)
+{
+    pool_block_t **ppBlock;
+    
+    //! block size should be at least the size of pointers.
+    if (NULL == pool || (0u == level)
+        || (NULL == mem)
+        || (blockSize < sizeof(void *))
+        || ( (size_t)mem & (((size_t)1 << sizeof(void *)) - 1) != 0u ) ) {
         return false;
     }
 
     pool->FreeList  = NULL;
-    pool->BlockSize = blockSize;
-    pool->Size      = 0u;
-    pool->Level     = 0u;
-    pool->LevelMin  = 0u;
+    pool->Level     = level;
+    pool->LevelMin  = level;
 
-    return true;
-}
-
-bool pool_deinit(void *obj)
-{
-    return true;
-}
-
-/*! \brief  add memory to pool.
- */
-bool pool_add_memory(void *obj, void *pMem, pool_uint_t num)
-{
-    pool_t *pool = (pool_t *)obj;
-
-    if ((NULL == obj) || (NULL == pMem)) {
-        return false;
+    ppBlock = (pool_block_t **)&pool->FreeList;
+    for (; level; level--) {
+        *ppBlock = (pool_block_t *)mem;
+        ppBlock = &((pool_block_t *)mem)->Next;
+        mem = (char *)mem + blockSize;
     }
-
-    __POOL_ATOM_ACCESS(
-        for (; num; num--) {
-            ((pool_block_t *)pMem)->Next = (pool_block_t *)pool->FreeList;
-            pool->FreeList = pMem;
-            pMem = (char *)pMem + pool->BlockSize;
-        }
-        pool->Level     += num;
-        pool->LevelMin  += num;
-    )
-
+    *ppBlock = NULL;
+    
     return true;
 }
 
-bool pool_free(void* obj, void* pMem)
+bool pool_free(pool_t *pool, void *mem)
 {    
-    pool_t *pool = (pool_t *)obj;
-
-    if ((NULL == obj) || (NULL == pMem)) {
+    if ((NULL == pool) || (NULL == mem)
+        || ( (size_t)mem & (((size_t)1 << sizeof(void *)) - 1) != 0u ) ) {
         return false;
     }
 
-    __POOL_ATOM_ACCESS(
-        do {
-            ((pool_block_t *)pMem)->Next = (pool_block_t *)pool->FreeList;
-            pool->FreeList = pMem;
-            pool->Level++;
-        } while (0);
-    )
+    POOL_CRITICAL_SECTION_BEGIN();
+    do {
+        ((pool_block_t *)mem)->Next = (pool_block_t *)pool->FreeList;
+        pool->FreeList = (pool_block_t *)mem;
+        pool->Level++;
+    } while (0);
+    POOL_CRITICAL_SECTION_END();
 
     return true;
 }
 
-void *pool_new(void *obj)
+void *pool_new(pool_t *pool)
 {
-    pool_t *pool = (pool_t *)obj;
-    void *pMem = NULL;
+    void *mem = NULL;
 
-    if (NULL == obj) {
+    if (NULL == pool) {
         return NULL;
     }
 
-     __POOL_ATOM_ACCESS(
-        do {
-            if (NULL == pool->FreeList) {
-                break; 
-            }
-            pMem = pool->FreeList;
-            pool->FreeList = ((pool_block_t *)pMem)->Next; 
-            ((pool_block_t*)pMem)->Next = NULL;
-            pool->Level--;
-            if (pool->Level < pool->LevelMin) {
-                pool->LevelMin = pool->Level;
-            }
-        } while (0);
-    )
+    POOL_CRITICAL_SECTION_BEGIN();
+    do {
+        if (NULL == pool->FreeList) {
+            break; 
+        }
+        mem = pool->FreeList;
+        pool->FreeList = ((pool_block_t *)mem)->Next; 
+        pool->Level--;
+        if (pool->Level < pool->LevelMin) {
+            pool->LevelMin = pool->Level;
+        }
+        ((pool_block_t*)mem)->Next = NULL;
+    } while (0);
+    POOL_CRITICAL_SECTION_END();
 
-    return pMem;     
+    return mem;     
 }    
 
-pool_uint_t pool_get_level(void *obj)
+pool_uint_t pool_get_level(pool_t *pool)
 {
-    pool_t *pool = (pool_t *)obj;
-
-    if (NULL == obj) {
+    if (NULL == pool) {
         return 0;
     }
 
     return pool->Level;
 }
 
-pool_uint_t pool_get_min_level(void *obj)
+pool_uint_t pool_get_min_level(pool_t *pool)
 {
-    pool_t *pool = (pool_t *)obj;
-
-    if (NULL == obj) {
+    if (NULL == pool) {
         return 0;
     }
 

@@ -44,7 +44,7 @@
         printf(__string, __VA0, __VA_ARGS__)
 #else
 #   define STRING_PRINTF(__string, __VA0, ...)          \
-        string_printf(__string, (unsigned int)__VA0)
+        string_printf(__string, (void *)__VA0)
 #endif
 
 /*============================ TYPES =========================================*/
@@ -65,8 +65,8 @@ extern unsigned int string_copy(char *d, const char *s, unsigned int n);
 extern char        *string_find_string(const char *s1, const char *s2);
 extern char        *strsep(char **strngRef, const char *delim);
 extern uint32_t     itostr(int32_t value, char *integerString, int32_t radix);
-extern void         string_printf(const char *formatString, unsigned int argument);
-extern unsigned int string_printf_to_buffer(char *buffer, unsigned int bufferLength, const char *formatString, unsigned int argument);
+extern void         string_printf(const char *formatString, void *argument);
+extern unsigned int string_printf_to_buffer(char *buffer, unsigned int bufferLength, const char *formatString, void *argument);
 
 #endif
 /* EOF */

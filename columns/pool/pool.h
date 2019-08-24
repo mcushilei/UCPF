@@ -1,5 +1,5 @@
 /*******************************************************************************
- *  Copyright(C)2015-2018 by Dreistein<mcu_shilei@hotmail.com>                *
+ *  Copyright(C)2015-2019 by Dreistein<mcu_shilei@hotmail.com>                *
  *                                                                            *
  *  This program is free software; you can redistribute it and/or modify it   *
  *  under the terms of the GNU Lesser General Public License as published     *
@@ -26,8 +26,6 @@
 /*============================ TYPES =========================================*/
 DEF_STRUCTURE(pool_t)
     void           *FreeList;
-    size_t          BlockSize;      //!< size of one memory block.
-    pool_uint_t     Size;           //!< pool size.
     pool_uint_t     Level;          //!< pool level.
     pool_uint_t     LevelMin;       //!< minimum pool level.
 END_DEF_STRUCTURE(pool_t)
@@ -35,13 +33,11 @@ END_DEF_STRUCTURE(pool_t)
 /*============================ GLOBAL VARIABLES ==============================*/
 /*============================ PROTOTYPES ====================================*/
 //! \note   the memory block you want to be managed by pool should be multiple size of void *.
-extern bool         pool_init           (void *obj, pool_uint_t blockSize);
-extern bool         pool_deinit         (void *obj);
-extern bool         pool_add_memory     (void *obj, void *pMem, pool_uint_t num);
-extern void        *pool_new            (void *obj);
-extern bool         pool_free           (void *obj, void *pMem);
-extern pool_uint_t  pool_get_level      (void *obj);
-extern pool_uint_t  pool_get_min_level  (void *obj);
+extern bool         pool_init           (pool_t *pool, pool_uint_t level, void *mem, size_t blockSize);
+extern void        *pool_new            (pool_t *pool);
+extern bool         pool_free           (pool_t *pool, void *mem);
+extern pool_uint_t  pool_get_level      (pool_t *pool);
+extern pool_uint_t  pool_get_min_level  (pool_t *pool);
 
 #endif      //!< #ifndef __POOL_H__
 /* EOF */
