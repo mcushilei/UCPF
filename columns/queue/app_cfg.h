@@ -1,5 +1,5 @@
 /*******************************************************************************
- *  Copyright(C)2015 by Dreistein<mcu_shilei@hotmail.com>                     *
+ *  Copyright(C)2015-2019 by Dreistein<mcu_shilei@hotmail.com>                *
  *                                                                            *
  *  This program is free software; you can redistribute it and/or modify it   *
  *  under the terms of the GNU Lesser General Public License as published     *
@@ -25,12 +25,12 @@
 /*============================ INCLUDES ======================================*/
 /*============================ MACROS ========================================*/
 
-#define __QUEUE_ATOM_ENTER()                //ENTER_SAFE_ATOM_CODE()
-#define __QUEUE_ATOM_EXIT()                 //EXIT_SAFE_ATOM_CODE()
+#define QUEUE_CRITICAL_SECTION_BEGIN()                //ENTER_SAFE_ATOM_CODE()
+#define QUEUE_CRITICAL_SECTION_END()                 //EXIT_SAFE_ATOM_CODE()
 
 /*============================ MACROFIED FUNCTIONS ===========================*/
 /*============================ TYPES =========================================*/
-typedef uint32_t __queue_uint_t;
+typedef uint32_t queue_uint_t;
 
 /*============================ GLOBAL VARIABLES ==============================*/
 /*============================ PROTOTYPES ====================================*/
