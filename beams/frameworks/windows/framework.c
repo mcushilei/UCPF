@@ -15,19 +15,38 @@
  *  along with this program; if not, see http://www.gnu.org/licenses/.        *
 *******************************************************************************/
 
-//! \note do not move this pre-processor statement to other places
-#include "..\app_cfg.h"
+//! Do not move this pre-processor statement to other places
+#define __FRAMEWORKS_WINDOWS_FRAMEWORK_C__
 
-#ifndef __ARCH_BOARD_APOLLO_EVK_APP_CFG_H__
-#define __ARCH_BOARD_APOLLO_EVK_APP_CFG_H__
 
 /*============================ INCLUDES ======================================*/
+#include ".\app_cfg.h"
+
 /*============================ MACROS ========================================*/
 /*============================ MACROFIED FUNCTIONS ===========================*/
 /*============================ TYPES =========================================*/
-/*============================ GLOBAL VARIABLES ==============================*/
-/*============================ PROTOTYPES ====================================*/
+/*============================ PRIVATE PROTOTYPES ============================*/
+/*============================ PRIVATE VARIABLES =============================*/
+/*============================ PUBLIC VARIABLES ==============================*/
+/*============================ IMPLEMENTATION ================================*/
+bool framework_init(void)
+{
+    
+    return true;
+}
 
 
-#endif  //!< #ifndef __ARCH_BOARDS_APP_CFG_H__
+int user_printf_output_char(char cChar)
+{
+    putchar(cChar);
+
+    return cChar;
+}
+
+void debug_output_char(char cChar)
+{
+    putchar(cChar);
+}
+
+
 /* EOF */

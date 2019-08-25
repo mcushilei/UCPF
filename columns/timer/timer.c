@@ -34,10 +34,6 @@
 #define TIMER_CRITICAL_SECTION_END()
 #endif
 
-#ifndef TIMER_TICK_CYCLE
-#define TIMER_TICK_CYCLE    (10u)       //! in ms
-#endif
-
 /*============================ MACROFIED FUNCTIONS ===========================*/
 /*============================ TYPES =========================================*/
 /*============================ PROTOTYPES ====================================*/
@@ -48,14 +44,14 @@ static volatile uint32_t    scanHand;
 static volatile uint32_t    scanHandOld;
 static list_node_t          timerListToday;
 static list_node_t          timerListNextDay;
-static uint8_t              isStart;
+static bool                 isInitOK;
 
 /*============================ GLOBAL VARIABLES ==============================*/
 /*============================ IMPLEMENTATION ================================*/
 
 bool timer_init(void)
 {
-    isStart = 0xCC;
+    isInitOK = true;
     scanHandOld = scanHand;
     list_init(&timerListToday);
     list_init(&timerListNextDay);
@@ -111,28 +107,33 @@ static void timer_timeout_processs(timer_t *timer)
 //! This function should be called periodly.
 void timer_tick(void)
 {
+    if (!isInitOK) {
+        return;
+    }
+
     //! increase scanHand
     ++scanHand;
-    
-    if (isStart != 0xCCu) {
+}
+
+void timer_watchman(void)
+{
+    if (!isInitOK) {
         return;
     }
 
     TIMER_CRITICAL_SECTION_BEGIN();
-    //! to see if it has run over.
-    if (scanHandOld > scanHand) { //! yes.            
-        //! all timer in timerListToday has timeout. so, empty it.
-        if (!LIST_IS_EMPTY(timerListToday)) {
-            for (list_node_t *pNode = timerListToday.Next; pNode != &timerListToday; ) {
-                timer_t *pTimer = CONTAINER_OF(pNode, timer_t, ListNode);
-                pNode = pNode->Next;
-                list_remove(&pTimer->ListNode);
-                timer_timeout_processs(pTimer);
-            }
+    if (scanHandOld > scanHand) {   //! Has the hand made a revolution?...
+                                    //! ...Yes
+        //! All the timers in timerListToday has timeout. so empty it.
+        for (list_node_t *pNode = timerListToday.Next; pNode != &timerListToday; ) {
+            timer_t *pTimer = CONTAINER_OF(pNode, timer_t, ListNode);
+            pNode = pNode->Next;
+            list_remove(&pTimer->ListNode);
+            timer_timeout_processs(pTimer);
         }
 
-        //! move timerListNextDay to timerListToday.
-        if (!LIST_IS_EMPTY(timerListNextDay)) {
+        //! then move the timerListNextDay list to timerListToday list. Note: this is a Circular Doubly Linked List.
+        if (!LIST_IS_EMPTY(timerListNextDay)) { //! there is no need to swap the lists if they are both empty.
             list_node_t *pHead = timerListNextDay.Next;
             list_node_t *pTail = timerListNextDay.Prev;
             timerListNextDay.Next = &timerListNextDay;
@@ -144,18 +145,14 @@ void timer_tick(void)
         }
     }
 
-    if (!LIST_IS_EMPTY(timerListToday)) {
-        //! to see if there is any timer overflow in timerListToday.
-        for (list_node_t *pNode = timerListToday.Next; pNode != &timerListToday; ) {
-            timer_t *pTimer = CONTAINER_OF(pNode, timer_t, ListNode);
-            //! to see if it has overflow.
-            if (pTimer->Count > scanHand) { //!< no.
-                break;            //!< The list has been sorted, so we just break.
-            } else {                        //!< yes
-                pNode = pNode->Next;
-                list_remove(&pTimer->ListNode);
-                timer_timeout_processs(pTimer);
-            }
+    for (list_node_t *pNode = timerListToday.Next; pNode != &timerListToday; ) {    //! to check if there is any timer has timeout.
+        timer_t *pTimer = CONTAINER_OF(pNode, timer_t, ListNode);
+        if (pTimer->Count > scanHand) { //!< no.
+            break;                      //!< The list has been sorted, so we just break here.
+        } else {                        //!< yes
+            pNode = pNode->Next;
+            list_remove(&pTimer->ListNode);
+            timer_timeout_processs(pTimer);
         }
     }
     TIMER_CRITICAL_SECTION_END();
@@ -170,8 +167,8 @@ bool timer_config(
 	timer_routine_t *pRoutine,
     void            *RoutineArg)
 {
-    initValue     = (initValue   + TIMER_TICK_CYCLE - 1u) / TIMER_TICK_CYCLE;
-    timer->Period = (reloadValue + TIMER_TICK_CYCLE - 1u) / TIMER_TICK_CYCLE;
+    initValue     = initValue;
+    timer->Period = reloadValue;
     timer->Flag   = 0;
     timer->pRoutine     = pRoutine;
     timer->RoutineArg   = RoutineArg;
@@ -189,7 +186,6 @@ bool timer_config(
 
 void timer_start(timer_t *timer, uint32_t value)
 {
-    value = (value + TIMER_TICK_CYCLE - 1u) / TIMER_TICK_CYCLE;
     if (value != 0u) {
         TIMER_CRITICAL_SECTION_BEGIN();
         //! remove it from running list.

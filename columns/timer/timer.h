@@ -41,6 +41,7 @@ typedef struct {
 /*============================ PROTOTYPES ====================================*/
 extern bool timer_init(void);
 extern void timer_tick(void);
+extern void timer_watchman(void);
 extern bool timer_config(
 	timer_t        *timer,
 	uint32_t		initValue,

@@ -26,12 +26,8 @@
     #include ".\rtos\os.h"
 #elif   defined(__OS_XOS__)
     #include ".\xos\os.h"
-#else
-#define OS_CRITICAL_DEFINE(__CRITICAL)      
-#define OS_CRITICAL_INIT(__CRITICAL)        do {} while (0)
-#define OS_CRITICAL_DEINIT(__CRITICAL)      do {} while (0)
-#define OS_CRITICAL_ENTER(__CRITICAL)       do {} while (0)
-#define OS_CRITICAL_EXIT(__CRITICAL)        do {} while (0)
+#elif   defined(__OS_XOS_PIZZA__)
+    #include ".\xos_pizza\os.h"
 #endif
 
 /*============================ MACROS ========================================*/

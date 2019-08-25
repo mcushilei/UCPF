@@ -75,7 +75,7 @@ const UINT16 OSTaskProfileEn    = OS_TASK_PROFILE_EN;
 const UINT16 OSTaskStatEn       = OS_STAT_EN;
 const UINT16 OSTaskStatStkChkEn = OS_STAT_TASK_STK_CHK_EN;
 const UINT16 OSTaskSwHookEn     = OS_TASK_SW_HOOK_EN;
-const UINT16 OSTimeTickHookEn   = OS_TIME_TICK_HOOK_EN;
+const UINT16 OSTimeTickHookEn   = OS_SYS_TICK_HOOK_EN;
 const UINT16 OSHooksEn          = OS_HOOKS_EN;
 
 

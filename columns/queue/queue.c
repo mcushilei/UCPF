@@ -25,6 +25,15 @@
 
 /*============================ MACROS ========================================*/
 /*============================ MACROFIED FUNCTIONS ===========================*/
+#ifndef QUEUE_CRITICAL_SECTION_BEGIN
+#define QUEUE_CRITICAL_SECTION_BEGIN()
+#endif
+
+#ifndef QUEUE_CRITICAL_SECTION_END
+#define QUEUE_CRITICAL_SECTION_END()
+#endif
+
+
 /*============================ TYPES =========================================*/
 /*============================ PROTOTYPES ====================================*/
 /*============================ LOCAL VARIABLES ===============================*/

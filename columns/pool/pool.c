@@ -23,6 +23,15 @@
 
 /*============================ MACROS ========================================*/
 /*============================ MACROFIED FUNCTIONS ===========================*/
+#ifndef POOL_CRITICAL_SECTION_BEGIN
+#define POOL_CRITICAL_SECTION_BEGIN()
+#endif
+
+#ifndef POOL_CRITICAL_SECTION_END
+#define POOL_CRITICAL_SECTION_END()
+#endif
+
+
 /*============================ TYPES =========================================*/
 //! \brief   memory block structure: single-list node.
 //! @{

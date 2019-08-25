@@ -45,7 +45,6 @@ struct heap_block_link_t {
 #define HEAP_MEM_CRITICAL_SECTION_BEGIN()
 #endif
 
-
 #ifndef HEAP_MEM_CRITICAL_SECTION_END
 #define HEAP_MEM_CRITICAL_SECTION_END()
 #endif

@@ -1,5 +1,5 @@
 /*******************************************************************************
- *  Copyright(C)2018-2019 by Dreistein<mcu_shilei@hotmail.com>                *
+ *  Copyright(C)2018 by Dreistein<mcu_shilei@hotmail.com>                     *
  *                                                                            *
  *  This program is free software; you can redistribute it and/or modify it   *
  *  under the terms of the GNU Lesser General Public License as published     *
@@ -15,18 +15,18 @@
  *  along with this program; if not, see http://www.gnu.org/licenses/.        *
 *******************************************************************************/
 
-#ifndef __ARCH_BOARD_APOLLO_EVK_BOARD_H__
-#define __ARCH_BOARD_APOLLO_EVK_BOARD_H__
+//! \note do not move this pre-processor statement to other places
+#include "..\app_cfg.h"
+
+#ifndef __ARCH_WINDOWS_APP_CFG_H__
+#define __ARCH_WINDOWS_APP_CFG_H__
 
 /*============================ INCLUDES ======================================*/
-#include ".\app_cfg.h"
-
 /*============================ MACROS ========================================*/
 /*============================ MACROFIED FUNCTIONS ===========================*/
 /*============================ TYPES =========================================*/
 /*============================ GLOBAL VARIABLES ==============================*/
 /*============================ PROTOTYPES ====================================*/
-extern bool board_init(void);
 
-#endif  //!< #ifndef __ARCH_BOARD_APOLLO_EVK_BOARD_H__
+#endif  //! #ifndef __ARCH_WINDOWS_APP_CFG_H__
 /* EOF */

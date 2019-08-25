@@ -57,7 +57,7 @@ extern void OSTaskIdleHook(void);
 extern void OSTaskStatHook(void);
 extern void OSTaskSwHook(void);
 extern void OSTCBInitHook(OS_TCB *ptcb);
-extern void OSTimeTickHook(void);
+extern void OSSysTickHook(void);
 #endif
 
 #if OS_DEBUG_EN > 0u

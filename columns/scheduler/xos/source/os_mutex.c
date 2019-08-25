@@ -16,14 +16,13 @@
 *******************************************************************************/
 
 
-//! \note do not move this pre-processor statement to other places
-#define __OS_MUTEX_C__
+
 
 /*============================ INCLUDES ======================================*/
 #include ".\os_private.h"
 #include ".\os_port.h"
 
-#if (OS_MUTEX_EN > 0u) && (OS_MAX_MUTEXES >0u)
+#if OS_MUTEX_EN > 0u
 
 /*============================ MACROS ========================================*/
 /*============================ MACROFIED FUNCTIONS ===========================*/
@@ -32,34 +31,33 @@
 /*============================ LOCAL VARIABLES ===============================*/
 /*============================ GLOBAL VARIABLES ==============================*/
 /*============================ IMPLEMENTATION ================================*/
+/*
+    How does task own mutex? from time zone:
+    overlap enabled:
+                            .....
+                    |--------- mutex 3 ---------|
+                          |------------------ mutex 2 -------------|
+        |------------------ mutex 1 ----------------------|
+    |------------------ mutex 0 -----------------------------|   ...
+    
+    overlap disabled:
+    |--- mutex 0 ---|   |------ mutex 1 ------|         |--- mutex 2 ---| ...
+   
+*/
 
-//! How does task own mutex? from time zone:
-//! overlap enabled:
-//!                         .....
-//!                 |--------- mutex 3 ---------|
-//!                       |------------------ mutex 2 -------------|
-//!     |------------------ mutex 1 ----------------------|
-//! |------------------ mutex 0 -----------------------------|   ...
-//! 
-//! overlap disabled:
-//! |--- mutex 0 ---|   |------ mutex 1 ------|         |--- mutex 2 ---| ...
-//!
-
-/*!
- *! \Brief       CREATE A MUTEX
- *!
- *! \Description This function creates a mutex.
- *!
- *! \Arguments   pMutexHandle  is a pointer to the handle to the event control block associated
- *!                            with the desired mutex.
- *!
- *!              ceilingPrio   ceiling priority of the mutex. You can disable this function of
- *!                            the mutex by setting this value to OS_TASK_LOWEST_PRIO.
- *!
- *! \Returns     OS_ERR_NONE            If the call was successful.
- *!              OS_ERR_USE_IN_ISR      If you attempted to create a mutex from an ISR.
- *!              OS_ERR_INVALID_HANDLE  If 'pMutexHandle' is a invalid handle.
- *!              OS_ERR_OBJ_DEPLETED    If No more objects available.
+/*
+ *  \brief      CREATE A MUTEX
+ * 
+ *  \param      pMutexHandle    is a pointer to the handle to the event control block associated
+ *                              with the desired mutex.
+ * 
+ *              ceilingPrio     ceiling priority of the mutex. You can disable this function of
+ *                              the mutex by setting this value to OS_TASK_LOWEST_PRIO.
+ * 
+ *  \return     OS_ERR_NONE            If the call was successful.
+ *              OS_ERR_USE_IN_ISR      If you attempted to create a mutex from an ISR.
+ *              OS_ERR_INVALID_HANDLE  If 'pMutexHandle' is a invalid handle.
+ *              OS_ERR_OBJ_DEPLETED    If No more objects available.
  */
 OS_ERR osMutexCreate(OS_HANDLE *pMutexHandle, UINT8 ceilingPrio)
 {
@@ -107,40 +105,40 @@ OS_ERR osMutexCreate(OS_HANDLE *pMutexHandle, UINT8 ceilingPrio)
     return OS_ERR_NONE;
 }
 
-/*!
- *! \Brief       DELETE A MUTEX
- *!
- *! \Description This function deletes a mutex and readies all tasks pending 
- *!              on the it.
- *!
- *! \Arguments   hMutex         is a handle to the event control block associated with the
- *!                             desired mutex.
- *!
- *!              opt            determines delete options as follows:
- *!                             opt == OS_DEL_NOT_IN_USE    Delete mutex ONLY if no task pending
- *!                             opt == OS_DEL_ALWAYS        Deletes the mutex if tasks are waiting.
- *!                                                         In this case, all the tasks pending will
- *!                                                         be readied.
- *!
- *! \Returns     OS_ERR_NONE            The call was successful and the mutex was deleted
- *!              OS_ERR_INVALID_HANDLE  If 'hMutex' is an invalid handle.
- *!              OS_ERR_OBJ_TYPE        If you didn't pass a event mutex object.
- *!              OS_ERR_USE_IN_ISR      If you attempted to delete the MUTEX from an ISR
- *!              OS_ERR_INVALID_OPT     An invalid option was specified
- *!              OS_ERR_TASK_WAITING    One or more tasks were waiting on the mutex
- *!              OS_ERR_MUTEX_IS_OWNED  Mutex is owned by a task.
- *!
- *! \Notes       1) This function must be used with care.  Tasks that would normally expect the
- *!                 presence of the mutex MUST check the return code of osMutexPend().
- *!              2) This call can potentially disable interrupts for a long time.  The interrupt
- *!                 disable time is directly proportional to the number of tasks waiting on the mutex.
- *!              3) Because ALL tasks pending on the mutex will be readied, you MUST be careful
- *!                 because the resource(s) will no longer be guarded by the mutex.
- *!              4) IMPORTANT: In the 'OS_DEL_ALWAYS' case, we assume that the owner of the Mutex
- *!                            (if there is one) is ready-to-run and is thus NOT pending on another
- *!                            kernel object or has delayed itself.  In other words, if a task owns
- *!                            the mutex being deleted, that task will be made ready-to-run at its
- *!                            original priority.
+/*
+ *  \brief      DELETE A MUTEX
+ * 
+ *  \remark     This function deletes a mutex and readies all tasks pending 
+ *              on the it.
+ * 
+ *  \param      hMutex      is a handle to the event control block associated with the
+ *                          desired mutex.
+ * 
+ *              opt         determines delete options as follows:
+ *                              opt == OS_DEL_NOT_IN_USE    Delete mutex ONLY if no task pending
+ *                              opt == OS_DEL_ALWAYS        Deletes the mutex if tasks are waiting.
+ *                                                          In this case, all the tasks pending will
+ *                                                          be readied.
+ * 
+ *  \return     OS_ERR_NONE            The call was successful and the mutex was deleted
+ *              OS_ERR_INVALID_HANDLE  If 'hMutex' is an invalid handle.
+ *              OS_ERR_OBJ_TYPE        If you didn't pass a event mutex object.
+ *              OS_ERR_USE_IN_ISR      If you attempted to delete the MUTEX from an ISR
+ *              OS_ERR_INVALID_OPT     An invalid option was specified
+ *              OS_ERR_TASK_WAITING    One or more tasks were waiting on the mutex
+ *              OS_ERR_MUTEX_IS_OWNED  Mutex is owned by a task.
+ * 
+ *  \note        1) This function must be used with care.  Tasks that would normally expect the
+ *                  presence of the mutex MUST check the return code of osMutexPend().
+ *               2) This call can potentially disable interrupts for a long time.  The interrupt
+ *                  disable time is directly proportional to the number of tasks waiting on the mutex.
+ *               3) Because ALL tasks pending on the mutex will be readied, you MUST be careful
+ *                  because the resource(s) will no longer be guarded by the mutex.
+ *               4) IMPORTANT: In the 'OS_DEL_ALWAYS' case, we assume that the owner of the Mutex
+ *                             (if there is one) is ready-to-run and is thus NOT pending on another
+ *                             kernel object or has delayed itself.  In other words, if a task owns
+ *                             the mutex being deleted, that task will be made ready-to-run at its
+ *                             original priority.
  */
 #if OS_MUTEX_DEL_EN > 0u
 OS_ERR osMutexDelete(OS_HANDLE *pMutexHandle, UINT16 opt)
@@ -225,35 +223,35 @@ OS_ERR osMutexDelete(OS_HANDLE *pMutexHandle, UINT16 opt)
 }
 #endif
 
-/*!
- *! \Brief       PEND ON MUTEX
- *!
- *! \Description This function waits for a mutex.
- *!
- *! \Arguments   hMutex        is a handle to the mutex.
- *!
- *!              timeout       is an optional timeout period (in clock ticks).  If non-zero, your
- *!                            task will wait for the resource up to the amount of time specified
- *!                            by this argument. If you specify OS_INFINITE, however, your task
- *!                            will wait forever at the specified mutex or, until the resource
- *!                            becomes available. If you specify 0, however, your task will NOT wait
- *!                            and return OS_ERR_TIMEOUT if the specified mutex is not avalible.
- *!
- *! \Returns     OS_ERR_NONE            The call was successful and your task owns the mutex.
- *!              OS_ERR_INVALID_HANDLE  If 'hMutex' is an invalid handle.
- *!              OS_ERR_OBJ_TYPE        If object was not a mutex.
- *!              OS_ERR_USE_IN_ISR      If this function was called from an ISR and the result
- *!              OS_ERR_PEND_LOCKED     If this function was called when the scheduler is locked.
- *!              OS_ERR_TIMEOUT         The mutex was not available within the specified 'timeout'.
- *!              OS_ERR_PEND_ABORT      The wait on the mutex was aborted.
- *!                                     would lead to a suspension.
- *!              OS_ERR_MUTEX_OVERFLOW  The task has recursively use the same mutex too many times.
- *!              OS_ERR_OVERLAP_MUTEX   Current task try getting the mutex while it has gotten another one.
- *!                                     User should release the mutex before try getting it again.
- *!
- *! \Notes       1) The task that has owned one mutex could NOT try to own other one. It's say it
- *!                 could not be overlapped if OS_MUTEX_OVERLAP_EN = 0.
- *!              2) If OS_MUTEX_OVERLAP_EN != 0, 
+/*
+ *  \brief      PEND ON MUTEX
+ * 
+ *  \remark     This function waits for a mutex.
+ * 
+ *  \param      hMutex      is a handle to the mutex.
+ * 
+ *              timeout     is an optional timeout period (in clock ticks).  If non-zero, your
+ *                          task will wait for the resource up to the amount of time specified
+ *                          by this argument. If you specify OS_INFINITE, however, your task
+ *                          will wait forever at the specified mutex or, until the resource
+ *                          becomes available. If you specify 0, however, your task will NOT wait
+ *                          and return OS_ERR_TIMEOUT if the specified mutex is not avalible.
+ * 
+ *  \return     OS_ERR_NONE             The call was successful and your task owns the mutex.
+ *              OS_ERR_INVALID_HANDLE   If 'hMutex' is an invalid handle.
+ *              OS_ERR_OBJ_TYPE         If object was not a mutex.
+ *              OS_ERR_USE_IN_ISR       If this function was called from an ISR and the result
+ *              OS_ERR_PEND_LOCKED      If this function was called when the scheduler is locked.
+ *              OS_ERR_TIMEOUT          The mutex was not available within the specified 'timeout'.
+ *              OS_ERR_PEND_ABORT       The wait on the mutex was aborted.
+ *                                      would lead to a suspension.
+ *              OS_ERR_MUTEX_OVERFLOW   The task has recursively use the same mutex too many times.
+ *              OS_ERR_OVERLAP_MUTEX    Current task try getting the mutex while it has gotten another one.
+ *                                      User should release the mutex before try getting it again.
+ * 
+ *  \note       1) The task that has owned one mutex could NOT try to own other one. It's say it
+ *                 could not be overlapped if OS_MUTEX_OVERLAP_EN = 0.
+ *              2) If OS_MUTEX_OVERLAP_EN != 0, 
  */
 OS_ERR osMutexPend(OS_HANDLE hMutex, UINT32 timeout)
 {
@@ -268,8 +266,8 @@ OS_ERR osMutexPend(OS_HANDLE hMutex, UINT32 timeout)
         return OS_ERR_INVALID_HANDLE;
     }
 #endif
-    if (osIntNesting > 0u) {                //!< See if called from ISR ...
-        return OS_ERR_USE_IN_ISR;           //!< ... mutex can't be used from an ISR.
+    if (osIntNesting > 0u) {                //!< Should not be used from an ISR.
+        return OS_ERR_USE_IN_ISR;
     }
     if (osLockNesting > 0u) {               //!< See if called with scheduler locked ...
         return OS_ERR_PEND_LOCKED;          //!  ... This usage is deprecated.
@@ -337,20 +335,18 @@ OS_ERR osMutexPend(OS_HANDLE hMutex, UINT32 timeout)
     return err;
 }
 
-/*!
- *! \Brief       POST TO A MUTEX
- *!
- *! \Description This function signals a mutex
- *!
- *! \Arguments   hMutex         is a handle to the mutex.
- *!
- *! \Returns     OS_ERR_NONE                The call was successful and the mutex was signaled.
- *!              OS_ERR_USE_IN_ISR          Attempted to post from an ISR (not valid for MUTEXes)
- *!              OS_ERR_INVALID_HANDLE      If 'hMutex' is an invalid handle.
- *!              OS_ERR_OBJ_TYPE            If you didn't pass a event mutex object.
- *!              OS_ERR_NOT_MUTEX_OWNER     The task that did the post is NOT the owner of the MUTEX.
- *!
- *! \Notes       1) The mutex can ONLY be released by it's owner.
+/*
+ *  \brief      POST TO A MUTEX
+ * 
+ *  \param      hMutex         is a handle to the mutex.
+ * 
+ *  \return     OS_ERR_NONE                The call was successful and the mutex was signaled.
+ *              OS_ERR_USE_IN_ISR          Attempted to post from an ISR (not valid for MUTEXes)
+ *              OS_ERR_INVALID_HANDLE      If 'hMutex' is an invalid handle.
+ *              OS_ERR_OBJ_TYPE            If you didn't pass a event mutex object.
+ *              OS_ERR_NOT_MUTEX_OWNER     The task that did the post is NOT the owner of the MUTEX.
+ * 
+ *  \note       1) The mutex can ONLY be released by it's owner.
  */
 OS_ERR osMutexPost(OS_HANDLE hMutex)
 {
@@ -364,8 +360,8 @@ OS_ERR osMutexPost(OS_HANDLE hMutex)
         return OS_ERR_INVALID_HANDLE;
     }
 #endif
-    if (osIntNesting > 0u) {                //!< See if called from ISR ...
-        return OS_ERR_USE_IN_ISR;           //!< ... mutex can't be used from an ISR.
+    if (osIntNesting > 0u) {                //!< Should not be used from an ISR.
+        return OS_ERR_USE_IN_ISR;
     }
     if (OS_OBJ_TYPE_GET(pmutex->OSMutexObjHeader.OSObjType) != OS_OBJ_TYPE_MUTEX) {   //!< Validate event block type
         return OS_ERR_OBJ_TYPE;
@@ -389,7 +385,7 @@ OS_ERR osMutexPost(OS_HANDLE hMutex)
     }
     list_remove(&pmutex->OSMutexOvlpList);
     
-    if (!LIST_IS_EMPTY(pmutex->OSMutexWaitList)) {           //!< Is any task waiting for the mutex?...
+    if (!LIST_IS_EMPTY(pmutex->OSMutexWaitList)) {              //!< Is any task waiting for the mutex?...
         ptcb = OS_WaitableObjRdyTask((OS_WAITABLE_OBJ *)pmutex, //!< ... Yes, Make the HPT waiting for the mutex ready
                                      &pmutex->OSMutexWaitList,
                                      OS_STAT_PEND_OK);
@@ -410,20 +406,20 @@ OS_ERR osMutexPost(OS_HANDLE hMutex)
     return OS_ERR_NONE;
 }
 
-/*!
- *! \Brief       QUERY A MUTEX
- *!
- *! \Description This function obtains information about a mutex
- *!
- *! \Arguments   hMutex         is a handle to the mutex.
- *!
- *!              pInfo          is a pointer to a structure that will contain information about
- *!                             the mutex
- *!
- *! \Returns     OS_ERR_NONE            The call was successful and the message was sent
- *!              OS_ERR_INVALID_HANDLE  If 'hMutex' is an invalid handle.
- *!              OS_ERR_OBJ_TYPE        If you didn't pass a mutex object.
- *!              OS_ERR_PDATA_NULL      If 'pInfo' is a NULL pointer
+/*
+ *  \brief      QUERY A MUTEX
+ * 
+ *  \remark     This function obtains information about a mutex
+ * 
+ *  \param      hMutex         is a handle to the mutex.
+ * 
+ *              pInfo          is a pointer to a structure that will contain information about
+ *                              the mutex
+ * 
+ *  \return     OS_ERR_NONE            The call was successful and the message was sent
+ *              OS_ERR_INVALID_HANDLE  If 'hMutex' is an invalid handle.
+ *              OS_ERR_OBJ_TYPE        If you didn't pass a mutex object.
+ *              OS_ERR_PDATA_NULL      If 'pInfo' is a NULL pointer
  */
 #if OS_MUTEX_QUERY_EN > 0u
 OS_ERR osMutexQuery(OS_HANDLE hMutex, OS_MUTEX_INFO *pInfo)
@@ -456,4 +452,4 @@ OS_ERR osMutexQuery(OS_HANDLE hMutex, OS_MUTEX_INFO *pInfo)
 }
 #endif      //!< #if OS_MUTEX_QUERY_EN > 0u
 
-#endif      //!< #if (OS_MUTEX_EN > 0u) && (OS_MAX_MUTEXES >0u)
+#endif      //!< #if OS_MUTEX_EN > 0u

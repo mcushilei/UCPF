@@ -17,12 +17,13 @@
 
 
 
+
 /*============================ INCLUDES ======================================*/
 #include ".\os_private.h"
 #include ".\os_port.h"
 #include <string.h>
 
-#if (OS_QUEUE_EN > 0u) && (OS_MAX_QUEUES > 0u)
+#if OS_QUEUE_EN > 0u
 
 /*============================ MACROS ========================================*/
 /*============================ MACROFIED FUNCTIONS ===========================*/
@@ -31,6 +32,24 @@
 /*============================ LOCAL VARIABLES ===============================*/
 /*============================ GLOBAL VARIABLES ==============================*/
 /*============================ IMPLEMENTATION ================================*/
+/*
+ *  \brief      CREATE A QUEUE
+ * 
+ *  \param      hQueue      the pointer to a handle to the queue.
+ * 
+ *              buffer      the buffer of the queue. If it is NULL and OS_QUEUE_BUFFER_ON_HEAP_EN
+ *                          is enabled, the buffer will be allocated on the heap.
+ * 
+ *              queueSize   the maximum LENGTH of the queue. This is NOT the SIZEOF() the buffer.
+ * 
+ *              elementSize The size of the element stored in the queue.
+ * 
+ *  \return     OS_ERR_NONE            The call was successful.
+ *              OS_ERR_INVALID_OPT     If 'queueSize' is 0.
+ *              OS_ERR_NULL_POINTER    If 'buffer' is NULL when OS_QUEUE_BUFFER_ON_HEAP_EN is disabled.
+ *              OS_ERR_USE_IN_ISR      Being called in an ISR.
+ *              OS_ERR_OUT_OF_MEMORY   There is no queue object to use or the heap cannot get enough memory for the buffer.
+ */
 OS_ERR osQueueCreate(OS_HANDLE *hQueue, void *buffer, UINT16 queueSize, size_t elementSize)
 {
     OS_QUEUE   *pqueue;
@@ -46,7 +65,7 @@ OS_ERR osQueueCreate(OS_HANDLE *hQueue, void *buffer, UINT16 queueSize, size_t e
     }
 #endif
     if (0u == queueSize) {
-        return OS_ERR_NULL_POINTER;
+        return OS_ERR_INVALID_OPT;
     }
 #endif
     if (osIntNesting > 0u) {            //!< See if called from ISR ...
@@ -76,7 +95,7 @@ OS_ERR osQueueCreate(OS_HANDLE *hQueue, void *buffer, UINT16 queueSize, size_t e
     //! Set object type.
     //! Init wait list head.
     //! Init queue values.
-    pqueue->OSQueueObjHead.OSObjType =  OS_OBJ_TYPE_SET(OS_OBJ_TYPE_QUEUE)
+    pqueue->OSQueueObjHead.OSObjType = OS_OBJ_TYPE_SET(OS_OBJ_TYPE_QUEUE)
                                      | OS_OBJ_TYPE_WAITABLE_MSK
                                      | OS_OBJ_PRIO_TYPE_SET(OS_OBJ_PRIO_TYPE_LIST);
     list_init(&pqueue->OSQueueEnqueueWaitList);
@@ -95,7 +114,44 @@ OS_ERR osQueueCreate(OS_HANDLE *hQueue, void *buffer, UINT16 queueSize, size_t e
     return OS_ERR_NONE;
 }
 
+/*
+ *  \brief      STOP ENQUEUE
+ * 
+ *  \remark     This function would be called and then osQueueRead() would be called till the queue
+ *              is empty before deleting a queue by calling osQueueDelete(). 
+ * 
+ *  \param      hQueue      the handle to the queue.
+ * 
+ *  \return     OS_ERR_NONE            The call was successful.
+ *              OS_ERR_INVALID_HANDLE  If 'hQueue' is an invalid handle.
+ *              OS_ERR_OBJ_TYPE        If you didn't pass a queue object.
+ */
 #if OS_QUEUE_DEL_EN > 0
+OS_ERR osQueueStopEnqueue(OS_HANDLE *hQueue)
+{
+    OS_QUEUE   *pqueue = (OS_QUEUE *)*hQueue;
+
+
+#if OS_ARG_CHK_EN > 0u
+    if (hQueue == NULL) {
+        return OS_ERR_INVALID_HANDLE;
+    }
+#endif
+    if (osIntNesting > 0u) {            //!< See if called from ISR ...
+        return OS_ERR_USE_IN_ISR;       //!< ... can't use from an ISR
+    }
+    if (OS_OBJ_TYPE_GET(pqueue->OSQueueObjHead.OSObjType) != OS_OBJ_TYPE_QUEUE) { //!< Validate object's type
+        return OS_ERR_OBJ_TYPE;
+    }
+
+
+    OSEnterCriticalSection();
+    pqueue->OSQueueOpt |= OS_QUEUE_STOP_ENQUEUE;
+    OSExitCriticalSection();
+    
+    return OS_ERR_NONE;
+}
+
 OS_ERR osQueueDelete(OS_HANDLE *hQueue, UINT16 opt)
 {
     OS_QUEUE   *pqueue = (OS_QUEUE *)*hQueue;
@@ -160,6 +216,19 @@ OS_ERR osQueueDelete(OS_HANDLE *hQueue, UINT16 opt)
 }
 #endif
 
+/*
+ *  \brief      ENQUEUE
+ * 
+ *  \param      hQueue      the handle to the queue.
+ *              buffer      the buffer to store the enqueued data.
+ *              timeout     the time trying to wait if queue is full.
+ * 
+ *  \return     OS_ERR_NONE            The call was successful.
+ *              OS_ERR_INVALID_HANDLE  If 'hQueue' is an invalid handle.
+ *              OS_ERR_OBJ_TYPE        If you didn't pass a queue object.
+ *              OS_ERR_PEND_ABORT      The queue has been shutdown.
+ *              OS_ERR_TIMEOUT         The queue is full till 'timeout' has expired.
+ */
 OS_ERR osQueueWrite(OS_HANDLE hQueue, const void *buffer, UINT32 timeout)
 {
     OS_QUEUE       *pqueue = (OS_QUEUE *)hQueue;
@@ -175,7 +244,7 @@ OS_ERR osQueueWrite(OS_HANDLE hQueue, const void *buffer, UINT32 timeout)
         return OS_ERR_NULL_POINTER;
     }
 #endif
-    if (osLockNesting > 0u) {           //!< See if called with scheduler locked.
+    if (osLockNesting > 0u && timeout != 0u) {           //!< See if it tries to pend on queue with scheduler locked.
         return OS_ERR_PEND_LOCKED;
     }
     if (OS_OBJ_TYPE_GET(pqueue->OSQueueObjHead.OSObjType) != OS_OBJ_TYPE_QUEUE) { //!< Validate object's type
@@ -184,6 +253,10 @@ OS_ERR osQueueWrite(OS_HANDLE hQueue, const void *buffer, UINT32 timeout)
 
 
     OSEnterCriticalSection();
+    if (pqueue->OSQueueOpt & OS_QUEUE_STOP_ENQUEUE) {
+        OSExitCriticalSection();
+        return OS_ERR_PEND_ABORT;
+    }
     if (pqueue->OSQueueWriteToken == 0u) {     //!< is there any write token avalible?
         if (timeout == 0u) {
             OSExitCriticalSection();
@@ -235,6 +308,19 @@ OS_ERR osQueueWrite(OS_HANDLE hQueue, const void *buffer, UINT32 timeout)
     return OS_ERR_NONE;
 }
 
+/*
+ *  \brief      DEQUEUE
+ * 
+ *  \param      hQueue      the handle to the queue.
+ *              buffer      the buffer to store the dequeued data.
+ *              timeout     the time trying to wait if queue is empty.
+ * 
+ *  \return     OS_ERR_NONE            The call was successful.
+ *              OS_ERR_INVALID_HANDLE  hQueue is an invalid handle.
+ *              OS_ERR_OBJ_TYPE        hQueue is not a handle to a queue object.
+ *              OS_ERR_PEND_ABORT      The queue has been shutdown.
+ *              OS_ERR_TIMEOUT         The queue is empty till 'timeout' has expired.
+ */
 OS_ERR osQueueRead(OS_HANDLE hQueue, void *buffer, UINT32 timeout)
 {
     OS_QUEUE       *pqueue = (OS_QUEUE *)hQueue;
@@ -341,5 +427,5 @@ OS_ERR osQueueQuery(OS_HANDLE hQueue, OS_QUEUE_INFO *pInfo)
 }
 #endif      //!< #if OS_QUEUE_QUERY_EN > 0u
 
-#endif      //!< #if (OS_QUEUE_EN > 0u) && (OS_MAX_QUEUES > 0u)
+#endif      //!< #if OS_QUEUE_EN > 0u
 

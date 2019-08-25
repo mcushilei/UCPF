@@ -1,5 +1,5 @@
 /*******************************************************************************
- *  Copyright(C)2018-2019 by Dreistein<mcu_shilei@hotmail.com>                *
+ *  Copyright(C)2018 by Dreistein<mcu_shilei@hotmail.com>                     *
  *                                                                            *
  *  This program is free software; you can redistribute it and/or modify it   *
  *  under the terms of the GNU Lesser General Public License as published     *
@@ -15,19 +15,21 @@
  *  along with this program; if not, see http://www.gnu.org/licenses/.        *
 *******************************************************************************/
 
-//! \note do not move this pre-processor statement to other places
-#include "..\app_cfg.h"
-
-#ifndef __BEAMS_APP_APP_CFG_H__
-#define __BEAMS_APP_APP_CFG_H__
+#ifndef __FRAMEWORKS_WINDOWS_FRAMEWORK_C__
+#ifndef __FRAMEWORKS_WINDOWS_FRAMEWORK_H__
+#define __FRAMEWORKS_WINDOWS_FRAMEWORK_H__
 
 /*============================ INCLUDES ======================================*/
+#include ".\app_cfg.h"
+
+
 /*============================ MACROS ========================================*/
 /*============================ MACROFIED FUNCTIONS ===========================*/
 /*============================ TYPES =========================================*/
 /*============================ GLOBAL VARIABLES ==============================*/
 /*============================ PROTOTYPES ====================================*/
+extern bool framework_init(void);
 
-
-#endif  //!< __BEAMS_APP_APP_CFG_H__
+#endif  //! #ifndef __FRAMEWORKS_WINDOWS_FRAMEWORK_H__
+#endif  //! #ifndef __FRAMEWORKS_WINDOWS_FRAMEWORK_C__
 /* EOF */

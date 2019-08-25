@@ -24,10 +24,6 @@
 
 /*============================ INCLUDES ======================================*/
 /*============================ MACROS ========================================*/
-
-#define POOL_CRITICAL_SECTION_BEGIN()                //ENTER_SAFE_ATOM_CODE()
-#define POOL_CRITICAL_SECTION_END()                 //EXIT_SAFE_ATOM_CODE()
-
 /*============================ MACROFIED FUNCTIONS ===========================*/
 /*============================ TYPES =========================================*/
 typedef uint32_t pool_uint_t;

@@ -43,7 +43,7 @@ void OSInitHookBegin(void)
  *! \Notes       1) Interrupts should be disabled during this call.
  */
 #if OS_HOOKS_EN > 0
-void OSInitHookEnd(void)
+WEAK void OSInitHookEnd(void)
 {
 }
 #endif
@@ -166,8 +166,8 @@ void OSTCBInitHook(OS_TCB *ptcb)
  *!
  *! \Notes       1) Interrupts may or may not be ENABLED during this call.
  */
-#if (OS_HOOKS_EN > 0) && (OS_TIME_TICK_HOOK_EN > 0)
-void OSTimeTickHook(void)
+#if (OS_HOOKS_EN > 0) && (OS_SYS_TICK_HOOK_EN > 0)
+WEAK void OSSysTickHook(void)
 {
 }
 #endif

@@ -24,10 +24,6 @@
 
 /*============================ INCLUDES ======================================*/
 /*============================ MACROS ========================================*/
-
-#define QUEUE_CRITICAL_SECTION_BEGIN()                //ENTER_SAFE_ATOM_CODE()
-#define QUEUE_CRITICAL_SECTION_END()                 //EXIT_SAFE_ATOM_CODE()
-
 /*============================ MACROFIED FUNCTIONS ===========================*/
 /*============================ TYPES =========================================*/
 typedef uint32_t queue_uint_t;

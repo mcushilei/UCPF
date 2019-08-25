@@ -21,6 +21,7 @@
 /*============================ INCLUDES ======================================*/
 #include ".\os_private.h"
 #include ".\os_port.h"
+#include <string.h>
 
 /*============================ MACROS ========================================*/
 /*============================ MACROFIED FUNCTIONS ===========================*/
@@ -46,12 +47,12 @@ static  void    os_init_idle_task(void);
 static  void   *os_task_idle(void *parg);
 
 /*============================ LOCAL VARIABLES ===============================*/
-/*!
- *! \Brief       LEADING ZERO LOOKUP TABLE
- *!
- *! \Notes       Index into table is bit pattern to resolve highest priority
- *!              Indexed value corresponds to highest priority bit position (i.e. 0..7)
- *!              Leading 0 algorithm.
+/*
+ *  \brief       LEADING ZERO LOOKUP TABLE
+ * 
+ *  \note        Index into table is bit pattern to resolve highest priority
+ *               Indexed value corresponds to highest priority bit position (i.e. 0..7)
+ *               Leading 0 algorithm.
  */
 static const UINT8 osLZTbl[256] = {
     0u, 0u, 1u, 0u, 2u, 0u, 1u, 0u, 3u, 0u, 1u, 0u, 2u, 0u, 1u, 0u, //!< 0x00 to 0x0F
@@ -75,15 +76,15 @@ static const UINT8 osLZTbl[256] = {
 /*============================ GLOBAL VARIABLES ==============================*/
 /*============================ IMPLEMENTATION ================================*/
 
-/*!
- *! \Brief       INITIALIZATION
- *!
- *! \Description This function is used to initialize the internals of OS and MUST be called prior to
- *!              creating any OS object and, prior to calling osStart().
- *!
- *! \Arguments   none
- *!
- *! \Returns     none
+/*
+ *  \brief      INITIALIZATION
+ * 
+ *  \remark     This function is used to initialize the internals of OS and MUST be called prior to
+ *              creating any OS object and, prior to calling osStart().
+ * 
+ *  \param      none
+ * 
+ *  \return     none
  */
 void osInit(void)
 {
@@ -91,13 +92,13 @@ void osInit(void)
     OSInitHookBegin();                                  //!< Call port specific initialization code
 #endif
     
+    os_init_misc();                                     //!< Initialize miscellaneous variables
+    
 #if OS_HEAP_MEM_EN > 0
     OSHeapInit();
 #endif
-    
-    os_init_misc();                                     //!< Initialize miscellaneous variables
 
-    os_init_obj_pool();                            //!< Initialize the free list of OS_TCBs
+    os_init_obj_pool();                                 //!< Initialize the free list of OS_TCBs
 
     OS_SchedulerInit();                                 //!< Initialize the Ready List
 
@@ -115,21 +116,24 @@ void osInit(void)
 #endif
 }
 
-/*!
- *! \Brief       INITIALIZE MISCELLANEOUS VARIABLES
- *!
- *! \Description This function is called by osInit() to initialize miscellaneous variables.
- *!
- *! \Arguments   none
- *!
- *! \Returns     none
+/*
+ *  \brief      INITIALIZE MISCELLANEOUS VARIABLES
+ * 
+ *  \remark     This function is called by osInit() to initialize miscellaneous variables.
+ * 
+ *  \param      none
+ * 
+ *  \return     none
  */
 static void os_init_misc(void)
 {
-    osRunning               = FALSE;                    //!< Indicate that multitasking not started
+    osRunning       = FALSE;            //!< Indicate that multitasking not started
+
+    osTCBCur        = NULL;
+    osTCBNextRdy    = NULL;
     
-    osCoreTimerScanHand     = 0u;
-    osCoreTimerScanHandOld  = 0u;
+    osSysClockScanHand     = 0u;
+    osSysClockScanHandOld  = 0u;
 
     osIntNesting            = 0u;                       //!< Clear the interrupt nesting counter
     osLockNesting           = 0u;                       //!< Clear the scheduling lock counter
@@ -173,21 +177,21 @@ static void os_init_obj_pool(void)
 #endif
 }
 
-/*!
- *! \Brief       ENTER ISR
- *!
- *! \Description This function is used to notify OS that you are about to service an interrupt
- *!              service routine (ISR).  This allows OS to keep track of interrupt nesting and thus
- *!              only perform rescheduling at the last nested ISR.
- *!
- *! \Arguments   none
- *!
- *! \Returns     none
- *!
- *! \Notes       1) You MUST invoke osIntEnter() and osIntExit() in pair.  In other words, for every call
- *!                 to osIntEnter() at the beginning of the ISR you MUST have a call to osIntExit() at the
- *!                 end of the ISR.
- *!              2) You are allowed to nest interrupts up to 255 levels deep.
+/*
+ *  \brief      ENTER ISR
+ * 
+ *  \remark     This function is used to notify OS that you are about to service an interrupt
+ *              service routine (ISR).  This allows OS to keep track of interrupt nesting and thus
+ *              only perform rescheduling at the last nested ISR.
+ * 
+ *  \param      none
+ * 
+ *  \return     none
+ * 
+ *  \note       1) You MUST invoke osIntEnter() and osIntExit() in pair.  In other words, for every call
+ *                 to osIntEnter() at the beginning of the ISR you MUST have a call to osIntExit() at the
+ *                 end of the ISR.
+ *              2) You are allowed to nest interrupts up to 255 levels deep.
  */
 void osIntEnter(void)
 {
@@ -202,21 +206,21 @@ void osIntEnter(void)
     OSExitCriticalSection();
 }
 
-/*!
- *! \Brief       EXIT ISR
- *!
- *! \Description This function is used to notify os that you have completed servicing an ISR.  When
- *!              the last nested ISR has completed, OS will call the scheduler to determine whether
- *!              a new, high-priority task, is ready to run.
- *!
- *! \Arguments   none
- *!
- *! \Returns     none
- *!
- *! \Notes       1) You MUST invoke osIntEnter() and osIntExit() in pair.  In other words, for every call
- *!                 to osIntEnter() at the beginning of the ISR you MUST have a call to osIntExit() at the
- *!                 end of the ISR.
- *!              2) Rescheduling is prevented when the scheduler is locked.
+/*
+ *  \brief      EXIT ISR
+ * 
+ *  \remark     This function is used to notify os that you have completed servicing an ISR.  When
+ *              the last nested ISR has completed, OS will call the scheduler to determine whether
+ *              a new, high-priority task, is ready to run.
+ * 
+ *  \param      none
+ * 
+ *  \return     none
+ * 
+ *  \note       1) You MUST invoke osIntEnter() and osIntExit() in pair.  In other words, for every call
+ *                 to osIntEnter() at the beginning of the ISR you MUST have a call to osIntExit() at the
+ *                 end of the ISR.
+ *              2) Rescheduling is prevented when the scheduler is locked.
  */
 void osIntExit(void)
 {
@@ -242,19 +246,19 @@ void osIntExit(void)
 }
 
 #if OS_SCHED_LOCK_EN > 0u
-/*!
- *! \Brief       Lock scheduler
- *!
- *! \Description To stop scheduling to mutually run a critical section.
- *!              This is intended to be used where the critical section is too short for a condition in which mutex is used.
- *!              If the critical section is even shorter, disabling the interrupt is preferred.
- *!
- *! \Arguments   none
- *!
- *! \Returns     none
- *!
- *! \Notes       1) This function is INTERNAL to OS and your application should not call it.
- *!              2) This function is not intended to be used in a ISR.
+/*
+ *  \brief      Lock scheduler
+ * 
+ *  \remark     To stop scheduling to mutually run a critical section.
+ *              This is intended to be used where the critical section is too short for a condition in which mutex is used.
+ *              If the critical section is even shorter, disabling the interrupt is preferred.
+ * 
+ *  \param      none
+ * 
+ *  \return     none
+ * 
+ *  \note       1) This function is INTERNAL to OS and your application should not call it.
+ *              2) This function is not intended to be used in a ISR.
  */
 void osLockSched(void)
 {
@@ -271,19 +275,19 @@ void osLockSched(void)
     }
 }
 
-/*!
- *! \Brief       Unlock scheduler
- *!
- *! \Description To stop scheduling to mutually run a critical section.
- *!              This is intended to be used where the critical section is too short for a condition in which mutex is used.
- *!              If the critical section is even shorter, disabling the interrupt is preferred.
- *!
- *! \Arguments   none
- *!
- *! \Returns     none
- *!
- *! \Notes       1) This function is INTERNAL to OS and your application should not call it.
- *!              2) This function is not intended to be used in a ISR.
+/*
+ *  \brief      Unlock scheduler
+ * 
+ *  \remark     To stop scheduling to mutually run a critical section.
+ *              This is intended to be used where the critical section is too short for a condition in which mutex is used.
+ *              If the critical section is even shorter, disabling the interrupt is preferred.
+ * 
+ *  \param      none
+ * 
+ *  \return     none
+ * 
+ *  \note       1) This function is INTERNAL to OS and your application should not call it.
+ *              2) This function is not intended to be used in a ISR.
  */
 void osUnlockSched(void)
 {
@@ -301,23 +305,23 @@ void osUnlockSched(void)
 }
 #endif  //!< #if OS_SCHED_LOCK_EN > 0u
 
-/*!
- *! \Brief       START MULTITASKING
- *!
- *! \Description This function is used to start the multitasking process which lets OS manages the
- *!              task that you have created.  Before you can call osStart(), you MUST have called osInit()
- *!              and you MUST have created at least one task.
- *!
- *! \Arguments   none
- *!
- *! \Returns     none
- *!
- *! \Note        OSStartTheFirstThread() MUST:
- *!                 a) Call OSTaskSwHook() then,
- *!                 b) Set osRunning to TRUE.
- *!                 c) Load the context of the task pointed to by osTCBNextRdy.
- *!                 d) Execute the task.
- *!                 e) Enable system-level interrupt.
+/*
+ *  \brief      START MULTITASKING
+ * 
+ *  \remark     This function is used to start the multitasking process which lets OS manages the
+ *              task that you have created.  Before you can call osStart(), you MUST have called osInit()
+ *              and you MUST have created at least one task.
+ * 
+ *  \param      none
+ * 
+ *  \return     none
+ * 
+ *  \note       OSStartTheFirstThread() MUST:
+ *              a) Call OSTaskSwHook() then,
+ *              b) Set osRunning to TRUE.
+ *              c) Load the context of the task pointed to by osTCBNextRdy.
+ *              d) Execute the task.
+ *              e) Enable system-level interrupt.
  */
 void osStart(void)
 {
@@ -328,16 +332,16 @@ void osStart(void)
     }
 }
 
-/*!
- *! \Brief       ADD TASK TO EVENT WAIT LIST
- *!
- *! \Description Add a task to an event's wait list.
- *!
- *! \Arguments   pobj     a pointer to the object that this wati-node wait for.
- *!              plist    a pointer to the list this node will be inserted to.
- *!              pnode    a pointer to the wait-node.
- *!
- *! \Returns     none
+/*
+ *  \brief      ADD TASK TO EVENT WAIT LIST
+ * 
+ *  \remark     Add a task to an event's wait list.
+ * 
+ *  \param      pobj     a pointer to the object that this wati-node wait for.
+ *              plist    a pointer to the list this node will be inserted to.
+ *              pnode    a pointer to the wait-node.
+ * 
+ *  \return     none
  */
 static void OS_WaitNodeInsert(OS_WAITABLE_OBJ *pobj, OS_LIST_NODE *plist, OS_WAIT_NODE *pnode)
 {
@@ -368,17 +372,17 @@ void OS_WaitNodeRemove(OS_TCB *ptcb)
 }
 
 
-/*!
- *! \Brief       ADD TASK TO WAIT LIST
- *!
- *! \Description Add a task to the wait list.
- *!
- *! \Arguments   ptcb     is a pointer to the task to remove.
- *!
- *! \Returns     none
- *!
- *! \Notes       1) This function assumes that interrupts are DISABLED.
- *!              2) This function is INTERNAL to OS and your application should not call it.
+/*
+ *  \brief      ADD TASK TO WAIT LIST
+ * 
+ *  \remark     Add a task to the wait list.
+ * 
+ *  \param      ptcb     is a pointer to the task to remove.
+ * 
+ *  \return     none
+ * 
+ *  \note       1) This function assumes that interrupts are DISABLED.
+ *              2) This function is INTERNAL to OS and your application should not call it.
  */
 static void OS_WaitListInsert(OS_TCB *ptcb)
 {
@@ -389,17 +393,17 @@ static void OS_WaitListInsert(OS_TCB *ptcb)
     }
 
 
-    ptcb->OSTCBDly += osCoreTimerScanHand;
+    ptcb->OSTCBDly += osSysClockScanHand;
     
     //! to see if we have run over.
-    if (osCoreTimerScanHandOld > osCoreTimerScanHand) { //! yes.
-        if (ptcb->OSTCBDly > osCoreTimerScanHand) {
+    if (osSysClockScanHandOld > osSysClockScanHand) { //! yes.
+        if (ptcb->OSTCBDly > osSysClockScanHand) {
             pList = &osWaitRunoverList;
         } else {
             pList = &osWaitList;
         }
     } else {
-        if (ptcb->OSTCBDly > osCoreTimerScanHand) {
+        if (ptcb->OSTCBDly > osSysClockScanHand) {
             pList = &osWaitList;
         } else {
             pList = &osWaitRunoverList;
@@ -429,18 +433,18 @@ static void OS_WaitListRemove(OS_TCB *ptcb)
     ptcb->OSTCBDly = 0u;
 }
 
-/*!
- *! \Brief       PROCESS SYSTEM TICK
- *!
- *! \Description This function is used to signal to OS the occurrence of a 'system tick' (also known
- *!              as a 'clock tick').  This function should be called by the ticker ISR but, can also be
- *!              called by a HIGH priority task.
- *!
- *! \Arguments   none
- *!
- *! \Returns     none
+/*
+ *  \brief      PROCESS SYSTEM TICK
+ * 
+ *  \remark     This function is used to signal to OS the occurrence of a 'system tick' (also known
+ *              as a 'clock tick').  This function should be called by the ticker ISR but, can also be
+ *              called by a HIGH priority task.
+ * 
+ *  \param      none
+ * 
+ *  \return     none
  */
-void osTimeTick(void)
+void osSysTick(void)
 {
     OS_LIST_NODE       *list;
     OS_TCB             *ptcb;
@@ -451,29 +455,26 @@ void osTimeTick(void)
         return;
     }
     
-#if (OS_HOOKS_EN > 0u) && (OS_TIME_TICK_HOOK_EN > 0u)
-    OSTimeTickHook();
+#if (OS_HOOKS_EN > 0u) && (OS_SYS_TICK_HOOK_EN > 0u)
+    OSSysTickHook();
 #endif
     
-    //! increase osCoreTimerScanHand
-    ++osCoreTimerScanHand;
+    //! increase osSysClockScanHand
+    ++osSysClockScanHand;
 
     OSEnterCriticalSection();
-    //! to see if we have run over.
-    if (osCoreTimerScanHandOld > osCoreTimerScanHand) { //! yes.
+    if (osSysClockScanHandOld > osSysClockScanHand) { //! if the hand has made a revolution.
         //! all ptcb in osWaitList has timeout.
-        if (osWaitList.Next != &osWaitList) {    //! see if osWaitList is empyt.
-            for (list = osWaitList.Next; list != &osWaitList; ) {
-                ptcb = CONTAINER_OF(list, OS_TCB, OSTCBList);
-                list = list->Next;
-                pnode = ptcb->OSTCBWaitNode;
+        for (list = osWaitList.Next; list != &osWaitList; ) {
+            ptcb = CONTAINER_OF(list, OS_TCB, OSTCBList);
+            list = list->Next;
+            pnode = ptcb->OSTCBWaitNode;
 
-                pnode->OSWaitNodeRes = OS_STAT_PEND_TO;         //!< Indicate PEND timeout.
-                OS_WaitNodeRemove(ptcb);
+            pnode->OSWaitNodeRes = OS_STAT_PEND_TO;         //!< Indicate PEND timeout.
+            OS_WaitNodeRemove(ptcb);
 
-                OS_WaitListRemove(ptcb);
-                OS_SchedulerReadyTask(ptcb);
-            }
+            OS_WaitListRemove(ptcb);
+            OS_SchedulerReadyTask(ptcb);
         }
 
         //! move osWaitRunoverList to osWaitList if there is any node on osWaitRunoverList.
@@ -495,7 +496,7 @@ void osTimeTick(void)
             ptcb = CONTAINER_OF(list, OS_TCB, OSTCBList);
             list = list->Next;
                                                             //! to see if it has overflow.
-            if (ptcb->OSTCBDly > osCoreTimerScanHand) {     //!< no.
+            if (ptcb->OSTCBDly > osSysClockScanHand) {     //!< no.
                 break;                      //!< The list has been sorted, so we just break.
             } else {                                        //!< yes
                 pnode = ptcb->OSTCBWaitNode;
@@ -511,21 +512,21 @@ void osTimeTick(void)
     OSExitCriticalSection();
 
 
-    osCoreTimerScanHandOld = osCoreTimerScanHand;
+    osSysClockScanHandOld = osSysClockScanHand;
 }
 
-/*!
- *! \Brief       SEND TASK TO SLEEP FOR 'n' TICKS
- *!
- *! \Description This function is called to delay execution of the currently running task until the
- *!              specified number of system ticks expires.  This, of course, directly equates to delaying
- *!              the current task for some time to expire.  No delay will result If the specified delay is
- *!              0.  If the specified delay is greater than 0 then, a context switch will result.
- *!
- *! \Arguments   ticks     is the time delay that the task will be suspended in number of clock 'ticks'.
- *!                        Note that by specifying 0, the task will not be delayed.
- *!
- *! \Returns     none
+/*
+ *  \brief      SEND TASK TO SLEEP FOR 'n' TICKS
+ * 
+ *  \remark     This function is called to delay execution of the currently running task until the
+ *              specified number of system ticks expires.  This, of course, directly equates to delaying
+ *              the current task for some time to expire.  No delay will result If the specified delay is
+ *              0.  If the specified delay is greater than 0 then, a context switch will result.
+ * 
+ *  \param      ticks       is the time delay that the task will be suspended in number of clock 'ticks'.
+ *                          note that by specifying 0, the task will not be delayed.
+ * 
+ *  \return     none
  */
 OS_ERR osTaskSleep(UINT32 ticks)
 {
@@ -561,22 +562,22 @@ OS_ERR osTaskSleep(UINT32 ticks)
     return OS_ERR_NONE;
 }
 
-/*!
- *! \Brief       STATISTICS INITIALIZATION
- *!
- *! \Description This function is called by your application to establish CPU usage by first determining
- *!              how high a 32-bit counter would count to in 1 second if no other tasks were to execute
- *!              during that time.  CPU usage is then determined by a low priority task which keeps track
- *!              of this 32-bit counter every second but this time, with other tasks running.  CPU usage is
- *!              determined by:
- *!
- *!                                             osIdleCtr
- *!                 CPU Usage (%) = 100 * (1 - ------------)
- *!                                            osIdleCtrMax
- *!
- *! \Arguments   none
- *!
- *! \Returns     none
+/*
+ *  \brief      STATISTICS INITIALIZATION
+ * 
+ *  \remark     This function is called by your application to establish CPU usage by first determining
+ *              how high a 32-bit counter would count to in 1 second if no other tasks were to execute
+ *              during that time.  CPU usage is then determined by a low priority task which keeps track
+ *              of this 32-bit counter every second but this time, with other tasks running.  CPU usage is
+ *              determined by:
+ * 
+ *                                              osIdleCtr
+ *                  CPU Usage (%) = 100 * (1 - ------------)
+ *                                             osIdleCtrMax
+ * 
+ *  \param      none
+ * 
+ *  \return     none
  */
 #if OS_STAT_EN > 0u
 void osStatInit(void)
@@ -601,21 +602,21 @@ void osStatInit(void)
 }
 #endif
 
-/*!
- *! \Brief       CREATING THE STATISTIC TASK
- *!
- *! \Description This function creates the Statistic Task.
- *!
- *! \Arguments   none
- *!
- *! \Returns     none
+/*
+ *  \brief      CREATING THE STATISTIC TASK
+ * 
+ *  \remark     This function creates the Statistic Task.
+ * 
+ *  \param      none
+ * 
+ *  \return     none
  */
 #if OS_STAT_EN > 0u
 static void os_init_statistics_task(void)
 {
 
     osTaskCreate(NULL,
-                 os_task_statistics,
+                os_task_statistics,
                 NULL,
                 osTaskStatStk,
                 OS_TASK_STAT_STK_SIZE,
@@ -624,20 +625,20 @@ static void os_init_statistics_task(void)
 }
 #endif
 
-/*!
- *! \Brief       CREATING THE IDLE TASK
- *!
- *! \Description This function creates the Idle Task.
- *!
- *! \Arguments   none
- *!
- *! \Returns     none
+/*
+ *  \brief      CREATING THE IDLE TASK
+ * 
+ *  \remark     This function creates the Idle Task.
+ * 
+ *  \param      none
+ * 
+ *  \return     none
  */
 static void os_init_idle_task(void)
 {
 
     osTaskCreate(NULL,
-                 os_task_idle,
+                os_task_idle,
                 NULL,
                 osTaskIdleStk,
                 OS_TASK_IDLE_STK_SIZE,
@@ -645,23 +646,23 @@ static void os_init_idle_task(void)
                 OS_TASK_IDLE_PRIO);
 }
 
-/*!
- *! \Brief       IDLE TASK
- *!
- *! \Description This task is internal to OS and executes whenever no other higher priority tasks
- *!              executes because they are ALL waiting for event(s) to occur.
- *!
- *! \Arguments   parg     this pointer is not used at this time.
- *!
- *! \Returns     none
- *!
- *! \Notes       1) OSTaskIdleHook() is called after the critical section to ensure that interrupts will be
- *!                 enabled for at least a few instructions.  On some processors (ex. Philips XA), enabling
- *!                 and then disabling interrupts didn't allow the processor enough time to have interrupts
- *!                 enabled before they were disabled again.  OS would thus never recognize
- *!                 interrupts.
- *!              2) This hook has been added to allow you to do such things as STOP the CPU to conserve
- *!                 power.
+/*
+ *  \brief      IDLE TASK
+ * 
+ *  \remark     This task is internal to OS and executes whenever no other higher priority tasks
+ *              executes because they are ALL waiting for event(s) to occur.
+ * 
+ *  \param      parg        this pointer is not used at this time.
+ * 
+ *  \return     none
+ * 
+ *  \note       1) OSTaskIdleHook() is called after the critical section to ensure that interrupts will be
+ *                 enabled for at least a few instructions.  On some processors (ex. Philips XA), enabling
+ *                 and then disabling interrupts didn't allow the processor enough time to have interrupts
+ *                 enabled before they were disabled again.  OS would thus never recognize
+ *                 interrupts.
+ *              2) This hook has been added to allow you to do such things as STOP the CPU to conserve
+ *                 power.
  */
 static void *os_task_idle(void *parg)
 {
@@ -678,26 +679,26 @@ static void *os_task_idle(void *parg)
     }
 }
 
-/*!
- *! \Brief       STATISTICS TASK
- *!
- *! \Description This task is internal to OS and is used to compute some statistics about the
- *!              multitasking environment.  Specifically, os_task_statistics() computes the CPU usage.
- *!              CPU usage is determined by:
- *!
- *!                                          osIdleCtr
- *!                 osCPUUsage = 100 * (1 - ------------)     (units are in %)
- *!                                         osIdleCtrMax
- *!
- *! \Arguments   parg     this pointer is not used at this time.
- *!
- *! \Returns     none
- *!
- *! \Notes       1) This task runs at a priority level higher than the idle task.  In fact, it runs at the
- *!                 next higher priority, OS_TASK_IDLE_PRIO-1.
- *!              2) You can disable this task by setting the configuration #define OS_STAT_EN to 0.
- *!              3) You MUST have at least a delay of 1 seconds to allow for the system to establish the
- *!                 maximum value for the idle counter.
+/*
+ *  \brief      STATISTICS TASK
+ * 
+ *  \remark     This task is internal to OS and is used to compute some statistics about the
+ *              multitasking environment.  Specifically, os_task_statistics() computes the CPU usage.
+ *              CPU usage is determined by:
+ * 
+ *                                           osIdleCtr
+ *                  osCPUUsage = 100 * (1 - ------------)     (units are in %)
+ *                                          osIdleCtrMax
+ * 
+ *  \param      parg     this pointer is not used at this time.
+ * 
+ *  \return     none
+ * 
+ *  \note       1) This task runs at a priority level higher than the idle task.  In fact, it runs at the
+ *                 next higher priority, OS_TASK_IDLE_PRIO-1.
+ *              2) You can disable this task by setting the configuration #define OS_STAT_EN to 0.
+ *              3) You MUST have at least a delay of 1 seconds to allow for the system to establish the
+ *                 maximum value for the idle counter.
  */
 #if OS_STAT_EN > 0u
 static void *os_task_statistics(void *parg)
@@ -709,7 +710,7 @@ static void *os_task_statistics(void *parg)
 
     parg = parg;                            //!< Prevent compiler warning for not using 'parg'
     
-    while (osTaskStatRunning == FALSE) {        //!< Wait until osIdleCtrMax has been measured.
+    while (osTaskStatRunning == FALSE) {    //!< Wait until osIdleCtrMax has been measured.
         osTaskSleep(OS_TICKS_PER_SEC);
     }
     osIdleCtrMax /= 100u;
@@ -747,31 +748,31 @@ static void *os_task_statistics(void *parg)
 }
 #endif
 
-/*!
- *! \Brief       INITIALIZE TCB
- *!
- *! \Description This function is internal to OS and is used to get and initialize a Task Control Block when
- *!              a task is created (see osTaskCreate()).
- *!
- *! \Arguments   prio          is the priority of the task being created
- *!
- *!              psp           stack pointer when task begin to run. This value return by OSTaskStkInit.
- *!
- *!              pstk          Point to the LOWEST (valid) memory location of the stack. It's not stack
- *!                            pointer.
- *!
- *!              stkSize       is the size of the stack (in 'stack units').  If the stack units are INT8Us
- *!                            then, 'stkSize' contains the number of bytes for the stack.  If the stack
- *!                            units are INT32Us then, the stack contains '4 * stkSize' bytes.  The stack
- *!                            units are established by the #define constant CPU_STK which is CPU
- *!                            specific.  'stkSize' is 0 if called by 'osTaskCreate()'.
- *!
- *!              opt           options as passed to 'osTaskCreate()' or,
- *!                            0 if called from 'osTaskCreate()'.
- *!
- *! \Returns     none
- *!
- *! \Note        This function is INTERNAL to OS and your application should not call it.
+/*
+ *  \brief      INITIALIZE TCB
+ * 
+ *  \remark     This function is internal to OS and is used to get and initialize a Task Control Block when
+ *              a task is created (see osTaskCreate()).
+ * 
+ *  \param      prio          is the priority of the task being created
+ * 
+ *              psp           stack pointer when task begin to run. This value return by OSTaskStkInit.
+ *
+ *              pstk          Point to the LOWEST (valid) memory location of the stack. It's not stack
+ *                            pointer.
+ * 
+ *              stkSize       is the size of the stack (in 'stack units').  If the stack units are INT8Us
+ *                            then, 'stkSize' contains the number of bytes for the stack.  If the stack
+ *                            units are INT32Us then, the stack contains '4 * stkSize' bytes.  The stack
+ *                            units are established by the #define constant CPU_STK which is CPU
+ *                            specific.  'stkSize' is 0 if called by 'osTaskCreate()'.
+ * 
+ *              opt           options as passed to 'osTaskCreate()' or,
+ *                            0 if called from 'osTaskCreate()'.
+ * 
+ *  \return     none
+ * 
+ *  \note       This function is INTERNAL to OS and your application should not call it.
  */
 void OS_TCBInit(OS_TCB  *ptcb,
                 UINT8    prio,
@@ -811,19 +812,19 @@ void OS_TCBInit(OS_TCB  *ptcb,
 #endif
 }
 
-/*!
- *! \Brief       STACK CHECKING
- *!
- *! \Description This function is called to check the amount of free memory left on the specified task's
- *!              stack.
- *!
- *! \Arguments   prio          is the task priority
- *!
- *! \Returns     OS_ERR_NONE            upon success
- *!              OS_ERR_INVALID_PRIO    if the priority you specify is higher that the maximum allowed
- *!              OS_ERR_TASK_NOT_EXIST  if the desired task has not been created or is assigned to a Mutex PIP
- *!              OS_ERR_TASK_OPT        if you did NOT specified OS_TASK_OPT_STK_CHK when the task was created
- *!              OS_ERR_PDATA_NULL      if 'p_stk_data' is a NULL pointer
+/*
+ *  \brief      STACK CHECKING
+ * 
+ *  \remark     This function is called to check the amount of free memory left on the specified task's
+ *              stack.
+ * 
+ *  \param      prio          is the task priority
+ * 
+ *  \return     OS_ERR_NONE            upon success
+ *              OS_ERR_INVALID_PRIO    if the priority you specify is higher that the maximum allowed
+ *              OS_ERR_TASK_NOT_EXIST  if the desired task has not been created or is assigned to a Mutex PIP
+ *              OS_ERR_TASK_OPT        if you did NOT specified OS_TASK_OPT_STK_CHK when the task was created
+ *              OS_ERR_PDATA_NULL      if 'p_stk_data' is a NULL pointer
  */
 #if (OS_STAT_TASK_STK_CHK_EN > 0u)
 void OS_TaskStkChk(OS_TCB *ptcb)
@@ -866,24 +867,24 @@ void OS_TaskStkChk(OS_TCB *ptcb)
 }
 #endif
 
-/*!
- *! \Brief       MAKE TASK WAIT FOR EVENT TO OCCUR
- *!
- *! \Description This function is called by other OS services to suspend a task because an event has
- *!              not occurred.
- *!
- *! \Arguments   pevent   is a pointer to the event control block for which the task will be waiting for.
- *!
- *!              pnode    is a pointer to a structure which contains data about the task waiting for
- *!                       event to occur.
- *!
- *!              ticks    is the desired amount of ticks that the task will wait for the event to
- *!                       occur.
- *!
- *! \Returns     none
- *!
- *! \Notes       1) This function assumes that interrupts are DISABLED.
- *!              2) This function is INTERNAL to OS and your application should not call it.
+/*
+ *  \brief      MAKE TASK WAIT FOR EVENT TO OCCUR
+ * 
+ *  \remark     This function is called by other OS services to suspend a task because an event has
+ *              not occurred.
+ * 
+ *  \param      pevent   is a pointer to the event control block for which the task will be waiting for.
+ * 
+ *              pnode    is a pointer to a structure which contains data about the task waiting for
+ *                       event to occur.
+ *
+ *              ticks    is the desired amount of ticks that the task will wait for the event to
+ *                       occur.
+ * 
+ *  \return     none
+ * 
+ *  \note       1) This function assumes that interrupts are DISABLED.
+ *              2) This function is INTERNAL to OS and your application should not call it.
  */
 void OS_WaitableObjAddTask( OS_WAITABLE_OBJ    *pobj,
                             OS_WAIT_NODE       *pnode,
@@ -905,26 +906,26 @@ void OS_WaitableObjAddTask( OS_WAITABLE_OBJ    *pobj,
     OS_WaitListInsert(osTCBCur);
 }
 
-/*!
- *! \Brief       MAKE TASK READY TO RUN BASED ON EVENT OCCURING
- *!
- *! \Description This function is called by other OS services and is used to make a task ready-to-run because
- *!              desired event occur. Only the thread in the head of the wait-node list will be set to ready.
- *!
- *! \Arguments   pevent     is a pointer to the event control block corresponding to the event.
- *!
- *!              plist      a pointer to the wait-node list of the event object.
- *!
- *!              pendRes    is used to indicate the readied task's pending status:
- *!
- *!                          OS_STAT_PEND_OK      Task ready due to a event-set, not a timeout or
- *!                                               an abort.
- *!                          OS_STAT_PEND_ABORT   Task ready due to an abort(or event was deleted).
- *!
- *! \Returns     none
- *!
- *! \Notes       1) This function assumes that interrupts are DISABLED.
- *!              2) The list plist points to should not be empty!.
+/*
+ *  \brief      MAKE TASK READY TO RUN BASED ON EVENT OCCURING
+ * 
+ *  \remark     This function is called by other OS services and is used to make a task ready-to-run because
+ *              desired event occur. Only the thread in the head of the wait-node list will be set to ready.
+ * 
+ *  \param      pevent     is a pointer to the event control block corresponding to the event.
+ * 
+ *              plist      a pointer to the wait-node list of the event object.
+ * 
+ *              pendRes    is used to indicate the readied task's pending status:
+ * 
+ *                           OS_STAT_PEND_OK      Task ready due to a event-set, not a timeout or
+ *                                                an abort.
+ *                           OS_STAT_PEND_ABORT   Task ready due to an abort(or event was deleted).
+ * 
+ *  \return     none
+ * 
+ *  \note       1) This function assumes that interrupts are DISABLED.
+ *              2) The list plist points to should not be empty!.
  */
 OS_TCB *OS_WaitableObjRdyTask(OS_WAITABLE_OBJ *pobj, OS_LIST_NODE *plist, UINT8 pendRes)
 {
@@ -949,19 +950,19 @@ OS_TCB *OS_WaitableObjRdyTask(OS_WAITABLE_OBJ *pobj, OS_LIST_NODE *plist, UINT8 
     return ptcb;
 }
 
-/*!
- *! \Brief       CHANGE PRIORITY OF A TASK
- *!
- *! \Description This function changes the priority of a task.
- *!
- *! \Arguments   ptcb     pointer to tcb
- *!
- *!              newp     is the new priority
- *!
- *! \Returns     none
- *!
- *! \Notes       1) This function assumes that interrupts are disabled.
- *!              2) This function is INTERNAL to OS and your application should not call it.
+/*
+ *  \brief      CHANGE PRIORITY OF A TASK
+ * 
+ *  \remark     This function changes the priority of a task.
+ * 
+ *  \param      ptcb     pointer to tcb
+ * 
+ *              newp     is the new priority
+ * 
+ *  \return     none
+ * 
+ *  \note       1) This function assumes that interrupts are disabled.
+ *              2) This function is INTERNAL to OS and your application should not call it.
  */
 void OS_ChangeTaskPrio(OS_TCB *ptcb, UINT8 newprio)
 {
@@ -1050,19 +1051,27 @@ UINT8 OS_BitmapGetHigestPrio(OS_PRIO_BITMAP *pmap)
     return prio;
 }
 
-/*!
- *! \Brief       GET VERSION
- *!
- *! \Description This function is used to return the version number of OS.  The returned value
- *!              corresponds to OS's version number multiplied by 10000.  In other words, version
- *!              2.01.00 would be returned as 20100.
- *!
- *! \Arguments   none
- *!
- *! \Returns     The version number of OS multiplied by 10000.
+/*
+ *  \brief      GET VERSION
+ * 
+ *  \param      none
+ * 
+ *  \return     The version number of OS multiplied by 10000.
  */
 UINT16 osVersion(void)
 {
     return OS_VERSION;
+}
+
+/*
+ *  \brief      GET VERSION
+ * 
+ *  \param      none
+ * 
+ *  \return     The version number of OS multiplied by 10000.
+ */
+UINT32 osGetSysTickCount(void)
+{
+    return osSysClockScanHand;
 }
 

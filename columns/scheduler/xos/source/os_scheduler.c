@@ -16,8 +16,7 @@
 *******************************************************************************/
 
 
-//! \note do not move this pre-processor statement to other places
-#define __OS_SCHEDULER_C__
+
 
 /*============================ INCLUDES ======================================*/
 #include ".\os_private.h"
@@ -32,14 +31,14 @@
 /*============================ LOCAL VARIABLES ===============================*/
 /*============================ IMPLEMENTATION ================================*/
 
-/*!
- *! \Brief       INITIALIZE THE READY LIST
- *!
- *! \Description This function is called by osInit() to initialize the Ready List.
- *!
- *! \Arguments   none
- *!
- *! \Returns     none
+/*
+ *  \brief      INITIALIZE THE READY LIST
+ * 
+ *  \remark     This function is called by osInit() to initialize the Ready List.
+ * 
+ *  \param      none
+ * 
+ *  \return     none
  */
 void OS_SchedulerInit(void)
 {
@@ -50,42 +49,27 @@ void OS_SchedulerInit(void)
         list_init(&osRdyList[i]);
     }
     memset((char *)&osRdyBitmap, 0, sizeof(osRdyBitmap));
-
-    osTCBCur      = NULL;
-    osTCBNextRdy  = NULL;
 }
 
-/*!
- *! \Brief       READY TASK TO RUN
- *!
- *! \Description This function add task in scheduler's ready list and make it can be
- *!              scheduled.
- *!
- *! \Arguments   none
- *!
- *! \Returns     none
- *!
- *! \Notes       1) This function is INTERNAL to OS and your application should not call it.
- *!              2) Interrupts are assumed to be DISABLED when this function is called.
+/*
+ *  \brief      READY TASK TO RUN
+ * 
+ *  \param      none
+ * 
+ *  \return     none
  */
 void OS_SchedulerReadyTask(OS_TCB *ptcb)
 {
-    list_insert(&ptcb->OSTCBList, osRdyList[ptcb->OSTCBPrio].Prev); //!< add task to the end of ready task list.
+    list_insert(&ptcb->OSTCBList, osRdyList[ptcb->OSTCBPrio].Prev); //!< add task to the END of ready task list.
     OS_BitmapSet(&osRdyBitmap, ptcb->OSTCBPrio);                    //!< set the flay to indicate that there are some threads ready to run.
 }
 
-/*!
- *! \Brief       READY TASK TO RUN
- *!
- *! \Description This function remove task from scheduler's ready list, so the task can not be
- *!              scheduled.
- *!
- *! \Arguments   none
- *!
- *! \Returns     none
- *!
- *! \Notes       1) This function is INTERNAL to OS and your application should not call it.
- *!              2) Interrupts are assumed to be DISABLED when this function is called.
+/*
+ *  \brief      UNREADY TASK FROM READY
+ * 
+ *  \param      none
+ * 
+ *  \return     none
  */
 void OS_SchedulerUnreadyTask(OS_TCB *ptcb)
 {
@@ -95,23 +79,20 @@ void OS_SchedulerUnreadyTask(OS_TCB *ptcb)
     prio = ptcb->OSTCBPrio;
     
     list_remove(&ptcb->OSTCBList);
-    if (osRdyList[prio].Prev == &osRdyList[prio]) { //!< Is osRdyList empty?
-        OS_BitmapClr(&osRdyBitmap, prio);           //!< Yes, clear the ready flag of this priority.
+    if (LIST_IS_EMPTY(osRdyList[prio])) {
+        OS_BitmapClr(&osRdyBitmap, prio);
     }
 }
 
-/*!
- *! \Brief       FIND HIGHEST PRIORITY TASK IN TEH READY TABLE
- *!
- *! \Description This function try determining the task that has the highest priority to run.
- *!              It will not determine the next task if currnt priority is the hightest.
- *!
- *! \Arguments   none
- *!
- *! \Returns     none
- *!
- *! \Notes       1) This function is INTERNAL to OS and your application should not call it.
- *!              2) Interrupts are assumed to be DISABLED when this function is called.
+/*
+ *  \brief      FIND HIGHEST PRIORITY TASK IN TEH READY TABLE
+ * 
+ *  \remark     This function try determining the task that has the highest priority to run.
+ *              It will not determine the next task if currnt priority is the hightest.
+ * 
+ *  \param      none
+ * 
+ *  \return     none
  */
 void OS_SchedulerPrio(void)
 {
@@ -129,18 +110,15 @@ void OS_SchedulerPrio(void)
     }
 }
 
-/*!
- *! \Brief       FIND NEXT READY TASK
- *!
- *! \Description This function is called by other OS services to determine the next ready task to
- *!              run. The next task's priority might be the same with current task's.
- *!
- *! \Arguments   none
- *!
- *! \Returns     none
- *!
- *! \Notes       1) This function is INTERNAL to OS and your application should not call it.
- *!              2) Interrupts are assumed to be DISABLED when this function is called.
+/*
+ *  \brief      FIND NEXT READY TASK
+ * 
+ *  \remark     This function is called by other OS services to determine the next ready task to
+ *              run. The next task's priority might be the same with current task's.
+ * 
+ *  \param      none
+ * 
+ *  \return     none
  */
 void OS_SchedulerNext(void)
 {
@@ -156,26 +134,23 @@ void OS_SchedulerNext(void)
     osTCBNextRdy = CONTAINER_OF(node, OS_TCB, OSTCBList);
 }
 
-/*!
- *! \Brief       MKAE THE HIGHEST PRIORITY READY TASK RUN
- *!
- *! \Description This function try determining the task that has the highest priority to run.
- *!              It will not determine the next task if currnt priority is the hightest.
- *!
- *! \Arguments   none
- *!
- *! \Returns     none
- *!
- *! \Notes       1) This function is INTERNAL to OS and your application should not call it.
- *!              2) Rescheduling is prevented when the scheduler is locked (see OS_SchedLock())
+/*
+ *  \brief      MKAE THE HIGHEST PRIORITY READY TASK RUN
+ * 
+ *  \remark     This function try determining the task that has the highest priority to run.
+ *              It will not determine the next task if currnt priority is the hightest.
+ * 
+ *  \param      none
+ * 
+ *  \return     none
  */
 void OS_SchedulerRunPrio(void)
 {
-    if (osIntNesting != 0u) {                   //!< Can not be used in ISR and ...
+    if (osIntNesting != 0u) {                   //!< Can not be used in ISR or when ...
         return;
     }
     
-    if (osLockNesting != 0u) {                  //!< ... scheduler is not locked
+    if (osLockNesting != 0u) {                  //!< ... scheduler is locked
         return;
     }
 
@@ -189,27 +164,24 @@ void OS_SchedulerRunPrio(void)
     OSExitCriticalSection();
 }
 
-/*!
- *! \Brief       MAKE NEXT READY TASK RUN
- *!
- *! \Description This function is called by other OS services to determine the next ready task to
- *!              run, beacuse current task has been pend. The next task's priority might be the
- *!              same with current task's.
- *!
- *! \Arguments   none
- *!
- *! \Returns     none
- *!
- *! \Notes       1) This function is INTERNAL to OS and your application should not call it.
- *!              2) Rescheduling is prevented when the scheduler is locked (see OS_SchedLock())
+/*
+ *  \brief      MAKE NEXT READY TASK RUN
+ * 
+ *  \remark     This function is called by other OS services to determine the next ready task to
+ *              run, beacuse current task has been pend. The next task's priority might be the
+ *              same with current task's.
+ * 
+ *  \param      none
+ * 
+ *  \return     none
  */
 void OS_SchedulerRunNext(void)
 {
-    if (osIntNesting != 0u) {                   //!< Can not be used in ISR and ...
+    if (osIntNesting != 0u) {                   //!< Can not be used in ISR or when ...
         return;
     }
     
-    if (osLockNesting != 0u) {                  //!< ... scheduler is not locked
+    if (osLockNesting != 0u) {                  //!< ... scheduler is locked
         return;
     }
 
@@ -222,6 +194,5 @@ void OS_SchedulerRunNext(void)
     }
     OSExitCriticalSection();
 }
-
 
 /* EOF */

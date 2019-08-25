@@ -20,9 +20,6 @@
 #ifndef __XOS_SOURCE_OS_H__
 #define __XOS_SOURCE_OS_H__
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 /*!
  *! OS VERSION NUMBER
@@ -282,7 +279,7 @@ OS_ERR      osTaskSleep            (UINT32          ticks);
 /*!
  *! \Brief  TIME MANAGEMENT
  */
-void        osTimeTick             (void);
+void        osSysTick              (void);
 
 /*!
  *! \Brief  MISCELLANEOUS
@@ -303,6 +300,8 @@ void        osUnlockSched          (void);
 
 UINT16      osVersion              (void);
 
+UINT32      osGetSysTickCount      (void);
+
 #define OS_MS_PER_TICK              (1000u / OS_TICKS_PER_SEC)
 #define OS_MS2TICK(__ms)            ((__ms) / (OS_MS_PER_TICK))
 
@@ -317,8 +316,5 @@ UINT16      osVersion              (void);
 #define     osResumeInterrupt()         OSResumeInterrupt()
 
 
-#ifdef __cplusplus
-}
-#endif
 
 #endif  ////!< #ifndef __XOS_SOURCE_OS_H__

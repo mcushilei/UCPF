@@ -36,18 +36,18 @@
 #ifndef OS_FLAG_EN
 #   error "OS_CFG.H, Missing OS_FLAG_EN: Enable (1) or Disable (0) code generation for Event Flags"
 #else
-#   ifndef OS_MAX_FLAGS
-#       error "OS_CFG.H, Missing OS_MAX_FLAGS: Max. number of Event Flag Groups in your application"
-#   else
-#       if  OS_MAX_FLAGS > 65500u
-#           error "OS_CFG.H, OS_MAX_FLAGS must be <= 65500"
-#       endif
-#   endif
 #   ifndef  OS_FLAG_DEL_EN
 #       error "OS_CFG.H, Missing OS_FLAG_DEL_EN: Include code for osFlagDelete()"
 #   endif
 #   ifndef  OS_FLAG_QUERY_EN
 #       error "OS_CFG.H, Missing OS_FLAG_QUERY_EN: Include code for osFlagQuery()"
+#   endif
+#   ifndef OS_MAX_FLAGS
+#       error "OS_CFG.H, Missing OS_MAX_FLAGS: Max. number of event control blocks in your application"
+#   else
+#       if  OS_MAX_FLAGS > 65535 || OS_MAX_FLAGS < 1
+#           error "OS_CFG.H, make sure 0 < OS_MAX_FLAGS <= 65535"
+#       endif
 #   endif
 #endif
 
@@ -60,6 +60,13 @@
 #   endif
 #   ifndef  OS_MUTEX_QUERY_EN
 #       error "OS_CFG.H, Missing OS_MUTEX_QUERY_EN: Include code for osMutexQuery()"
+#   endif
+#   ifndef OS_MAX_MUTEXES
+#       error "OS_CFG.H, Missing OS_MAX_MUTEXES: Max. number of event control blocks in your application"
+#   else
+#       if  OS_MAX_MUTEXES > 65535 || OS_MAX_MUTEXES < 1
+#           error "OS_CFG.H, make sure 0 < OS_MAX_MUTEXES <= 65535"
+#       endif
 #   endif
 #endif
 
@@ -79,6 +86,13 @@
 #   ifndef  OS_SEM_SET_EN
 #       error "OS_CFG.H, Missing OS_SEM_SET_EN: Include code for osSemSet()"
 #   endif
+#   ifndef OS_MAX_SEMAPHORES
+#       error "OS_CFG.H, Missing OS_MAX_SEMAPHORES: Max. number of event control blocks in your application"
+#   else
+#       if  OS_MAX_SEMAPHORES > 65535 || OS_MAX_SEMAPHORES < 1
+#           error "OS_CFG.H, make sure 0 < OS_MAX_SEMAPHORES <= 65535"
+#       endif
+#   endif
 #endif
 
 //! QUEUE
@@ -90,6 +104,13 @@
 #   endif
 #   ifndef  OS_QUEUE_QUERY_EN
 #       error "OS_CFG.H, Missing OS_QUEUE_QUERY_EN: Include code for osQueueQuery()"
+#   endif
+#   ifndef OS_MAX_QUEUES
+#       error "OS_CFG.H, Missing OS_MAX_QUEUES: Max. number of queue control blocks in your application"
+#   else
+#       if  OS_MAX_QUEUES > 65535 || OS_MAX_QUEUES < 1
+#           error "OS_CFG.H, make sure 0 < OS_MAX_QUEUES <= 65535"
+#       endif
 #   endif
 #endif
 
@@ -106,7 +127,7 @@
 #ifndef OS_TICKS_PER_SEC
 #   error "OS_CFG.H, Missing OS_TICKS_PER_SEC: Sets the number of ticks in one second"
 #else
-#   if  OS_TICKS_PER_SEC == 0
+#   if  OS_TICKS_PER_SEC <= 0
 #       error "OS_CFG.H, OS_TICKS_PER_SEC must be > 0"
 #   endif
 #endif
@@ -125,8 +146,8 @@
 #   error "OS_CFG.H, Missing OS_ARG_CHK_EN: Enable (1) or Disable (0) argument checking"
 #endif
 
-#ifndef OS_HOOKS_EN
-#   error "OS_CFG.H, Missing OS_HOOKS_EN: Hooks are Enable (1) or Disable (0)"
+#ifndef OS_STAT_TASK_STK_CHK_EN
+#   error "OS_CFG.H, Missing OS_STAT_TASK_STK_CHK_EN: Check task stacks from statistics task"
 #endif
 
 #ifndef OS_DEBUG_EN
@@ -136,56 +157,32 @@
 #ifndef OS_MAX_PRIO_LEVELS
 #   error "OS_CFG.H, Missing OS_MAX_PRIO_LEVELS: Max. levels of priority in your application"
 #else
-#   if  OS_MAX_PRIO_LEVELS <  1u
-#       error "OS_CFG.H, OS_MAX_PRIO_LEVELS must be >= 1"
-#   endif
-#   if  OS_MAX_PRIO_LEVELS >  256u
-#       error "OS_CFG.H, OS_MAX_PRIO_LEVELS must be <= 256"
+#   if  OS_MAX_PRIO_LEVELS > 256 || OS_MAX_PRIO_LEVELS < 1
+#       error "OS_CFG.H, make sure 0 < OS_MAX_PRIO_LEVELS <= 256"
 #   endif
 #endif
 
-#ifndef OS_MAX_SEMAPHORES
-#   error "OS_CFG.H, Missing OS_MAX_SEMAPHORES: Max. number of event control blocks in your application"
-#else
-#   if  OS_MAX_SEMAPHORES > 65535u
-#       error "OS_CFG.H, OS_MAX_SEMAPHORES must be <= 65535"
-#   endif
-#endif
 
-#ifndef OS_MAX_MUTEXES
-#   error "OS_CFG.H, Missing OS_MAX_MUTEXES: Max. number of event control blocks in your application"
-#else
-#   if  OS_MAX_MUTEXES > 65535u
-#       error "OS_CFG.H, OS_MAX_MUTEXES must be <= 65535"
-#   endif
-#endif
 
-#ifndef OS_MAX_FLAGS
-#   error "OS_CFG.H, Missing OS_MAX_FLAGS: Max. number of event control blocks in your application"
-#else
-#   if  OS_MAX_FLAGS > 65535u
-#       error "OS_CFG.H, OS_MAX_FLAGS must be <= 65535"
-#   endif
-#endif
 
 #ifndef OS_SCHED_LOCK_EN
 #   error "OS_CFG.H, Missing OS_SCHED_LOCK_EN: Include code for osLockSched() and osUnlockSched()"
-#endif
-
-#ifndef OS_TASK_SW_HOOK_EN
-#   error "OS_CFG.H, Missing OS_TASK_SW_HOOK_EN: Allows you to include the code for OSTaskSwHook() or not"
-#endif
-
-#ifndef OS_TIME_TICK_HOOK_EN
-#   error "OS_CFG.H, Missing OS_TIME_TICK_HOOK_EN: Allows you to include the code for OSTimeTickHook() or not"
 #endif
 
 #ifndef OS_STAT_EN
 #   error "OS_CFG.H, Missing OS_STAT_EN: Enable (1) or Disable(0) the statistics task"
 #endif
 
-#ifndef OS_STAT_TASK_STK_CHK_EN
-#   error "OS_CFG.H, Missing OS_STAT_TASK_STK_CHK_EN: Check task stacks from statistics task"
+#ifndef OS_HOOKS_EN
+#   error "OS_CFG.H, Missing OS_HOOKS_EN: Hooks are Enable (1) or Disable (0)"
+#endif
+
+#ifndef OS_TASK_SW_HOOK_EN
+#   error "OS_CFG.H, Missing OS_TASK_SW_HOOK_EN: Allows you to include the code for OSTaskSwHook() or not"
+#endif
+
+#ifndef OS_SYS_TICK_HOOK_EN
+#   error "OS_CFG.H, Missing OS_SYS_TICK_HOOK_EN: Allows you to include the code for OSSysTickHook() or not"
 #endif
 
      

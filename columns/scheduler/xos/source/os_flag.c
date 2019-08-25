@@ -16,14 +16,13 @@
 *******************************************************************************/
 
 
-//! \note do not move this pre-processor statement to other places
-#define __OS_FLAG_C__
+
 
 /*============================ INCLUDES ======================================*/
 #include ".\os_private.h"
 #include ".\os_port.h"
 
-#if (OS_FLAG_EN > 0u) && (OS_MAX_FLAGS > 0u)
+#if OS_FLAG_EN > 0u
 
 /*============================ MACROS ========================================*/
 #define OS_FLAG_STATUS_BIT              (0x01u)
@@ -36,25 +35,25 @@
 /*============================ GLOBAL VARIABLES ==============================*/
 /*============================ IMPLEMENTATION ================================*/
 
-/*!
- *! \Brief       CREATE AN EVENT FLAG
- *!
- *! \Description This function is called to create an flag object.
- *!
- *! \Arguments   pFlagHandle    Pointer to the handle of flag.
- *!
- *!              initValue      Initial value of flag. If this value is TRUE, the initial state of the
- *!                             flag is SET.
- *!
- *!              manualReset    If this flag is auto reset. It can be:
- *!                             manualReset == TRUE     The flag will not be reset until you reset it
- *!                                                     by calling osFlagReset. 
- *!                             manualReset == FALSE    The flag will be reset once a waiting task has
- *!                                                     been release. 
- *!
- *! \Returns     OS_ERR_NONE            If the call was successful.
- *!              OS_ERR_USE_IN_ISR      If you attempted to create an Event Flag from an ISR.
- *!              OS_ERR_OBJ_DEPLETED    If there are no more event flag control block
+/*
+ *  \brief      CREATE AN EVENT FLAG
+ * 
+ *  \remark     This function is called to create an flag object.
+ * 
+ *  \param      pFlagHandle     Pointer to the handle of flag.
+ * 
+ *              initValue       Initial value of flag. If this value is TRUE, the initial state of the
+ *                              flag is SET.
+ * 
+ *              manualReset     If this flag is auto reset. It can be:
+ *                              manualReset == TRUE     The flag will not be reset until you reset it
+ *                                                      by calling osFlagReset. 
+ *                              manualReset == FALSE    The flag will be reset once a waiting task has
+ *                                                      been release. 
+ * 
+ *  \return     OS_ERR_NONE            If the call was successful.
+ *              OS_ERR_USE_IN_ISR      If you attempted to create an Event Flag from an ISR.
+ *              OS_ERR_OBJ_DEPLETED    If there are no more event flag control block
  */
 OS_ERR osFlagCreate(OS_HANDLE *pFlagHandle, BOOL initValue, BOOL manualReset)
 {
@@ -90,9 +89,9 @@ OS_ERR osFlagCreate(OS_HANDLE *pFlagHandle, BOOL initValue, BOOL manualReset)
     //! set object type.
     //! initial flag's property.
     //! initial flag's wait list.
-    pflag->OSFlagObjHeader.OSObjType      = OS_OBJ_TYPE_SET(OS_OBJ_TYPE_FLAG)
-                          | OS_OBJ_TYPE_WAITABLE_MSK
-                          | OS_OBJ_PRIO_TYPE_SET(OS_OBJ_PRIO_TYPE_LIST);
+    pflag->OSFlagObjHeader.OSObjType = OS_OBJ_TYPE_SET(OS_OBJ_TYPE_FLAG)
+                                     | OS_OBJ_TYPE_WAITABLE_MSK
+                                     | OS_OBJ_PRIO_TYPE_SET(OS_OBJ_PRIO_TYPE_LIST);
     pflag->OSFlagFlags    = flags;
     list_init(&pflag->OSFlagWaitList);
     
@@ -101,35 +100,35 @@ OS_ERR osFlagCreate(OS_HANDLE *pFlagHandle, BOOL initValue, BOOL manualReset)
     return OS_ERR_NONE;
 }
 
-/*!
- *! \Brief       DELETE A FLAG
- *!
- *! \Description This function deletes a flag and readies all tasks pending on it.
- *!
- *! \Arguments   pFlagHandle    is a pointer to the handle of flag.
- *!
- *!              opt            determines delete options, one of follows:
- *!                             opt == OS_DEL_NOT_IN_USE    Deletes the flag ONLY if no task pending
- *!                                                         for it.
- *!                             opt == OS_DEL_ALWAYS        Deletes the flag even if tasks are pending 
- *!                                                         for it.  In this case, all the pending tasks
- *!                                                         will be readied.
- *!
- *! \Returns     OS_ERR_NONE            The flag was deleted successfully.
- *!              OS_ERR_USE_IN_ISR      If you attempted to delete the flag from an ISR.
- *!              OS_ERR_INVALID_HANDLE  If 'hFlag' is an invalid handle.
- *!              OS_ERR_OBJ_TYPE        If you didn't pass a flag object.
- *!              OS_ERR_INVALID_OPT     An invalid option was specified.
- *!              OS_ERR_TASK_WAITING    One or more tasks were waiting on the flag.
- *!
- *!
- *! \Notes       1) This function must be used with care. Tasks that would normally expect
- *!                 the presence of the flag MUST check the return code of osFlagPend().
- *!              2) This call can potentially disable interrupts for a long time. The interrupt
- *!                 disable time is directly proportional to the number of tasks waiting on
- *!                 the flag.
- *!              3) All tasks that were waiting for the event flag will be readied and returned an
- *!                 OS_ERR_PEND_ABORT if osFlagDelete() was called with OS_DEL_ALWAYS.
+/*
+ *  \brief      DELETE A FLAG
+ * 
+ *  \remark     This function deletes a flag and readies all tasks pending on it.
+ * 
+ *  \param      pFlagHandle     is a pointer to the handle of flag.
+ * 
+ *              opt             determines delete options, one of follows:
+ *                              opt == OS_DEL_NOT_IN_USE    Deletes the flag ONLY if no task pending
+ *                                                          for it.
+ *                              opt == OS_DEL_ALWAYS        Deletes the flag even if tasks are pending 
+ *                                                          for it.  In this case, all the pending tasks
+ *                                                          will be readied.
+ * 
+ *  \return     OS_ERR_NONE            The flag was deleted successfully.
+ *              OS_ERR_USE_IN_ISR      If you attempted to delete the flag from an ISR.
+ *              OS_ERR_INVALID_HANDLE  If 'hFlag' is an invalid handle.
+ *              OS_ERR_OBJ_TYPE        If you didn't pass a flag object.
+ *              OS_ERR_INVALID_OPT     An invalid option was specified.
+ *              OS_ERR_TASK_WAITING    One or more tasks were waiting on the flag.
+ * 
+ * 
+ *  \note       1) This function must be used with care. Tasks that would normally expect
+ *                 the presence of the flag MUST check the return code of osFlagPend().
+ *              2) This call can potentially disable interrupts for a long time. The interrupt
+ *                 disable time is directly proportional to the number of tasks waiting on
+ *                 the flag.
+ *              3) All tasks that were waiting for the event flag will be readied and returned an
+ *                 OS_ERR_PEND_ABORT if osFlagDelete() was called with OS_DEL_ALWAYS.
  */
 #if OS_FLAG_DEL_EN > 0u
 OS_ERR osFlagDelete(OS_HANDLE *pFlagHandle, UINT16 opt)
@@ -156,11 +155,11 @@ OS_ERR osFlagDelete(OS_HANDLE *pFlagHandle, UINT16 opt)
     }
 
     OSEnterCriticalSection();
-    if (!LIST_IS_EMPTY(pflag->OSFlagWaitList)) {     //!< See if any tasks taskPend on this flag...
-        taskPend    = TRUE;                                         //!< ...Yes
+    if (!LIST_IS_EMPTY(pflag->OSFlagWaitList)) {    //!< Is any tasks taskPend on this flag...
+        taskPend    = TRUE;                         //!< ...Yes
         taskSched   = TRUE;
     } else {
-        taskPend    = FALSE;                                        //!< ...No
+        taskPend    = FALSE;                        //!< ...No
     }
     switch (opt) {
         case OS_DEL_NOT_IN_USE:
@@ -194,26 +193,26 @@ OS_ERR osFlagDelete(OS_HANDLE *pFlagHandle, UINT16 opt)
 }
 #endif
 
-/*!
- *! \Brief       WAIT ON A FLAG
- *!
- *! \Description This function is called to wait for a flag to be set.
- *!
- *! \Arguments   hFlag          is a handle to the desired flag.
- *!
- *!              timeout        is an optional timeout (in clock ticks) that your task will wait for
- *!                             the desired bit combination.  If you specify OS_INFINITE, this function
- *!                             will not return until the flag is set.
- *!                             If you specify 0, this call will return immediately even if the flag
- *!                             was not set.
- *!
- *!  \Returns    OS_ERR_NONE            The flag have been set within the specified 'timeout'.
- *!              OS_ERR_USE_IN_ISR      If you tried to PEND from an ISR.
- *!              OS_ERR_PEND_LOCKED     If you called this function when the scheduler is locked.
- *!              OS_ERR_INVALID_HANDLE  If 'hFlag' is an invalid handle.
- *!              OS_ERR_OBJ_TYPE      If you didn't pass a flag object.
- *!              OS_ERR_TIMEOUT         The flag have not been set in the specified 'timeout'.
- *!              OS_ERR_PEND_ABORT      The wait on the flag was aborted.
+/*
+ *  \brief      WAIT ON A FLAG
+ * 
+ *  \remark     This function is called to wait for a flag to be set.
+ * 
+ *  \param      hFlag       is a handle to the desired flag.
+ * 
+ *              timeout     is an optional timeout (in clock ticks) that your task will wait for
+ *                          the desired bit combination.  If you specify OS_INFINITE, this function
+ *                          will not return until the flag is set.
+ *                          If you specify 0, this call will return immediately even if the flag
+ *                          was not set.
+ * 
+ *   \return    OS_ERR_NONE             The flag have been set within the specified 'timeout'.
+ *              OS_ERR_USE_IN_ISR       If you tried to PEND from an ISR.
+ *              OS_ERR_PEND_LOCKED      If you called this function when the scheduler is locked.
+ *              OS_ERR_INVALID_HANDLE   If 'hFlag' is an invalid handle.
+ *              OS_ERR_OBJ_TYPE         If you didn't pass a flag object.
+ *              OS_ERR_TIMEOUT          The flag have not been set in the specified 'timeout'.
+ *              OS_ERR_PEND_ABORT       The wait on the flag was aborted.
  */
 OS_ERR osFlagPend(OS_HANDLE hFlag, UINT32 timeout)
 {
@@ -229,10 +228,10 @@ OS_ERR osFlagPend(OS_HANDLE hFlag, UINT32 timeout)
         return OS_ERR_INVALID_HANDLE;
     }
 #endif
-    if (osIntNesting > 0u) {            //!< Can't PEND from an ISR
+    if (osIntNesting > 0u) {                    //!< Can't PEND from an ISR
         return OS_ERR_USE_IN_ISR;
     }
-    if (osLockNesting > 0u) {           //!< Can't PEND when locked
+    if (osLockNesting > 0u && timeout != 0u) {  //!< Can't PEND when locked
         return OS_ERR_PEND_LOCKED;
     }
     if (OS_OBJ_TYPE_GET(pflag->OSFlagObjHeader.OSObjType) != OS_OBJ_TYPE_FLAG) {    //!< Validate object's type
@@ -277,21 +276,21 @@ OS_ERR osFlagPend(OS_HANDLE hFlag, UINT32 timeout)
     return err;
 }
 
-/*!
- *! \Brief       SET A FLAG
- *!
- *! \Description This function is called to set a flag.
- *!
- *! \Arguments   hFlag          is a handle to the desired flag.
- *!
- *! \Returns     OS_ERR_NONE            The call was successfull
- *!              OS_ERR_INVALID_HANDLE  If 'hFlag' is an invalid handle.
- *!              OS_ERR_OBJ_TYPE        If you didn't pass a event flag object.
- *!
- *! \Notes       1) The execution time of this function depends on the number of tasks waiting on
- *!                 the event flag.
- *!              2) The amount of time interrupts are DISABLED depends on the number of tasks
- *!                 waiting on the event flag.
+/*
+ *  \brief      SET A FLAG
+ * 
+ *  \remark     This function is called to set a flag.
+ * 
+ *  \param      hFlag          is a handle to the desired flag.
+ * 
+ *  \return     OS_ERR_NONE            The call was successfull
+ *              OS_ERR_INVALID_HANDLE  If 'hFlag' is an invalid handle.
+ *              OS_ERR_OBJ_TYPE        If you didn't pass a event flag object.
+ * 
+ *  \note       1) The execution time of this function depends on the number of tasks waiting on
+ *                 the event flag.
+ *              2) The amount of time interrupts are DISABLED depends on the number of tasks
+ *                 waiting on the event flag.
  */
 OS_ERR osFlagSet(OS_HANDLE hFlag)
 {
@@ -309,8 +308,8 @@ OS_ERR osFlagSet(OS_HANDLE hFlag)
 
     OSEnterCriticalSection();
     pflag->OSFlagFlags |= OS_FLAG_STATUS_BIT;               //!< Set the flags.
-    if (!LIST_IS_EMPTY(pflag->OSFlagWaitList)) {         //!< See if any task is waiting for this flag.
-        while (!LIST_IS_EMPTY(pflag->OSFlagWaitList)) {  //!< Yes, Ready ALL tasks waiting for this flag.
+    if (!LIST_IS_EMPTY(pflag->OSFlagWaitList)) {            //!< See if any task is waiting for this flag.
+        while (!LIST_IS_EMPTY(pflag->OSFlagWaitList)) {     //!< Yes, Ready ALL tasks waiting for this flag.
             OS_WaitableObjRdyTask((OS_WAITABLE_OBJ *)pflag, &pflag->OSFlagWaitList, OS_STAT_PEND_OK);
         }
         if (pflag->OSFlagFlags & OS_FLAG_MANUAL_RESET_BIT) {    //!< Is this a auto-reset flag?
@@ -323,16 +322,16 @@ OS_ERR osFlagSet(OS_HANDLE hFlag)
     return OS_ERR_NONE;
 }
 
-/*!
- *! \Brief       RESET A FLAG
- *!
- *! \Description This function is called to reset a flag.
- *!
- *! \Arguments   hFlag          is a handle to the desired flag.
- *!
- *! \Returns     OS_ERR_NONE            The call was successfull
- *!              OS_ERR_INVALID_HANDLE  If 'hFlag' is an invalid handle.
- *!              OS_ERR_OBJ_TYPE      If you didn't pass a flag object.
+/*
+ *  \brief      RESET A FLAG
+ * 
+ *  \remark     This function is called to reset a flag.
+ * 
+ *  \param      hFlag          is a handle to the desired flag.
+ * 
+ *  \return     OS_ERR_NONE             The call was successfull
+ *              OS_ERR_INVALID_HANDLE   If 'hFlag' is an invalid handle.
+ *              OS_ERR_OBJ_TYPE         If you didn't pass a flag object.
  */
 OS_ERR osFlagReset(OS_HANDLE hFlag)
 {
@@ -355,18 +354,18 @@ OS_ERR osFlagReset(OS_HANDLE hFlag)
     return OS_ERR_NONE;
 }
 
-/*!
- *! \Brief       QUERY A FLAG
- *!
- *! \Description This function is used to get the information of the flag. This is intent on statistic use, do not
- *!              use in your application.
- *!
- *! \Arguments   hFlag          is a handle to the desired flag.
- *!              pInfo          a pointer to a OS_FLAG_INFO struct to store the information.
- *!
- *! \Returns     OS_ERR_NONE            The call was successfull
- *!              OS_ERR_INVALID_HANDLE  If 'hFlag' is an invalid handle.
- *!              OS_ERR_OBJ_TYPE      If you didn't pass a event flag object.
+/*
+ *  \brief      QUERY A FLAG
+ * 
+ *  \remark     This function is used to get the information of the flag. This is intent on statistic use, do not
+ *              use in your application.
+ * 
+ *  \param      hFlag          is a handle to the desired flag.
+ *              pInfo          a pointer to a OS_FLAG_INFO struct to store the information.
+ * 
+ *  \return     OS_ERR_NONE             The call was successfull
+ *              OS_ERR_INVALID_HANDLE   If 'hFlag' is an invalid handle.
+ *              OS_ERR_OBJ_TYPE         If you didn't pass a event flag object.
  */
 #if OS_FLAG_QUERY_EN > 0u
 OS_ERR osFlagQuery(OS_HANDLE hFlag, OS_FLAG_INFO *pInfo)
@@ -405,4 +404,4 @@ OS_ERR osFlagQuery(OS_HANDLE hFlag, OS_FLAG_INFO *pInfo)
 }
 #endif
 
-#endif      //!< #if (OS_FLAG_EN > 0u) && (OS_MAX_FLAGS > 0u)
+#endif      //!< #if OS_FLAG_EN > 0u

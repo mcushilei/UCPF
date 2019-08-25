@@ -20,19 +20,15 @@
 #ifndef __XOS_SOURCE_PRIVATE_H__
 #define __XOS_SOURCE_PRIVATE_H__
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 
 #include "./os_cfg.h"
-#include "../ports/ports.h"
 #include "../../../list/list.h"
 #include "../../../pool/pool.h"
 #include "./os.h"
 
-/*!
- *! MISCELLANEOUS
+/*
+ *  MISCELLANEOUS
  */
 #ifdef  __OS_CORE_C__
 #   define OS_EXT
@@ -59,8 +55,8 @@ extern "C" {
 #define OS_BITMAP_TBL_SIZE          ((OS_MAX_PRIO_LEVELS + 15u) / 16u)  //!< Size of bitmap table
 
     
-/*!
- *! TASK PEND STATUS (Status codes for OSTCBStatPend)
+/*
+ *  TASK PEND STATUS (Status codes for OSTCBStatPend)
  */
 #define OS_STAT_PEND_OK             (0u)      //!< Not pending, or pending complete
 #define OS_STAT_PEND_TO             (1u)      //!< Pending timed out
@@ -68,11 +64,11 @@ extern "C" {
 
 
 
-/*!
- *! OBJECT TYPES
- *! 
- *! NOTE: the least bits shall always are 1 to make it very different from pointer's value
- *!       in case the objects have been freed.
+/*
+ *  OBJECT TYPES
+ *  
+ *  NOTE: the least bits shall always are 1 to make it very different from pointer's value
+ *        in case the objects have been freed.
  */
 enum {
     OS_OBJ_TYPE_UNUSED  = 0,
@@ -106,9 +102,11 @@ enum {
 
 #define OS_QUEUE_BUFFER_STATIC      (0x0000)
 #define OS_QUEUE_BUFFER_ON_HEAP     (0x0001)
-    
-/*!
- *! \Brief  ELEMENTARY TYPE
+#define OS_QUEUE_STOP_ENQUEUE       (0x0004)
+
+
+/*
+ *  \brief  ELEMENTARY TYPE
  */
 
 typedef UINT16                  OS_BITMAP_UINT;
@@ -126,9 +124,9 @@ typedef struct os_queue         OS_QUEUE;
 typedef struct os_wait_node     OS_WAIT_NODE;
 
 
-/*!
- *! \brief  all kernel's object shall begin with this header.
- *! \Note   This structure shall be always kept 32bits length.
+/*
+ *  \brief  all kernel's object shall begin with this header.
+ *  \note   This structure shall be always kept 32bits length.
  */
 typedef union {
     UINT16              OSObjType;
@@ -136,18 +134,13 @@ typedef union {
     void               *OSObjPointer;
 } OS_OBJ_HEAD;
 
-//! memory pool.
-struct os_mem_pool {
-    OS_LIST_NODE        OSMemList;
-};
-
-//!< Ready bitmap
+//! Ready bitmap
 struct os_prio_bitmap {
     OS_BITMAP_UINT      Y;
     OS_BITMAP_UINT      X[OS_BITMAP_TBL_SIZE];
 };
 
-//!< wait-node object.
+//! wait-node object.
 struct os_wait_node {
     OS_TCB             *OSWaitNodeTCB;              //!< Pointer to TCB.
     OS_WAITABLE_OBJ    *OSWaitNodeECB;              //!< Pointer to ECB.
@@ -156,16 +149,16 @@ struct os_wait_node {
     UINT8               OSWaitNodeRes;              //!< Wait resault.
 };
 
-/*!
- *! \brief  Waitable object type.
- *! \Note   For casting use, do NOT define any varibles.
+/*
+ *  \brief  Waitable object type.
+ *  \note   For casting use, do NOT define any varibles.
  */
 struct os_waitable_obj {
     OS_OBJ_HEAD         OSWaitObjHeader;
 };
 
-/*!
- *! \Brief  SEMAPHORE CONTROL BLOCK
+/*
+ *  \brief  SEMAPHORE CONTROL BLOCK
  */
 #if (OS_QUEUE_EN > 0u) && (OS_MAX_QUEUES > 0u)
 struct os_queue {
@@ -188,8 +181,8 @@ struct os_queue {
 };
 #endif
 
-/*!
- *! \Brief  SEMAPHORE CONTROL BLOCK
+/*
+ *  \brief  SEMAPHORE CONTROL BLOCK
  */
 #if (OS_SEM_EN > 0u) && (OS_MAX_SEMAPHORES > 0u)
 struct os_sem {
@@ -201,8 +194,8 @@ struct os_sem {
 };
 #endif
 
-/*!
- *! \Brief  MUTEX CONTROL BLOCK
+/*
+ *  \brief  MUTEX CONTROL BLOCK
  */
 #if (OS_MUTEX_EN > 0u) && (OS_MAX_MUTEXES > 0u)
 struct os_mutex {
@@ -221,8 +214,8 @@ struct os_mutex {
 };
 #endif
 
-/*!
- *! \Brief  EVENT FLAGS CONTROL BLOCK
+/*
+ *  \brief  EVENT FLAGS CONTROL BLOCK
  */
 #if (OS_FLAG_EN > 0u) && (OS_MAX_FLAGS > 0u)
 struct os_flag {
@@ -234,8 +227,8 @@ struct os_flag {
 };
 #endif
 
-/*!
- *! \Brief  TASK CONTROL BLOCK
+/*
+ *  \brief  TASK CONTROL BLOCK
  */
 struct os_tcb {
     OS_OBJ_HEAD         OSTCBObjHeader;
@@ -272,25 +265,25 @@ struct os_tcb {
 };
 
 
-/*!
- *! \Brief  GLOBAL VARIABLES
+/*
+ *  \brief  GLOBAL VARIABLES
  */
-#if (OS_QUEUE_EN > 0u) && (OS_MAX_QUEUES > 0u)
+#if OS_QUEUE_EN > 0u
 OS_EXT  OS_MEM_POOL     osQueueFreePool;                        //!< Pointer to list of free semaphore control blocks
 OS_EXT  OS_QUEUE        osQueueFreeTbl[OS_MAX_QUEUES];          //!< Table of semaphore control blocks
 #endif
 
-#if (OS_SEM_EN > 0u) && (OS_MAX_SEMAPHORES > 0u)
+#if OS_SEM_EN > 0u
 OS_EXT  OS_MEM_POOL     osSemFreePool;                          //!< Pointer to list of free semaphore control blocks
-OS_EXT  OS_SEM          osSemFreeTbl[OS_MAX_SEMAPHORES];       //!< Table of semaphore control blocks
+OS_EXT  OS_SEM          osSemFreeTbl[OS_MAX_SEMAPHORES];        //!< Table of semaphore control blocks
 #endif
 
-#if (OS_MUTEX_EN > 0u) && (OS_MAX_MUTEXES > 0u)
+#if OS_MUTEX_EN > 0u
 OS_EXT  OS_MEM_POOL     osMutexFreePool;                        //!< Pointer to list of free mutex control blocks
 OS_EXT  OS_MUTEX        osMutexFreeTbl[OS_MAX_MUTEXES];         //!< Table of mutex control blocks
 #endif
 
-#if (OS_FLAG_EN > 0u) && (OS_MAX_FLAGS > 0u)
+#if OS_FLAG_EN > 0u
 OS_EXT  OS_MEM_POOL     osFlagFreePool;                         //!< Pointer to list of free flag control blocks
 OS_EXT  OS_FLAG         osFlagFreeTbl[OS_MAX_FLAGS];            //!< Table of flag control blocks
 #endif
@@ -301,8 +294,8 @@ OS_EXT  OS_TCB          osTCBFreeTbl[OS_MAX_TASKS + OS_N_SYS_TASKS];    //!< Tab
 
 OS_EXT  OS_LIST_NODE    osWaitList;                             //!< list of waiting task.
 OS_EXT  OS_LIST_NODE    osWaitRunoverList;
-OS_EXT  volatile UINT32 osCoreTimerScanHand;
-OS_EXT  volatile UINT32 osCoreTimerScanHandOld;
+OS_EXT  volatile UINT32 osSysClockScanHand;
+OS_EXT  volatile UINT32 osSysClockScanHandOld;
 
 
 OS_EXT  OS_PRIO_BITMAP  osRdyBitmap;                            //!< bitmap that indicates which priority has threads that are ready to run.
@@ -328,13 +321,13 @@ OS_EXT  volatile UINT32 osIdleCtr;                              //!< Idle counte
 OS_EXT  CPU_STK         osTaskIdleStk[OS_TASK_IDLE_STK_SIZE];   //!< Idle task stack
 
 
-/*!
- *! INTERNAL FUNCTION PROTOTYPES
- *! (Your application MUST NOT call these functions)
+/*
+ *  INTERNAL FUNCTION PROTOTYPES
+ *  (Your application MUST NOT call these functions)
  */
 
-/*!
- *! OS SCHEDULE INTERFACE
+/*
+ *  OS SCHEDULE INTERFACE
  */
 void        OS_SchedulerInit       (void);
 void        OS_SchedulerReadyTask  (OS_TCB         *ptcb);
@@ -379,8 +372,5 @@ void        OS_BitmapClr           (OS_PRIO_BITMAP *pmap,
 
 UINT8       OS_BitmapGetHigestPrio (OS_PRIO_BITMAP *pmap);
 
-#ifdef __cplusplus
-}
-#endif
 
 #endif

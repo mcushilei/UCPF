@@ -39,48 +39,48 @@ static void os_task_return     (void           *arg);
 /*============================ GLOBAL VARIABLES ==============================*/
 /*============================ IMPLEMENTATION ================================*/
 
-/*!
- *! \Brief       CREATE A TASK
- *!
- *! \Description This function is used to have OS manage the execution of a task.  Tasks can either
- *!              be created prior to the start of multitasking or by a running task.  A task cannot be
- *!              created by an ISR.
- *!
- *!
- *!              the thread entry function shall like this:
- *!                 int task (void *parg)
- *!                 {
- *!                     if () {
- *!                        return -1;
- *!                     }
- *!                     
- *!                     for (;;) {
- *!                        Task code;
- *!                     }
- *!                     
- *!                     return 0;
- *!                 }
- *!
- *! \Arguments   pHandle    is a pointer to the task's handle
- *!
- *! \Arguments   Stack      point to the array stack[].
- *!
- *! \Arguments   StackSize  The size of the stack. The value is the length of the stack[], NOT sizeof(stack).
- *!
- *! \Arguments   Options    contains additional information (or options) about the behavior of the task.  The
- *!                         LOWER 8-bits are reserved by OS while the upper 8 bits can be application
- *!                         specific.  See OS_TASK_OPT_??? in OS.H.  Current choices are:
- *!
- *!                         OS_TASK_OPT_STK_CHK     Stack checking to be allowed for the task
- *!                         OS_TASK_OPT_STK_CLR     Clear the stack when the task is created
- *!                         OS_TASK_OPT_SAVE_FP     If the CPU has floating-point registers, save them
- *!                                                 during a context switch.
- *!
- *! \Arguments   Priority   The value should not freater than OS_TASK_LOWEST_PRIO.
- *!
- *! \Returns     OS_ERR_NONE            if the function was successful.
- *!              OS_ERR_INVALID_PRIO    if the priority you specify is higher that the maximum
- *!              OS_ERR_USE_IN_ISR      if you tried to create a task from an ISR.
+/*
+ *  \brief      CREATE A TASK
+ * 
+ *  \remark     This function is used to have OS manage the execution of a task.  Tasks can either
+ *              be created prior to the start of multitasking or by a running task.  A task cannot be
+ *              created by an ISR.
+ * 
+ * 
+ *              the thread entry function shall like this:
+ *                  int task (void *parg)
+ *                  {
+ *                      if () {
+ *                         return -1;
+ *                      }
+ *                      
+ *                      for (;;) {
+ *                         Task code;
+ *                      }
+ *                      
+ *                      return 0;
+ *                  }
+ * 
+ *  \param      pHandle    is a pointer to the task's handle
+ * 
+ *              stack      point to the array stack[].
+ * 
+ *              stackSize  The size of the stack. The value is the length of the stack[], NOT sizeof(stack).
+ * 
+ *              priority   The value should be LESS than OS_TASK_LOWEST_PRIO.
+ * 
+ *              options    contains additional information (or options) about the behavior of the task.  The
+ *                         LOWER 8-bits are reserved by OS while the upper 8 bits can be application
+ *                         specific.  See OS_TASK_OPT_??? in OS.H.  Current choices are:
+ * 
+ *                         OS_TASK_OPT_STK_CHK     Stack checking to be allowed for the task
+ *                         OS_TASK_OPT_STK_CLR     Clear the stack when the task is created
+ *                         OS_TASK_OPT_SAVE_FP     If the CPU has floating-point registers, save them
+ *                                                 during a context switch.
+ * 
+ *  \return     OS_ERR_NONE            if the function was successful.
+ *              OS_ERR_INVALID_PRIO    if the priority you specify is higher that the maximum
+ *              OS_ERR_USE_IN_ISR      if you tried to create a task from an ISR.
  */
 
 OS_ERR  osTaskCreate(   OS_HANDLE      *pHandle,
@@ -95,24 +95,22 @@ OS_ERR  osTaskCreate(   OS_HANDLE      *pHandle,
     CPU_STK    *psp;
 
 
-    if (osIntNesting > 0u) {            //!< See if called from ISR ...
-        return OS_ERR_USE_IN_ISR;       //!< ... Should not create object from an ISR.
-    }
 #if OS_ARG_CHK_EN > 0u
+    if (entry == NULL) {
+        return OS_ERR_NULL_POINTER;
+    }
 #if OS_TASK_STACK_ON_HEAP_EN == 0
     if (stack == NULL) {
         return OS_ERR_NULL_POINTER;
     }
 #endif
-    if (entry == NULL) {
-        return OS_ERR_NULL_POINTER;
-    }
-#if OS_TASK_LOWEST_PRIO < 255u
-    if (priority > OS_TASK_LOWEST_PRIO) {   //!< Make sure priority is within allowable range
+    if (priority >= OS_TASK_LOWEST_PRIO) {  //!< Make sure priority is within allowable range
         return OS_ERR_INVALID_PRIO;
     }
 #endif
-#endif
+    if (osIntNesting > 0u) {                //!< See if called from ISR ...
+        return OS_ERR_USE_IN_ISR;           //!< ... Should not create object from an ISR.
+    }
     
     //! Get a TCB object.
     OSEnterCriticalSection();
@@ -181,7 +179,7 @@ static void os_unlock_mutex(OS_MUTEX *pmutex)
 
     list_remove(&pmutex->OSMutexOvlpList);
     
-    if (!LIST_IS_EMPTY(pmutex->OSMutexWaitList)) {               //!< Any task waiting for the mutex?
+    if (!LIST_IS_EMPTY(pmutex->OSMutexWaitList)) {                  //!< Is any task waiting for the mutex?
         ptcb = OS_WaitableObjRdyTask((OS_WAITABLE_OBJ *)pmutex,     //!< Yes, Make HPT waiting for mutex ready
                                     &pmutex->OSMutexWaitList,
                                     OS_STAT_PEND_OK);
@@ -194,17 +192,17 @@ static void os_unlock_mutex(OS_MUTEX *pmutex)
 }
 #endif
 
-/*!
- *! \Brief       DELETE CURRENT TASK
- *!
- *! \Description This function delete current running task. The deleted task is returned to the dormant
- *!              state and can be re-activated by creating the deleted task again. This function is
- *!              internal to OS. Your task should be terminated by a return.
- *!              
- *!
- *! \Arguments   none
- *!
- *! \Returns     none
+/*
+ *  \brief      DELETE CURRENT TASK
+ * 
+ *  \remark     This function delete current running task. The deleted task is returned to the dormant
+ *              state and can be re-activated by creating the deleted task again. This function is
+ *              internal to OS. Your task should be terminated by a return.
+ *               
+ * 
+ *  \param      none
+ * 
+ *  \return     none
  */
 static void os_task_del(void)
 {
@@ -244,21 +242,21 @@ static void os_task_del(void)
 }
 #endif
 
-/*!
- *! \Brief       CHANGE PRIORITY OF A TASK
- *!
- *! \Description This function allows you to change the priority of a task dynamically.  Note that the new
- *!              priority MUST be available.
- *!
- *! \Arguments   ptcb     pointer to tcb
- *!
- *!              newp     is the new priority
- *!
- *! \Returns     OS_ERR_NONE            is the call was successful
- *!              OS_ERR_INVALID_HANDLE  ptcb is NULL.
- *!              OS_ERR_INVALID_PRIO    if the priority you specify is higher that the maximum allowed
- *!              OS_ERR_TASK_NOT_EXIST  there is no task with the specified OLD priority (i.e. the OLD task does
- *!                                     not exist.
+/*
+ *  \brief      CHANGE PRIORITY OF A TASK
+ * 
+ *  \remark     This function allows you to change the priority of a task dynamically.  Note that the new
+ *              priority MUST be available.
+ * 
+ *  \param      ptcb     pointer to tcb
+ * 
+ *              newp     is the new priority
+ * 
+ *  \return     OS_ERR_NONE             is the call was successful
+ *              OS_ERR_INVALID_HANDLE   ptcb is NULL.
+ *              OS_ERR_INVALID_PRIO     if the priority you specify is higher that the maximum allowed
+ *              OS_ERR_TASK_NOT_EXIST   there is no task with the specified OLD priority (i.e. the OLD task does
+ *                                      not exist.
  */
 #if OS_TASK_CHANGE_PRIO_EN > 0u
 OS_ERR osTaskChangePrio(OS_HANDLE taskHandle, UINT8 newprio)
@@ -282,7 +280,7 @@ OS_ERR osTaskChangePrio(OS_HANDLE taskHandle, UINT8 newprio)
 
     OSEnterCriticalSection();
 #if (OS_MUTEX_EN > 0u) && (OS_MAX_MUTEXES > 0u)
-    if (!LIST_IS_EMPTY(ptcb->OSTCBOwnMutexList)) {   //!< See if the task ownes any mutex.
+    if (!LIST_IS_EMPTY(ptcb->OSTCBOwnMutexList)) {      //!< See if the task ownes any mutex.
                                                         //!< Yes. Update the priority store in the mutex(es).
         for (OS_LIST_NODE *iterate = ptcb->OSTCBOwnMutexList.Next; iterate != &ptcb->OSTCBOwnMutexList; iterate = iterate->Next) {
             OS_MUTEX *pmutex = CONTAINER_OF(iterate, OS_MUTEX, OSMutexOvlpList);
@@ -307,23 +305,23 @@ OS_ERR osTaskChangePrio(OS_HANDLE taskHandle, UINT8 newprio)
 }
 #endif
 
-/*!
- *! \Brief       CATCH ACCIDENTAL TASK RETURN
- *!
- *! \Description This function is wrapper of a task.  It mainly handles the return of the task and deletes
- *!              it after the task function returns.
- *!
- *! \Arguments   parg          this value is returned by the task.
- *!
- *! \Returns     none
- *!
- *! \Notes       This function is INTERNAL to OS and your application should not call it.
+/*
+ *  \brief      CATCH ACCIDENTAL TASK RETURN
+ * 
+ *  \remark     This function is wrapper of a task.  It mainly handles the return of the task and deletes
+ *              it after the task function returns.
+ * 
+ *  \param      parg          this value is returned by the task.
+ * 
+ *  \return     none
+ * 
+ *  \note       This function is INTERNAL to OS and your application should not call it.
  */
 
 static void os_task_return(void *parg)
 {
 #if OS_HOOKS_EN > 0
-    OSTaskReturnHook(osTCBCur, parg);    //!< Call hook to let user decide on what to do
+    OSTaskReturnHook(osTCBCur, parg);   //!< Call hook to let user decide on what to do
 #endif
 
 #if OS_TASK_DEL_EN > 0u
@@ -335,25 +333,25 @@ static void os_task_return(void *parg)
 #endif
 }
 
-/*!
- *! \Brief       CLEAR TASK STACK
- *!
- *! \Description This function is used to clear the stack of a task (i.e. write all zeros)
- *!
- *! \Arguments   pbos     is a pointer to the task's BOTTOM of stack.  If the configuration constant
- *!                       OS_CPU_STK_GROWTH_DOWN is set to 1, the stack is assumed to grow downward (i.e. from high
- *!                       memory to low memory).  'pbos' will thus point to the lowest (valid) memory
- *!                       location of the stack.  If OS_CPU_STK_GROWTH_DOWN is set to 0, 'pbos' will point to the
- *!                       highest memory location of the stack and the stack will grow with increasing
- *!                       memory locations.  'pbos' MUST point to a valid 'free' data item.
- *!
- *!              size     is the number of 'stack elements' to clear.
- *!
- *!              opt      contains additional information (or options) about the behavior of the task.  The
- *!                       LOWER 8-bits are reserved by OS while the upper 8 bits can be application
- *!                       specific.  See OS_TASK_OPT_??? in OS.H.
- *!
- *! \Returns     none
+/*
+ *  \brief      CLEAR TASK STACK
+ * 
+ *  \remark     This function is used to clear the stack of a task (i.e. write all zeros)
+ * 
+ *  \param      pbos    is a pointer to the task's BOTTOM of stack.  If the configuration constant
+ *                      OS_CPU_STK_GROWTH_DOWN is set to 1, the stack is assumed to grow downward (i.e. from high
+ *                      memory to low memory).  'pbos' will thus point to the lowest (valid) memory
+ *                      location of the stack.  If OS_CPU_STK_GROWTH_DOWN is set to 0, 'pbos' will point to the
+ *                      highest memory location of the stack and the stack will grow with increasing
+ *                      memory locations.  'pbos' MUST point to a valid 'free' data item.
+ * 
+ *              size    is the number of 'stack elements' to clear.
+ * 
+ *              opt     contains additional information (or options) about the behavior of the task.  The
+ *                      LOWER 8-bits are reserved by OS while the upper 8 bits can be application
+ *                      specific.  See OS_TASK_OPT_??? in OS.H.
+ * 
+ *  \return     none
  */
 
 #if (OS_STAT_TASK_STK_CHK_EN > 0u)
