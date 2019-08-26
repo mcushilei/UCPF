@@ -257,28 +257,31 @@ void osIntExit(void)
  * 
  *  \return     none
  * 
- *  \note       1) This function is INTERNAL to OS and your application should not call it.
- *              2) This function is not intended to be used in a ISR.
+ *  \note       1) This function shell not have an effect in a ISR.
  */
 void osLockSched(void)
 {
-    if (osRunning != FALSE) {                   //!< Make sure multitasking is running
-        if (osIntNesting == 0u) {               //!< Can't call from an ISR
-            OSEnterCriticalSection();
-            if (osLockNesting < OS_MAX_SCHEDULE_LOCK_NEST_CNT) {    //!< Prevent osLockNesting from wrapping back to 0
-                osLockNesting++;
-            } else {
-                //! TODO handle error, this is unreasonable to happen in a application so there must be a bug or incorrect usage in user's application code.
-            }
-            OSExitCriticalSection();
-        }
+    if (osRunning == FALSE) {       //!< Make sure multitasking is running
+        return;
     }
+    
+    if (osIntNesting == 0u) {       //!< This function will not work in an ISR.
+        return;
+    }
+    
+    OSEnterCriticalSection();
+    if (osLockNesting < OS_MAX_SCHEDULE_LOCK_NEST_CNT) {    //!< Prevent osLockNesting from wrapping back to 0
+        osLockNesting++;
+    } else {
+        //! TODO handle error, this is unreasonable to happen in a application so there must be a bug or incorrect usage in user's application code.
+    }
+    OSExitCriticalSection();
 }
 
 /*
  *  \brief      Unlock scheduler
  * 
- *  \remark     To stop scheduling to mutually run a critical section.
+ *  \remark     To stop scheduling to mutually run a critical section between threads.
  *              This is intended to be used where the critical section is too short for a condition in which mutex is used.
  *              If the critical section is even shorter, disabling the interrupt is preferred.
  * 
@@ -286,22 +289,25 @@ void osLockSched(void)
  * 
  *  \return     none
  * 
- *  \note       1) This function is INTERNAL to OS and your application should not call it.
- *              2) This function is not intended to be used in a ISR.
+ *  \note       1) This function shell not have an effect in a ISR.
  */
 void osUnlockSched(void)
 {
-    if (osRunning != FALSE) {                   //!< Make sure multitasking is running
-        if (osIntNesting == 0u) {               //!< Can't call from an ISR
-            OSEnterCriticalSection();
-            if (osLockNesting > 0u) {           //!< Do not decrement if already 0
-                osLockNesting--;                //!< Decrement lock nesting level
-            }
-            OSExitCriticalSection();
-            
-            OS_SchedulerRunPrio();
-        }
+    if (osRunning == FALSE) {       //!< Make sure multitasking is running
+        return;
     }
+    
+    if (osIntNesting == 0u) {       //!< This function will not work in an ISR.
+        return;
+    }
+    
+    OSEnterCriticalSection();
+    if (osLockNesting > 0u) {           //!< Do not decrement if already 0
+        osLockNesting--;                //!< Decrement lock nesting level
+    }
+    OSExitCriticalSection();
+    
+    OS_SchedulerRunPrio();
 }
 #endif  //!< #if OS_SCHED_LOCK_EN > 0u
 
@@ -326,8 +332,8 @@ void osUnlockSched(void)
 void osStart(void)
 {
     if (osRunning == FALSE) {           //!< os must NOT be running!
+        osTCBCur = NULL;
         OS_SchedulerNext();
-        osTCBCur = osTCBNextRdy;
         OSStartTheFirstThread();
     }
 }
@@ -510,7 +516,6 @@ void osSysTick(void)
         }
     }
     OSExitCriticalSection();
-
 
     osSysClockScanHandOld = osSysClockScanHand;
 }

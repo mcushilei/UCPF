@@ -25,7 +25,7 @@
 /*============================ MACROFIED FUNCTIONS ===========================*/
 /*============================ TYPES =========================================*/
 /*============================ PROTOTYPES ====================================*/
-static void os_task_del        (void);
+static void os_task_exit        (void);
 
 #if (OS_STAT_TASK_STK_CHK_EN > 0u)
 static void os_task_stk_clr    (CPU_STK        *pbos,
@@ -104,7 +104,7 @@ OS_ERR  osTaskCreate(   OS_HANDLE      *pHandle,
         return OS_ERR_NULL_POINTER;
     }
 #endif
-    if (priority >= OS_TASK_LOWEST_PRIO) {  //!< Make sure priority is within allowable range
+    if (priority > OS_TASK_LOWEST_PRIO) {  //!< Make sure priority is within allowable range
         return OS_ERR_INVALID_PRIO;
     }
 #endif
@@ -195,8 +195,7 @@ static void os_unlock_mutex(OS_MUTEX *pmutex)
 /*
  *  \brief      DELETE CURRENT TASK
  * 
- *  \remark     This function delete current running task. The deleted task is returned to the dormant
- *              state and can be re-activated by creating the deleted task again. This function is
+ *  \remark     This function delete CURRENT running task. This function is
  *              internal to OS. Your task should be terminated by a return.
  *               
  * 
@@ -204,7 +203,7 @@ static void os_unlock_mutex(OS_MUTEX *pmutex)
  * 
  *  \return     none
  */
-static void os_task_del(void)
+static void os_task_exit(void)
 {
     OS_TCB         *ptcb;
     OS_MUTEX       *pmutex;
@@ -236,9 +235,9 @@ static void os_task_del(void)
 #endif
     pool_free(&osTCBFreePool, ptcb);   //!< Return TCB object to free TCB pool.
     osTCBCur = NULL;
+    OS_SchedulerNext();
     OSExitCriticalSection();
-    
-    OS_SchedulerRunNext();
+    OSCtxSw();
 }
 #endif
 
@@ -279,7 +278,7 @@ OS_ERR osTaskChangePrio(OS_HANDLE taskHandle, UINT8 newprio)
     }
 
     OSEnterCriticalSection();
-#if (OS_MUTEX_EN > 0u) && (OS_MAX_MUTEXES > 0u)
+#if OS_MUTEX_EN > 0u
     if (!LIST_IS_EMPTY(ptcb->OSTCBOwnMutexList)) {      //!< See if the task ownes any mutex.
                                                         //!< Yes. Update the priority store in the mutex(es).
         for (OS_LIST_NODE *iterate = ptcb->OSTCBOwnMutexList.Next; iterate != &ptcb->OSTCBOwnMutexList; iterate = iterate->Next) {
@@ -325,7 +324,7 @@ static void os_task_return(void *parg)
 #endif
 
 #if OS_TASK_DEL_EN > 0u
-    os_task_del();                      //!< Delete task if it returns!
+    os_task_exit();                      //!< Delete task if it returns!
 #else
     //! this should be a fatal error!
     OSEnterCriticalSection();
