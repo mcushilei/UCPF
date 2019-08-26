@@ -257,7 +257,7 @@ unsigned int string_copy(char *d, const char *s, unsigned int n)
 }
 
 //! find s2 in s1.
-char *string_find_string(const char *s1, const char *s2)
+char *find_string(const char *s1, const char *s2)
 {
     unsigned int n;
     
@@ -280,6 +280,27 @@ char *string_find_string(const char *s1, const char *s2)
     
     return NULL;
 }
+
+//! find s2 in s1 by the first n chars.
+char *find_string_by_n(const char *s1, const char *s2, size_t len)
+{
+    size_t len2;
+
+    len2 = strlen(s2);
+    if (0u == len2) {
+        return (char *)s1;
+    }
+    
+    while (len >= len2) {
+        len--;
+        if (0 == memcmp(s1, s2, len2)) {
+            return (char *)s1;
+        }
+        s1++;
+    }
+    return NULL;
+}
+
 
 /*! \brief  Paser string to tokens, replace delim to '\0' and return pointer to token.
  *!         String should be end with '\0'. 

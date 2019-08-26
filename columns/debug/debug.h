@@ -23,7 +23,7 @@
 /*============================ INCLUDES ======================================*/
 #include ".\app_cfg.h"
 
-#if DEBUG_FOMART_STRING == ENABLED
+#if DEBUG_USE_PRINTF == ENABLED
 #   include <stdio.h>
 #else
 #   include "..\string\string.h"
@@ -70,7 +70,7 @@
 /** print debug message only if debug message type is enabled...
  *  AND is of correct type AND is at least DEBUG_LEVEL
  */
-#if DEBUG_FOMART_STRING == ENABLED
+#if DEBUG_USE_PRINTF == ENABLED
 #   define __DEBUG_PRINT(...)                   printf(__VA_ARGS__)
 #else
 #   define __DEBUG_PRINT(__STR, ...)            debug_print_string(__STR)
