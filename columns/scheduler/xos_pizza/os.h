@@ -29,32 +29,32 @@
 
 
 #define OS_TIMER_TYPE                       OS_HANDLE
-#define OS_TIMER_CREATE(__T, __INIT, __RELOAD, __ROUTINE, __ARG)\
-    osTimerCreat(&__T, __INIT, __RELOAD, __ROUTINE, __ARG, OS_TIMER_OPT_AUTO_DELETE)
-#define OS_TIMER_DELETE(__T)                osTimerDelete(__T)
-#define OS_TIMER_START(__T, __TIME)         osTimerStart(__T, __TIME)
-#define OS_TIMER_STOP(__T)                  osTimerStop(__T)
+#define OS_TIMER_CREATE(__TIME, __INIT, __RELOAD, __ROUTINE, __ARG)\
+    osTimerCreat(&(__TIME), __INIT, __RELOAD, __ROUTINE, __ARG, OS_TIMER_OPT_AUTO_DELETE)
+#define OS_TIMER_DELETE(__TIME)             osTimerDelete(__TIME)
+#define OS_TIMER_START(__TIME, __T)         osTimerStart(__TIME, OS_MS2TICK(__T))
+#define OS_TIMER_STOP(__TIME)               osTimerStop(__TIME)
 
 
 #define OS_QUEUE_TYPE                       OS_HANDLE
 #define OS_QUEUE_CREATE(__Q, __L, __SIZE)   osQueueCreate(&(__Q), NULL, __L, __SIZE)
 #define OS_QUEUE_DELETE(__Q)                osQueueDelete(__Q, OS_DEL_ALWAYS)
-#define OS_QUEUE_WRITE(__Q, __BUF, __T)     osQueueWrite(__Q, __BUF, __T)
-#define OS_QUEUE_READ(__Q, __BUF, __T)      osQueueRead(__Q, __BUF, __T)
+#define OS_QUEUE_WRITE(__Q, __BUF, __T)     osQueueWrite(__Q, __BUF, OS_MS2TICK(__T))
+#define OS_QUEUE_READ(__Q, __BUF, __T)      osQueueRead(__Q, __BUF, OS_MS2TICK(__T))
 
 
 #define OS_SEMAPHORE_TYPE                   OS_HANDLE
 #define OS_SEMAPHORE_CREATE(__SEM, __CNT)   osSemCreate(&(__SEM), __CNT)
 #define OS_SEMAPHORE_DELETE(__SEM)          osSemDelete(__SEM, OS_DEL_ALWAYS)
 #define OS_SEMAPHORE_RELEASE(__SEM)         osSemPost(__SEM, 1u)
-#define OS_SEMAPHORE_WAIT(__SEM, __T)       osSemPend(__SEM, __T)
+#define OS_SEMAPHORE_WAIT(__SEM, __T)       osSemPend(__SEM, OS_MS2TICK(__T))
 
 
 #define OS_MUTEX_TYPE                       OS_HANDLE
 #define OS_MUTEX_CREATE(__MUTEX)            osMutexCreate(&(__MUTEX), OS_TASK_LOWEST_PRIO)
 #define OS_MUTEX_DELETE(__MUTEX)            osMutexDelete(__MUTEX, OS_DEL_ALWAYS)
 #define OS_MUTEX_RELEASE(__MUTEX)           osMutexPost(__MUTEX)
-#define OS_MUTEX_WAIT(__MUTEX, __T)         osMutexPend(__MUTEX, __T)
+#define OS_MUTEX_WAIT(__MUTEX, __T)         osMutexPend(__MUTEX, OS_MS2TICK(__T))
 
 
 #define OS_FLAG_TYPE                        OS_HANDLE
@@ -62,14 +62,14 @@
 #define OS_FLAG_DELETE(__FLAG)              osFlagDelete(__FLAG, OS_DEL_ALWAYS)
 #define OS_FLAG_SET(__FLAG)                 osFlagSet(__FLAG)
 #define OS_FLAG_RESET(__FLAG)               osFlagReset(__FLAG)
-#define OS_FLAG_WAIT(__FLAG, __T)           osFlagPend(__FLAG, __T)
+#define OS_FLAG_WAIT(__FLAG, __T)           osFlagPend(__FLAG, OS_MS2TICK(__T))
 
 
 #define OS_TASK_CREATE(__HANDLE, __NAME, __ENTRY, __ARG,  __STACK_SIZE, __RIO, __OPT)   \
     osTaskCreate( &(__HANDLE), __ENTRY, __ARG,  NULL, __STACK_SIZE, __OPT, __RIO );
 #define OS_TASK_ENTRY(__TASK)               void *__TASK(void *pArg)
 #define OS_TASK_ARG                         (pArg)
-#define OS_TASK_SLEEP(__T)                  osTaskSleep(__T)
+#define OS_TASK_SLEEP(__T)                  osTaskSleep(OS_MS2TICK(__T))
 
 
 #define OS_GET_TICK_COUNT()                 osGetSysTickCount()
