@@ -131,25 +131,21 @@ OS_ERR osFlagCreate(OS_HANDLE *pFlagHandle, BOOL initValue, BOOL manualReset)
  *                 OS_ERR_PEND_ABORT if osFlagDelete() was called with OS_DEL_ALWAYS.
  */
 #if OS_FLAG_DEL_EN > 0u
-OS_ERR osFlagDelete(OS_HANDLE *pFlagHandle, UINT16 opt)
+OS_ERR osFlagDelete(OS_HANDLE hFlag, UINT16 opt)
 {
-    OS_FLAG    *pflag;
+    OS_FLAG    *pflag = (OS_FLAG *)hFlag;
     BOOL        taskPend;
     BOOL        taskSched = FALSE;
 
 
 #if OS_ARG_CHK_EN > 0u
-    if (pFlagHandle == NULL) {
+    if (hFlag == NULL) {
         return OS_ERR_INVALID_HANDLE;
     }
 #endif
     if (osIntNesting > 0u) {            //!< Can't DELETE from an ISR
         return OS_ERR_USE_IN_ISR;
     }
-    if (*pFlagHandle == NULL) {         //!< Validate handle
-        return OS_ERR_INVALID_HANDLE;
-    }
-    pflag = (OS_FLAG *)*pFlagHandle;
     if (OS_OBJ_TYPE_GET(pflag->OSFlagObjHeader.OSObjType) != OS_OBJ_TYPE_FLAG) {    //!< Validate object's type
         return OS_ERR_OBJ_TYPE;
     }

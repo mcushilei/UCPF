@@ -26,13 +26,13 @@
 /*============================ MACROS ========================================*/
 /*============================ MACROFIED FUNCTIONS ===========================*/
 /*============================ TYPES =========================================*/
-/* Define the linked list structure.  This is used to link free blocks in order
-of their memory address. */
+/* a heap structure is a singly-linked-list sorted by their memory address and
+   terminated by the node with a NULL 'NextFreeBlock'. */
 typedef struct heap_block_link_t heap_block_link_t;
 struct heap_block_link_t {
     /* The next free block in the list. */
 	heap_block_link_t  *NextFreeBlock;
-    /* The size of the free block. */
+    /* The size of this block. Including this struct. */
 	size_t              BlockSize;
 };
 
@@ -52,12 +52,12 @@ struct heap_block_link_t {
 
 #define HEAP_ALIGNMENT_OF_BLOCK_LINK    (( (sizeof(void *) - 1u) | (sizeof(size_t) - 1u) ) + 1u)
 #define HEAP_ALIGNMENT_OF_CFG           (1u << HEAP_MEM_ALIGNMENT)
-/* The alignemtn used of heap is the greater one between HEAP_ALIGNMENT_OF_BLOCK_LINK 
+/* The alignment of heap block is the greater one between HEAP_ALIGNMENT_OF_BLOCK_LINK 
 and HEAP_ALIGNMENT_OF_CFG. */
 #define HEAP_ALIGNMENT                  (( (HEAP_ALIGNMENT_OF_BLOCK_LINK - 1u) | (HEAP_ALIGNMENT_OF_CFG - 1u) ) + 1u)
 #define HEAP_ALIGNMENT_MASK             ((size_t)HEAP_ALIGNMENT - 1u)
 
-/* Block sizes must not get too small and must be kept aligned. */
+/* Block size must not get too small and must be kept aligned. */
 #define HEAP_MINIMUM_BLOCK_SIZE	        (heapStructSize + HEAP_ALIGNMENT)
 
 

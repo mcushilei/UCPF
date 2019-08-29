@@ -152,9 +152,9 @@ OS_ERR osQueueStopEnqueue(OS_HANDLE *hQueue)
     return OS_ERR_NONE;
 }
 
-OS_ERR osQueueDelete(OS_HANDLE *hQueue, UINT16 opt)
+OS_ERR osQueueDelete(OS_HANDLE hQueue, UINT16 opt)
 {
-    OS_QUEUE   *pqueue = (OS_QUEUE *)*hQueue;
+    OS_QUEUE   *pqueue = (OS_QUEUE *)hQueue;
     BOOL        taskPend;
 
 

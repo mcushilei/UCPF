@@ -117,22 +117,19 @@ OS_ERR osSemCreate(OS_HANDLE *pSemHandle, UINT16 initCnt)
  *                  OS_ERR_PEND_ABORT if osSemDelete() was called with OS_DEL_ALWAYS
  */
 #if OS_SEM_DEL_EN > 0u
-OS_ERR osSemDelete(OS_HANDLE *pSemHandle, UINT16 opt)
+OS_ERR osSemDelete(OS_HANDLE hSemaphore, UINT16 opt)
 {
-    OS_SEM     *psem = (OS_SEM *)*pSemHandle;
+    OS_SEM     *psem = (OS_SEM *)hSemaphore;
     BOOL        taskPend;
 
 
 #if OS_ARG_CHK_EN > 0u
-    if (pSemHandle == NULL) {
+    if (hSemaphore == NULL) {           //!< Validate handle
         return OS_ERR_INVALID_HANDLE;
     }
 #endif
     if (osIntNesting > 0u) {            //!< See if called from ISR ...
         return OS_ERR_USE_IN_ISR;       //!< ... can't DELETE from an ISR
-    }
-    if (*pSemHandle == NULL) {          //!< Validate handle
-        return OS_ERR_INVALID_HANDLE;
     }
     if (OS_OBJ_TYPE_GET(psem->OSSemObjHead.OSObjType) != OS_OBJ_TYPE_SEM) { //!< Validate object's type
         return OS_ERR_OBJ_TYPE;

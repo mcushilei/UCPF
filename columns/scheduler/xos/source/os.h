@@ -156,7 +156,7 @@ OS_ERR      osFlagCreate           (OS_HANDLE      *pFlagHandle,
                                     BOOL            manualReset);
 
 #if OS_FLAG_DEL_EN > 0u
-OS_ERR      osFlagDelete           (OS_HANDLE      *pFlagHandle,
+OS_ERR      osFlagDelete           (OS_HANDLE       hFlag,
                                     UINT16          opt);
 #endif  //!< #if OS_FLAG_DEL_EN > 0u
 
@@ -182,7 +182,7 @@ OS_ERR      osMutexCreate          (OS_HANDLE      *pMutexHandle,
                                     UINT8           ceilingPrio);
 
 #if OS_MUTEX_DEL_EN > 0u
-OS_ERR      osMutexDelete          (OS_HANDLE      *pMutexHandle,
+OS_ERR      osMutexDelete          (OS_HANDLE       hMutex,
                                     UINT16          opt);
 #endif
 
@@ -206,7 +206,7 @@ OS_ERR      osSemCreate            (OS_HANDLE      *pSemHandle,
                                     UINT16          cnt);
 
 #if OS_SEM_DEL_EN > 0u
-OS_ERR      osSemDelete            (OS_HANDLE      *pSemHandle,
+OS_ERR      osSemDelete            (OS_HANDLE       hSemaphore,
                                     UINT16          opt);
 #endif
 
@@ -241,7 +241,7 @@ OS_ERR      osQueueCreate           (OS_HANDLE     *hQueue,
                                      UINT16         queueSize,
                                      size_t         elementSize);
 
-OS_ERR      osQueueDelete           (OS_HANDLE     *hQueue,
+OS_ERR      osQueueDelete           (OS_HANDLE      hQueue,
                                      UINT16         opt);
 
 OS_ERR      osQueueWrite            (OS_HANDLE      hQueue,

@@ -141,26 +141,22 @@ OS_ERR osMutexCreate(OS_HANDLE *pMutexHandle, UINT8 ceilingPrio)
  *                             original priority.
  */
 #if OS_MUTEX_DEL_EN > 0u
-OS_ERR osMutexDelete(OS_HANDLE *pMutexHandle, UINT16 opt)
+OS_ERR osMutexDelete(OS_HANDLE hMutex, UINT16 opt)
 {
-    OS_MUTEX   *pmutex;
+    OS_MUTEX   *pmutex = (OS_MUTEX *)hMutex;
     OS_TCB     *powner;
     BOOL        taskPend;
     BOOL        taskSched = FALSE;
 
 
 #if OS_ARG_CHK_EN > 0u
-    if (pMutexHandle == NULL) {
+    if (hMutex == NULL) {           //!< Validate handle.
         return OS_ERR_INVALID_HANDLE;
     }
 #endif
-    if (osIntNesting > 0u) {                //!< Should not delete object from an ISR.
+    if (osIntNesting > 0u) {        //!< Should not delete object from an ISR.
         return OS_ERR_USE_IN_ISR;
     }
-    if (*pMutexHandle == NULL) {            //!< Validate handle.
-        return OS_ERR_INVALID_HANDLE;
-    }
-    pmutex = (OS_MUTEX *)*pMutexHandle;
     if (OS_OBJ_TYPE_GET(pmutex->OSMutexObjHeader.OSObjType) != OS_OBJ_TYPE_MUTEX) {   //!< Validate event block type.
         return OS_ERR_OBJ_TYPE;
     }
