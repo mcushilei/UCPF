@@ -545,7 +545,7 @@ OS_ERR osTaskSleep(UINT32 ticks)
         return OS_ERR_PEND_LOCKED;
     }
     
-    if (ticks == 0u || ticks == OS_INFINITE) {      //!< 0 means no delay!
+    if (ticks == 0u || ticks == OS_INFINITE) {      //!< 0 or infinite is nonsense.
         return OS_ERR_INVALID_SLEEP_TIME;
     }
     
@@ -955,6 +955,68 @@ OS_TCB *OS_WaitableObjRdyTask(OS_WAITABLE_OBJ *pobj, OS_LIST_NODE *plist, UINT8 
     return ptcb;
 }
 
+#if OS_TASK_DEL_EN > 0u
+#if OS_MUTEX_EN > 0u
+static void os_unlock_mutex(OS_MUTEX *pmutex)
+{
+    OS_TCB     *ptcb;
+    
+    
+    pmutex->OSMutexCnt = 0u;
+
+    list_remove(&pmutex->OSMutexOvlpList);
+    
+    if (!LIST_IS_EMPTY(pmutex->OSMutexWaitList)) {                  //!< Is any task waiting for the mutex?
+        ptcb = OS_WaitableObjRdyTask((OS_WAITABLE_OBJ *)pmutex,     //!< Yes, Make HPT waiting for mutex ready
+                                    &pmutex->OSMutexWaitList,
+                                    OS_STAT_PEND_OK);
+        pmutex->OSMutexOwnerTCB  = ptcb;
+        pmutex->OSMutexOwnerPrio = ptcb->OSTCBPrio;
+    } else {                                                        //!< No.
+        pmutex->OSMutexOwnerTCB  = NULL;
+        pmutex->OSMutexOwnerPrio = 0u;
+    }
+}
+#endif
+
+/*
+ *  \brief      STOP CURRENT TASK
+ * 
+ *  \remark     This function delete CURRENT running task. This function is
+ *              internal to OS. Your task should be terminated by a return.
+ *               
+ * 
+ *  \param      none
+ * 
+ *  \return     none
+ *
+ *  \note       In XOS, the only way to delete a task is by returning. That is to say a task can only
+ *              be deleted by itself in the application. There is no API to terminate or delete a task.
+ */
+void OS_TaskStop(void)
+{
+    OS_TCB         *ptcb = osTCBCur;
+
+
+    //! set free from any object that it suspend for.
+    if (ptcb->OSTCBWaitNode != NULL) {      //!< Is this task suspend for any object?
+        OS_WaitNodeRemove(ptcb);            //!< Yes, set it free from that object ...
+        OS_WaitListRemove(ptcb);            //!< ... and set it free from wait list.
+    } else {                                //!< NO. It's owned by scheduler ...
+        OS_SchedulerUnreadyTask(ptcb);      //!< ... set it free from scheduler.
+    }
+
+    //! to ensure task releases all mutex(es) that it has had got. This should be a fatal error???
+#if OS_MUTEX_EN > 0u
+    while (!LIST_IS_EMPTY(ptcb->OSTCBOwnMutexList)) {
+        OS_LIST_NODE *list = ptcb->OSTCBOwnMutexList.Next;
+        OS_MUTEX *pmutex = CONTAINER_OF(list, OS_MUTEX, OSMutexOvlpList);
+        os_unlock_mutex(pmutex);
+    }
+#endif
+}
+#endif      //!< #if OS_TASK_DEL_EN > 0u
+
 /*
  *  \brief      CHANGE PRIORITY OF A TASK
  * 
@@ -1005,55 +1067,55 @@ void OS_ChangeTaskPrio(OS_TCB *ptcb, UINT8 newprio)
     OSExitCriticalSection();
 }
 
-void OS_BitmapSet(OS_PRIO_BITMAP *pmap, UINT8 prio)
+void OS_BitmapSet(OS_PRIO_BITMAP *pmap, UINT8 bit)
 {
-    UINT16         y;
-    OS_BITMAP_UINT bitx, bity;
+    UINT16 y;
+    UINT16 mskX, mskY;
     
-    y = (prio >> 4) & 0x0Fu;
-    bitx = 1u << (prio & 0x0Fu);
-    bity = 1u << y;
+    y = (bit >> 4) & 0x000Fu;
+    mskX = 1u << (bit & 0x000Fu);
+    mskY = 1u << y;
     
-    pmap->Y    |= bity;
-    pmap->X[y] |= bitx;
+    pmap->Y    |= mskY;
+    pmap->X[y] |= mskX;
 }
 
-void OS_BitmapClr(OS_PRIO_BITMAP *pmap, UINT8 prio)
+void OS_BitmapClr(OS_PRIO_BITMAP *pmap, UINT8 bit)
 {
-    UINT16         y;
-    OS_BITMAP_UINT bitx, bity;
+    UINT16 y;
+    UINT16 mskX, mskY;
     
-    y = (prio >> 4) & 0x0Fu;
-    bitx = 1u << (prio & 0x0Fu);
-    bity = 1u << y;
+    y = (bit >> 4) & 0x000Fu;
+    mskX = 1u << (bit & 0x000Fu);
+    mskY = 1u << y;
 
-    pmap->X[y] &= (OS_BITMAP_UINT)~bitx;
+    pmap->X[y] &= (UINT16)~mskX;
     if (pmap->X[y] == 0u) {
-        pmap->Y &= (OS_BITMAP_UINT)~bity;
+        pmap->Y &= (UINT16)~mskY;
     }
 }
 
 UINT8 OS_BitmapGetHigestPrio(OS_PRIO_BITMAP *pmap)
 {
-    UINT8   y;
-    UINT8   prio;
-    OS_BITMAP_UINT valX;
+    UINT16 y;
+    UINT16 bit;
+    UINT16 valX;
 
 
     //! find the highest priority of ready task. We support up to 256 levels.
-    if ((pmap->Y & 0xFFu) != 0u) {
-        y =      OS_COUNT_LEADING_ZERO(pmap->Y & 0xFFu);
+    if ((pmap->Y & 0x00FFu) != 0u) {
+        y =      OS_COUNT_LEADING_ZERO(pmap->Y & 0x00FFu);
     } else {
-        y = 8u + OS_COUNT_LEADING_ZERO((pmap->Y >> 8u) & 0xFFu);
+        y = 8u + OS_COUNT_LEADING_ZERO((pmap->Y >> 8u) & 0x00FFu);
     }
     valX = pmap->X[y];
-    if ((valX & 0xFFu) != 0u) {
-        prio = (y * 16u) +      OS_COUNT_LEADING_ZERO(valX & 0xFFu);
+    if ((valX & 0x00FFu) != 0u) {
+        bit = (y * 16u) +      OS_COUNT_LEADING_ZERO(valX & 0x00FFu);
     } else {
-        prio = (y * 16u) + 8u + OS_COUNT_LEADING_ZERO((valX >> 8u) & 0xFFu);
+        bit = (y * 16u) + 8u + OS_COUNT_LEADING_ZERO((valX >> 8u) & 0x00FFu);
     }
     
-    return prio;
+    return bit;
 }
 
 /*

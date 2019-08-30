@@ -76,7 +76,7 @@ enum {
     OS_ERR_TIMEOUT                  = 0x30u,
     OS_ERR_PEND_LOCKED              = 0x31u,
     OS_ERR_PEND_ABORT               = 0x32u,
-    OS_ERR_TASK_WAITING             = 0x33u,
+    OS_ERR_DELETE_IN_USE            = 0x33u,
 
     OS_ERR_INVALID_PRIO             = 0x60u,
     OS_ERR_TASK_OPT                 = 0x61u,
@@ -107,7 +107,7 @@ typedef UINT16          OS_ERR;
 /*!
  *! \Brief  FLAG INFO TYPE
  */
-#if (OS_FLAG_EN > 0u) && (OS_MAX_FLAGS > 0u)
+#if OS_FLAG_EN > 0u
 typedef struct {
     BOOL                OSFlagStatus;
     BOOL                OSFlagManualReset;
@@ -117,7 +117,7 @@ typedef struct {
 /*!
  *! \Brief  MUTEX INFO TYPE
  */
-#if (OS_MUTEX_EN > 0u) && (OS_MAX_MUTEXES > 0u)
+#if OS_MUTEX_EN > 0u
 typedef struct {
     UINT8               OSOwnerPrio;
     UINT8               OSCeilingPrio;
@@ -127,13 +127,13 @@ typedef struct {
 /*!
  *! \Brief  SEMAPHORE INFO TYPE
  */
-#if (OS_SEM_EN > 0u) && (OS_MAX_SEMAPHORES > 0u)
+#if OS_SEM_EN > 0u
 typedef struct {
     UINT16              OSCnt;                      //!< Semaphore count
 } OS_SEM_INFO;
 #endif
 
-#if (OS_QUEUE_EN > 0u) && (OS_MAX_QUEUES > 0u)
+#if OS_QUEUE_EN > 0u
 /*!
  *! \Brief  QUEUE INFO TYPE
  */
@@ -158,7 +158,7 @@ OS_ERR      osFlagCreate           (OS_HANDLE      *pFlagHandle,
 #if OS_FLAG_DEL_EN > 0u
 OS_ERR      osFlagDelete           (OS_HANDLE       hFlag,
                                     UINT16          opt);
-#endif  //!< #if OS_FLAG_DEL_EN > 0u
+#endif
 
 OS_ERR      osFlagPend             (OS_HANDLE       hFlag,
                                     UINT32          timeout);
@@ -241,8 +241,12 @@ OS_ERR      osQueueCreate           (OS_HANDLE     *hQueue,
                                      UINT16         queueSize,
                                      size_t         elementSize);
 
+#if OS_QUEUE_DEL_EN > 0
+OS_ERR      osQueueStopEnqueue      (OS_HANDLE     *hQueue);
+
 OS_ERR      osQueueDelete           (OS_HANDLE      hQueue,
                                      UINT16         opt);
+#endif
 
 OS_ERR      osQueueWrite            (OS_HANDLE      hQueue,
                                      const void    *buffer,

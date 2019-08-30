@@ -361,6 +361,8 @@ void        OS_WaitableObjAddTask  (OS_WAITABLE_OBJ    *pobj,
                                     OS_LIST_NODE       *plist,
                                     UINT32              timeout);
 
+void        OS_TaskStop            (void);
+
 void        OS_ChangeTaskPrio      (OS_TCB         *ptcb,
                                     UINT8           newprio);
 

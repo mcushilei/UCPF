@@ -25,8 +25,6 @@
 /*============================ MACROFIED FUNCTIONS ===========================*/
 /*============================ TYPES =========================================*/
 /*============================ PROTOTYPES ====================================*/
-static void os_task_exit        (void);
-
 #if (OS_STAT_TASK_STK_CHK_EN > 0u)
 static void os_task_stk_clr    (CPU_STK        *pbos,
                                 UINT32          size,
@@ -81,6 +79,9 @@ static void os_task_return     (void           *arg);
  *  \return     OS_ERR_NONE            if the function was successful.
  *              OS_ERR_INVALID_PRIO    if the priority you specify is higher that the maximum
  *              OS_ERR_USE_IN_ISR      if you tried to create a task from an ISR.
+
+ *  \note       In XOS, the only way to delete a task is by returning. That is to say a task can only
+ *              be deleted by itself in the application. There is no API to terminate or delete a task.
  */
 
 OS_ERR  osTaskCreate(   OS_HANDLE      *pHandle,
@@ -168,79 +169,6 @@ OS_ERR  osTaskCreate(   OS_HANDLE      *pHandle,
     return OS_ERR_NONE;
 }
 
-#if OS_TASK_DEL_EN > 0u
-#if (OS_MUTEX_EN > 0u) && (OS_MAX_MUTEXES > 0u)
-static void os_unlock_mutex(OS_MUTEX *pmutex)
-{
-    OS_TCB     *ptcb;
-    
-    
-    pmutex->OSMutexCnt = 0u;
-
-    list_remove(&pmutex->OSMutexOvlpList);
-    
-    if (!LIST_IS_EMPTY(pmutex->OSMutexWaitList)) {                  //!< Is any task waiting for the mutex?
-        ptcb = OS_WaitableObjRdyTask((OS_WAITABLE_OBJ *)pmutex,     //!< Yes, Make HPT waiting for mutex ready
-                                    &pmutex->OSMutexWaitList,
-                                    OS_STAT_PEND_OK);
-        pmutex->OSMutexOwnerTCB  = ptcb;
-        pmutex->OSMutexOwnerPrio = ptcb->OSTCBPrio;
-    } else {                                                        //!< No.
-        pmutex->OSMutexOwnerTCB  = NULL;
-        pmutex->OSMutexOwnerPrio = 0u;
-    }
-}
-#endif
-
-/*
- *  \brief      DELETE CURRENT TASK
- * 
- *  \remark     This function delete CURRENT running task. This function is
- *              internal to OS. Your task should be terminated by a return.
- *               
- * 
- *  \param      none
- * 
- *  \return     none
- */
-static void os_task_exit(void)
-{
-    OS_TCB         *ptcb;
-    OS_MUTEX       *pmutex;
-
-
-    OSEnterCriticalSection();
-    ptcb = osTCBCur;
-    
-    //! set free from any object that it suspend for.
-    if (ptcb->OSTCBWaitNode != NULL) {      //!< Is this task suspend for any object?
-        OS_WaitNodeRemove(ptcb);            //!< Yes, set it free from that object.
-    } else {                                //!< NO. It's owned by scheduler ...
-        OS_SchedulerUnreadyTask(ptcb);      //!< ... set it free from scheduler.
-    }
-
-    //! to ensure task releases all mutex(es) that it has had got. This should be a fatal error???
-#if (OS_MUTEX_EN > 0u) && (OS_MAX_MUTEXES > 0u)
-    while (!LIST_IS_EMPTY(ptcb->OSTCBOwnMutexList)) {
-        OS_LIST_NODE *list = ptcb->OSTCBOwnMutexList.Next;
-        pmutex = CONTAINER_OF(list, OS_MUTEX, OSMutexOvlpList);
-        os_unlock_mutex(pmutex);
-    }
-#endif
-    
-#if OS_TASK_STACK_ON_HEAP_EN > 0
-    if (ptcb->OSTCBOpt & OS_TASK_OPT_STK_HEAP) {
-        OSHeapFree(ptcb->OSTCBStkBase);
-    }
-#endif
-    pool_free(&osTCBFreePool, ptcb);   //!< Return TCB object to free TCB pool.
-    osTCBCur = NULL;
-    OS_SchedulerNext();
-    OSExitCriticalSection();
-    OSCtxSw();
-}
-#endif
-
 /*
  *  \brief      CHANGE PRIORITY OF A TASK
  * 
@@ -324,8 +252,25 @@ static void os_task_return(void *parg)
 #endif
 
 #if OS_TASK_DEL_EN > 0u
-    os_task_exit();                      //!< Delete task if it returns!
-#else
+    OSEnterCriticalSection();
+
+    //! remove from sheduler and release the kernel objects the task used.
+    OS_TaskStop();
+    
+#if OS_TASK_STACK_ON_HEAP_EN > 0
+    if (osTCBCur->OSTCBOpt & OS_TASK_OPT_STK_HEAP) {
+        OSHeapFree(osTCBCur->OSTCBStkBase);
+    }
+#endif
+    pool_free(&osTCBFreePool, osTCBCur);    //!< Return TCB object to the TCB pool.
+
+    //! switch to another thread.
+    osTCBCur = NULL;
+    OS_SchedulerNext();
+    OSExitCriticalSection();
+    OSCtxSw();
+    
+#else   //!< #if OS_TASK_DEL_EN > 0u
     //! this should be a fatal error!
     OSEnterCriticalSection();
     while (1);

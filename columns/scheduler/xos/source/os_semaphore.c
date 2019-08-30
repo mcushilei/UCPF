@@ -97,12 +97,12 @@ OS_ERR osSemCreate(OS_HANDLE *pSemHandle, UINT16 initCnt)
  *                                                          will be set to ready and OS_ERR_PEND_ABORT will be
  *                                                          returned to them.
  * 
- *  \return     OS_ERR_NONE            The call was successful and the semaphore was deleted
- *              OS_ERR_USE_IN_ISR      If you attempted to delete the semaphore from an ISR
- *              OS_ERR_INVALID_OPT     An invalid option was specified
- *              OS_ERR_TASK_WAITING    One or more tasks were waiting on the semaphore
- *              OS_ERR_INVALID_HANDLE  If 'hSemaphore' is an invalid handle.
- *              OS_ERR_OBJ_TYPE        If you didn't pass a semaphore object.
+ *  \return     OS_ERR_NONE             The call was successful and the semaphore was deleted
+ *              OS_ERR_USE_IN_ISR       If you attempted to delete the semaphore from an ISR
+ *              OS_ERR_INVALID_OPT      An invalid option was specified
+ *              OS_ERR_DELETE_IN_USE    One or more tasks were waiting on the semaphore
+ *              OS_ERR_INVALID_HANDLE   If 'hSemaphore' is an invalid handle.
+ *              OS_ERR_OBJ_TYPE         If you didn't pass a semaphore object.
  * 
  *  \note        1) This function must be used with care.  Tasks that would normally expect the
  *                  presence of the semaphore MUST check the return code of osSemPend().
@@ -145,7 +145,7 @@ OS_ERR osSemDelete(OS_HANDLE hSemaphore, UINT16 opt)
         case OS_DEL_NOT_IN_USE:
             if (taskPend != FALSE) {
                 OSExitCriticalSection();
-                return OS_ERR_TASK_WAITING;
+                return OS_ERR_DELETE_IN_USE;
             }
             break;
 
@@ -192,7 +192,7 @@ OS_ERR osSemDelete(OS_HANDLE hSemaphore, UINT16 opt)
  *              OS_ERR_PEND_ABORT       The wait on the semaphore was aborted.
  *              OS_ERR_INVALID_HANDLE   If 'hSemaphore' is an invalid handle.
  *              OS_ERR_OBJ_TYPE         If you didn't pass a semaphore object.
- *              OS_ERR_USE_IN_ISR       If you called this function from an ISR and the result
+ *              OS_ERR_USE_IN_ISR       If you called this function from an ISR.
  *              OS_ERR_PEND_LOCKED      If you called this function when the scheduler is locked
  *                                      would lead to a suspension.
  */
@@ -377,7 +377,7 @@ OS_ERR osSemPendAbort(OS_HANDLE hSemaphore)
  *  \return     OS_ERR_NONE             The call was successful and the semaphore value was set.
  *              OS_ERR_INVALID_HANDLE   If 'hSemaphore' is an invalid handle.
  *              OS_ERR_OBJ_TYPE         If you didn't pass a event semaphore object.
- *              OS_ERR_TASK_WAITING     If tasks are waiting on the semaphore.
+ *              OS_ERR_DELETE_IN_USE     If tasks are waiting on the semaphore.
  */
 #if OS_SEM_SET_EN > 0u
 OS_ERR osSemSet(OS_HANDLE hSemaphore, UINT16 cnt)
@@ -398,7 +398,7 @@ OS_ERR osSemSet(OS_HANDLE hSemaphore, UINT16 cnt)
     err = OS_ERR_NONE;
     OSEnterCriticalSection();
     if (!LIST_IS_EMPTY(psem->OSSemWaitList)) {       //!< See if task(s) waiting?
-        err = OS_ERR_TASK_WAITING;
+        err = OS_ERR_DELETE_IN_USE;
     } else {
         psem->OSSemToken = cnt;                           //!< No, OK to set the value
     }

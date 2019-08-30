@@ -115,10 +115,17 @@ OS_ERR osQueueCreate(OS_HANDLE *hQueue, void *buffer, UINT16 queueSize, size_t e
 }
 
 /*
- *  \brief      STOP ENQUEUE
+ *  \brief      STOP A QUEUE
  * 
- *  \remark     This function would be called and then osQueueRead() would be called till the queue
- *              is empty before deleting a queue by calling osQueueDelete(). 
+ *  \remark     This will stop the queue. Any osQueueWrite() after this will return
+ *              OS_ERR_PEND_ABORT but osQueueRead() will not be effected. To elegantly
+ *              delete a queue:
+ *              1) the producer(s) should stop writing the queue;
+ *              2) the consumer shall call osQueueStopEnqueue() to stop the queue;
+ *              3) the consumer may optionally call osQueueRead() till the queue becomes empty in
+ *                 order to free the resource in the buffer.
+ *              4) delete the queue by calling osQueueDelete().
+ *              CAUTION: once a queue is stopped, there is no way to rturn it to normal status.
  * 
  *  \param      hQueue      the handle to the queue.
  * 
@@ -152,6 +159,23 @@ OS_ERR osQueueStopEnqueue(OS_HANDLE *hQueue)
     return OS_ERR_NONE;
 }
 
+/*
+ *  \brief      DELETE A QUEUE
+ * 
+ *  \remark     This function delete the queue. The data in the buffer, if any, will be lost. In the situration
+ *              where this is a matter, osQueueStopEnqueue() would be called before calling osQueueDelete(). 
+ * 
+ *  \param      hQueue      the handle to the queue.
+ * 
+ *              opt         determines delete options, one of follows:
+ *                          opt == OS_DEL_NOT_IN_USE    Delete the queue only if it is empyt.
+ *                          opt == OS_DEL_ALWAYS        Delete the queue no matter the queue is empty or not.
+ * 
+ *  \return     OS_ERR_NONE             The call was successful.
+ *              OS_ERR_INVALID_HANDLE   If 'hQueue' is an invalid handle.
+ *              OS_ERR_OBJ_TYPE         If you didn't pass a queue object.
+ *              OS_ERR_DELETE_IN_USE    One or more tasks are waiting on the queue.
+ */
 OS_ERR osQueueDelete(OS_HANDLE hQueue, UINT16 opt)
 {
     OS_QUEUE   *pqueue = (OS_QUEUE *)hQueue;
@@ -181,7 +205,7 @@ OS_ERR osQueueDelete(OS_HANDLE hQueue, UINT16 opt)
         case OS_DEL_NOT_IN_USE:
             if (pqueue->OSQueueLength != 0u) {
                 OSExitCriticalSection();
-                return OS_ERR_TASK_WAITING;
+                return OS_ERR_DELETE_IN_USE;
             }
             break;
 
@@ -223,11 +247,12 @@ OS_ERR osQueueDelete(OS_HANDLE hQueue, UINT16 opt)
  *              buffer      the buffer to store the enqueued data.
  *              timeout     the time trying to wait if queue is full.
  * 
- *  \return     OS_ERR_NONE            The call was successful.
- *              OS_ERR_INVALID_HANDLE  If 'hQueue' is an invalid handle.
- *              OS_ERR_OBJ_TYPE        If you didn't pass a queue object.
- *              OS_ERR_PEND_ABORT      The queue has been shutdown.
- *              OS_ERR_TIMEOUT         The queue is full till 'timeout' has expired.
+ *  \return     OS_ERR_NONE             The call was successful.
+ *              OS_ERR_INVALID_HANDLE   If 'hQueue' is an invalid handle.
+ *              OS_ERR_OBJ_TYPE         If you didn't pass a queue object.
+ *              OS_ERR_PEND_LOCKED      If you called this function when the scheduler is locked.
+ *              OS_ERR_PEND_ABORT       The queue has been shutdown.
+ *              OS_ERR_TIMEOUT          The queue is full till 'timeout' has expired.
  */
 OS_ERR osQueueWrite(OS_HANDLE hQueue, const void *buffer, UINT32 timeout)
 {
@@ -244,7 +269,10 @@ OS_ERR osQueueWrite(OS_HANDLE hQueue, const void *buffer, UINT32 timeout)
         return OS_ERR_NULL_POINTER;
     }
 #endif
-    if (osLockNesting > 0u && timeout != 0u) {           //!< See if it tries to pend on queue with scheduler locked.
+    if (osIntNesting > 0u && timeout != 0u) {       //!< it's no possible to pend a ISR.
+        return OS_ERR_USE_IN_ISR;
+    }
+    if (osLockNesting > 0u && timeout != 0u) {      //!< See if it tries to pend a task when scheduler is locked.
         return OS_ERR_PEND_LOCKED;
     }
     if (OS_OBJ_TYPE_GET(pqueue->OSQueueObjHead.OSObjType) != OS_OBJ_TYPE_QUEUE) { //!< Validate object's type
@@ -315,11 +343,13 @@ OS_ERR osQueueWrite(OS_HANDLE hQueue, const void *buffer, UINT32 timeout)
  *              buffer      the buffer to store the dequeued data.
  *              timeout     the time trying to wait if queue is empty.
  * 
- *  \return     OS_ERR_NONE            The call was successful.
- *              OS_ERR_INVALID_HANDLE  hQueue is an invalid handle.
- *              OS_ERR_OBJ_TYPE        hQueue is not a handle to a queue object.
- *              OS_ERR_PEND_ABORT      The queue has been shutdown.
- *              OS_ERR_TIMEOUT         The queue is empty till 'timeout' has expired.
+ *  \return     OS_ERR_NONE             The call was successful.
+ *              OS_ERR_INVALID_HANDLE   hQueue is an invalid handle.
+ *              OS_ERR_OBJ_TYPE         hQueue is not a handle to a queue object.
+ *              OS_ERR_USE_IN_ISR       If you called this function from an ISR.
+ *              OS_ERR_PEND_LOCKED      If you called this function when the scheduler is locked.
+ *              OS_ERR_PEND_ABORT       The queue has been shutdown.
+ *              OS_ERR_TIMEOUT          The queue is empty till 'timeout' has expired.
  */
 OS_ERR osQueueRead(OS_HANDLE hQueue, void *buffer, UINT32 timeout)
 {
@@ -336,10 +366,10 @@ OS_ERR osQueueRead(OS_HANDLE hQueue, void *buffer, UINT32 timeout)
         return OS_ERR_NULL_POINTER;
     }
 #endif
-    if (osIntNesting > 0u) {            //!< See if called from an ISR.
+    if (osIntNesting > 0u) {                    //!< See if called from an ISR. ISRs should not be consumers.
         return OS_ERR_USE_IN_ISR;
     }
-    if (osLockNesting > 0u) {           //!< See if called with scheduler locked.
+    if (osLockNesting > 0u && timeout != 0u) {  //!< See if called with scheduler locked.
         return OS_ERR_PEND_LOCKED;
     }
     if (OS_OBJ_TYPE_GET(pqueue->OSQueueObjHead.OSObjType) != OS_OBJ_TYPE_QUEUE) { //!< Validate object's type
@@ -347,7 +377,7 @@ OS_ERR osQueueRead(OS_HANDLE hQueue, void *buffer, UINT32 timeout)
     }
 
     OSEnterCriticalSection();
-    if (pqueue->OSQueueReadToken == 0u) {     //!< queue is empty.
+    if (pqueue->OSQueueReadToken == 0u) {       //!< queue is empty.
         if (timeout == 0u) {
             OSExitCriticalSection();
             return OS_ERR_TIMEOUT;

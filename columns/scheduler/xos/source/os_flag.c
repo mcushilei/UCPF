@@ -114,12 +114,12 @@ OS_ERR osFlagCreate(OS_HANDLE *pFlagHandle, BOOL initValue, BOOL manualReset)
  *                                                          for it.  In this case, all the pending tasks
  *                                                          will be readied.
  * 
- *  \return     OS_ERR_NONE            The flag was deleted successfully.
- *              OS_ERR_USE_IN_ISR      If you attempted to delete the flag from an ISR.
- *              OS_ERR_INVALID_HANDLE  If 'hFlag' is an invalid handle.
- *              OS_ERR_OBJ_TYPE        If you didn't pass a flag object.
- *              OS_ERR_INVALID_OPT     An invalid option was specified.
- *              OS_ERR_TASK_WAITING    One or more tasks were waiting on the flag.
+ *  \return     OS_ERR_NONE             The flag was deleted successfully.
+ *              OS_ERR_USE_IN_ISR       If you attempted to delete the flag from an ISR.
+ *              OS_ERR_INVALID_HANDLE   If 'hFlag' is an invalid handle.
+ *              OS_ERR_OBJ_TYPE         If you didn't pass a flag object.
+ *              OS_ERR_INVALID_OPT      An invalid option was specified.
+ *              OS_ERR_DELETE_IN_USE    One or more tasks were waiting on the flag.
  * 
  * 
  *  \note       1) This function must be used with care. Tasks that would normally expect
@@ -161,7 +161,7 @@ OS_ERR osFlagDelete(OS_HANDLE hFlag, UINT16 opt)
         case OS_DEL_NOT_IN_USE:
             if (taskPend != FALSE) {
                 OSExitCriticalSection();
-                return OS_ERR_TASK_WAITING;
+                return OS_ERR_DELETE_IN_USE;
             }
             break;
 
