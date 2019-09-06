@@ -62,7 +62,7 @@ void *osHeapMalloc(size_t size)
     return mem;
 }
 
-void *osHeapRemalloc(void *mem, size_t size)
+void *osHeapRealloc(void *mem, size_t size)
 {
     void *newMem = NULL;
 

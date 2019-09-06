@@ -70,6 +70,7 @@
 #define OS_TASK_ENTRY(__TASK)               void *__TASK(void *pArg)
 #define OS_TASK_ARG                         (pArg)
 #define OS_TASK_SLEEP(__T)                  osTaskSleep(OS_MS2TICK(__T))
+#define OS_TASK_EXIT(__RET)                 return (void *)(__RET)
 
 
 #define OS_GET_TICK_COUNT()                 osGetSysTickCount()
@@ -83,7 +84,7 @@
 /*============================ GLOBAL VARIABLES ==============================*/
 /*============================ PROTOTYPES ====================================*/
 extern void    *osHeapMalloc    (size_t size);
-extern void    *osHeapRemalloc  (void *mem, size_t size);
+extern void    *osHeapRealloc   (void *mem, size_t size);
 extern void     osHeapFree      (void *mem);
 
 extern OS_ERR   osTimerCreat    (OS_HANDLE *pTimerHandle, UINT32 initValue, UINT32 reloadValue, void *pRoutine, void *RoutineArg, UINT16 opt);
