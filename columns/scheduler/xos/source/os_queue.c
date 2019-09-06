@@ -59,7 +59,7 @@ OS_ERR osQueueCreate(OS_HANDLE *hQueue, void *buffer, UINT16 queueSize, size_t e
     if (hQueue == NULL) {
         return OS_ERR_INVALID_HANDLE;
     }
-#if OS_QUEUE_BUFFER_ON_HEAP_EN == 0
+#if OS_QUEUE_BUFFER_ON_HEAP_EN == 0u
     if (NULL == buffer) {
         return OS_ERR_NULL_POINTER;
     }
@@ -79,7 +79,7 @@ OS_ERR osQueueCreate(OS_HANDLE *hQueue, void *buffer, UINT16 queueSize, size_t e
         return OS_ERR_OUT_OF_MEMORY;
     }
     pqueue->OSQueueOpt = 0;
-#if OS_QUEUE_BUFFER_ON_HEAP_EN > 0
+#if OS_QUEUE_BUFFER_ON_HEAP_EN > 0u
     if (NULL == buffer) {
         buffer = OSHeapAlloc(elementSize * queueSize);
         if (buffer == NULL) {
@@ -224,7 +224,7 @@ OS_ERR osQueueDelete(OS_HANDLE hQueue, UINT16 opt)
     }
     
     pqueue->OSQueueObjHead.OSObjType = OS_OBJ_TYPE_UNUSED;
-#if OS_QUEUE_BUFFER_ON_HEAP_EN == 0
+#if OS_QUEUE_BUFFER_ON_HEAP_EN > 0u
     if (pqueue->OSQueueOpt & OS_QUEUE_BUFFER_ON_HEAP) {
         OSHeapFree(pqueue->OSQueueBuffer);
     }
