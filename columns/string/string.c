@@ -238,10 +238,11 @@ unsigned int string_copy(char *d, const char *s, unsigned int n)
 {
     unsigned int l = 0;
     
-    if ((NULL == d) || (NULL == s)) {
+    if ((NULL == d) || (NULL == s) || (n < 1u)) {
         return 0;
     }
 
+    --n;
     while ('\0' != *s && n != 0u) {
         *d = *s;
         d++;
@@ -249,9 +250,7 @@ unsigned int string_copy(char *d, const char *s, unsigned int n)
         n--;
         l++;
     }
-    if (n != 0u) {
-        *d = '\0';
-    }
+    *d = '\0';
 
     return l;
 }

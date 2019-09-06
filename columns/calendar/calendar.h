@@ -41,8 +41,14 @@ typedef struct {
 } time24_t;
 
 typedef struct {
-    date_t      Date;
-    time24_t    Time;
+    union {
+        date_t      Date;
+        date_t;
+    };
+    union {
+        time24_t    Time;
+        time24_t;
+    };
 } date_time_t;
 
 /*============================ GLOBAL VARIABLES ==============================*/

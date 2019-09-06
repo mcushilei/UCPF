@@ -25,7 +25,6 @@
 #include ".\clock\clock.h"
 //#include ".\codec\codec.h"
 #include ".\debug\debug.h"
-#include ".\dsp\dsp.h"
 #include ".\event_fsm\event_fsm.h"
 #include ".\fifo\fifo.h"
 #include ".\fsm\fsm.h"
@@ -38,6 +37,9 @@
 #include ".\string\string.h"
 #include ".\timer\timer.h"
 #include ".\ttp\ttp.h"
+#include "./heap_memory/heap_first_fit/heap_first_fit.h"
+#include "./json_checker/json_checker.h"
+#include "./cJSON/cJSON.h"
 
 /*============================ MACROS ========================================*/
 /*============================ MACROFIED FUNCTIONS ===========================*/
