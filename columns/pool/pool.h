@@ -26,7 +26,8 @@
 /*============================ TYPES =========================================*/
 DEF_STRUCTURE(pool_t)
     void           *FreeList;
-    pool_uint_t     Level;          //!< pool level.
+    pool_uint_t     Capacity;
+    pool_uint_t     Level;          //!< current pool level.
     pool_uint_t     LevelMin;       //!< minimum pool level.
 END_DEF_STRUCTURE(pool_t)
 

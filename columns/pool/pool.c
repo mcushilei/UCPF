@@ -59,6 +59,7 @@ bool pool_init(pool_t *pool, pool_uint_t level, void *mem, size_t blockSize)
     }
 
     pool->FreeList  = NULL;
+    pool->Capacity  = level;
     pool->Level     = level;
     pool->LevelMin  = level;
 
