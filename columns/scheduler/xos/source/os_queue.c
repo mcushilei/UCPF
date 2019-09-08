@@ -320,7 +320,7 @@ OS_ERR osQueueWrite(OS_HANDLE hQueue, const void *buffer, UINT32 timeout)
     memcpy((char *)pqueue->OSQueueBuffer + pqueue->OSQueueElementSize * pqueue->OSQueueTail, buffer, pqueue->OSQueueElementSize);
     pqueue->OSQueueTail++;
     if (pqueue->OSQueueTail >= pqueue->OSQueueSize) {
-        pqueue->OSQueueTail = 0;
+        pqueue->OSQueueTail = 0u;
     }
     pqueue->OSQueueLength++;
     pqueue->OSQueueReadToken++;
@@ -412,7 +412,7 @@ OS_ERR osQueueRead(OS_HANDLE hQueue, void *buffer, UINT32 timeout)
     memcpy(buffer, (char *)pqueue->OSQueueBuffer + pqueue->OSQueueElementSize * pqueue->OSQueueHead, pqueue->OSQueueElementSize);
     pqueue->OSQueueHead++;
     if (pqueue->OSQueueHead >= pqueue->OSQueueSize) {
-        pqueue->OSQueueHead = 0;
+        pqueue->OSQueueHead = 0u;
     }
     pqueue->OSQueueLength--;
     pqueue->OSQueueWriteToken++;

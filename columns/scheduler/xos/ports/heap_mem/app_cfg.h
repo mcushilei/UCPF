@@ -15,53 +15,16 @@
  *  along with this program; if not, see http://www.gnu.org/licenses/.        *
 *******************************************************************************/
 
-#ifndef __XOS_SOURCE_PORT_H__
-#define __XOS_SOURCE_PORT_H__
+//! Do not move this pre-processor statement to other places
+#include "../app_cfg.h"
 
-/*
- *  \brief
- *
- *  the variables, functions declared here would be imported from the 'ports'.
- */
-
+#ifndef __XOS_PORT_HEAP_MEM_APP_CFG_H__
+#define __XOS_PORT_HEAP_MEM_APP_CFG_H__
 
 /*============================ INCLUDES ======================================*/
-#include "..\ports\ports.h"
-
 /*============================ MACROS ========================================*/
 /*============================ MACROFIED FUNCTIONS ===========================*/
 /*============================ TYPES =========================================*/
-/*============================ GLOBAL VARIABLES ==============================*/
-/*============================ PROTOTYPES ====================================*/
-extern CPU_STK *OSTaskStkInit(CPU_STK *ptos, void *wrapper, void *task, void *parg);
-extern void     OSStartTheFirstThread(void);
-extern void     OSCtxSw(void);
-extern void     OSIntCtxSw(void);
-extern void     OSEnterCriticalSection(void);
-extern void     OSExitCriticalSection(void);
-extern CPU_REG  OSDisableInterrupt(void);
-extern void     OSResumeInterrupt(CPU_REG level);
 
-#if OS_HEAP_MEM_EN > 0
-extern void     OSHeapInit(void);
-extern void    *OSHeapAlloc(size_t size);
-extern void     OSHeapFree(void *mem);
-#endif
-
-#if OS_HOOKS_EN > 0
-extern void OSInitHookBegin(void);
-extern void OSInitHookEnd(void);
-extern void OSTaskCreateHook(OS_TCB *ptcb);
-extern void OSTaskReturnHook(OS_TCB *ptcb, void *arg);
-extern void OSTaskIdleHook(void);
-extern void OSTaskStatHook(void);
-extern void OSTaskSwHook(void);
-extern void OSTCBInitHook(OS_TCB *ptcb);
-extern void OSSysTickHook(void);
-#endif
-
-#if OS_DEBUG_EN > 0u
-extern void OSDebugInit(void);
-#endif
-
-#endif
+#endif  //!< #ifndef __XOS_PORT_HEAP_MEM_APP_CFG_H__
+/* EOF */

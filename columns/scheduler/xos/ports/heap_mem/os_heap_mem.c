@@ -15,53 +15,43 @@
  *  along with this program; if not, see http://www.gnu.org/licenses/.        *
 *******************************************************************************/
 
-#ifndef __XOS_SOURCE_PORT_H__
-#define __XOS_SOURCE_PORT_H__
 
-/*
- *  \brief
- *
- *  the variables, functions declared here would be imported from the 'ports'.
- */
 
 
 /*============================ INCLUDES ======================================*/
-#include "..\ports\ports.h"
+#include "./app_cfg.h"
+#include "../../../../heap_memory/heap_first_fit/heap_first_fit.h"
+#include "../../source/os_port.h"
 
 /*============================ MACROS ========================================*/
 /*============================ MACROFIED FUNCTIONS ===========================*/
 /*============================ TYPES =========================================*/
-/*============================ GLOBAL VARIABLES ==============================*/
-/*============================ PROTOTYPES ====================================*/
-extern CPU_STK *OSTaskStkInit(CPU_STK *ptos, void *wrapper, void *task, void *parg);
-extern void     OSStartTheFirstThread(void);
-extern void     OSCtxSw(void);
-extern void     OSIntCtxSw(void);
-extern void     OSEnterCriticalSection(void);
-extern void     OSExitCriticalSection(void);
-extern CPU_REG  OSDisableInterrupt(void);
-extern void     OSResumeInterrupt(CPU_REG level);
+/*============================ PRIVATE PROTOTYPES ============================*/
+/*============================ PRIVATE VARIABLES =============================*/
+/*============================ PUBLIC VARIABLES ==============================*/
+/*============================ IMPLEMENTATION ================================*/
 
-#if OS_HEAP_MEM_EN > 0
-extern void     OSHeapInit(void);
-extern void    *OSHeapAlloc(size_t size);
-extern void     OSHeapFree(void *mem);
-#endif
+static ALIGN(8) char heapMemory0[1024 * 15];
+_Pragma("location=\"ahb_ram\"") static ALIGN(8) char heapMemory1[1024 * 30];
 
-#if OS_HOOKS_EN > 0
-extern void OSInitHookBegin(void);
-extern void OSInitHookEnd(void);
-extern void OSTaskCreateHook(OS_TCB *ptcb);
-extern void OSTaskReturnHook(OS_TCB *ptcb, void *arg);
-extern void OSTaskIdleHook(void);
-extern void OSTaskStatHook(void);
-extern void OSTaskSwHook(void);
-extern void OSTCBInitHook(OS_TCB *ptcb);
-extern void OSSysTickHook(void);
-#endif
+static const heap_memory_cfg_t heapCfg[] = {
+    {&heapMemory0, sizeof(heapMemory0)},
+    {&heapMemory1, sizeof(heapMemory1)},
+};
 
-#if OS_DEBUG_EN > 0u
-extern void OSDebugInit(void);
-#endif
+void OSHeapInit(void)
+{
+    heap_init(heapCfg, UBOUND(heapCfg));
+}
 
-#endif
+void *OSHeapAlloc(size_t size)
+{
+    return heap_malloc(size);
+}
+
+void OSHeapFree(void *mem)
+{
+    heap_free(mem);
+}
+
+/* EOF */

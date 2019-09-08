@@ -38,7 +38,7 @@
 #define OS_MAX_SEMAPHORES        16u   //!< Max. number of semaphore in your application
 #define OS_MAX_MUTEXES           16u   //!< Max. number of mutex     in your application
 #define OS_MAX_FLAGS             16u   //!< Max. number of flag      in your application
-#define OS_MAX_TASKS             14u   //!< Max. number of tasks     in your application
+#define OS_MAX_TASKS             12u   //!< Max. number of tasks     in your application
 
 
 #define OS_STAT_EN                1u   //!< Enable (1) or Disable (0) the statistics task
@@ -87,8 +87,8 @@
 #define OS_SCHED_LOCK_EN          1u    //!< Include code for osLockSched() and osUnlockSched()
 
 //! TASK STACK SIZE
-#define OS_TASK_STAT_STK_SIZE    56u    //!< Statistics task stack size (# of CPU_STK wide entries)
-#define OS_TASK_IDLE_STK_SIZE    32u    //!< Idle       task stack size (# of CPU_STK wide entries)
+#define OS_TASK_STAT_STK_SIZE    90u    //!< Statistics task stack size (# of CPU_STK wide entries)
+#define OS_TASK_IDLE_STK_SIZE    60u    //!< Idle       task stack size (# of CPU_STK wide entries)
 
 //! HEAP MANAGEMENT
 #define OS_HEAP_MEM_EN            1u    //!< Enable (1) or Disable (0) code generation for heap management.

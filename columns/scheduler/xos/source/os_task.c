@@ -31,7 +31,8 @@ static void os_task_stk_clr    (CPU_STK        *pbos,
                                 UINT16          opt);
 #endif
 
-static void os_task_return     (void           *arg);
+static void os_task_wrapper    (OS_TASK        *task,
+                                void           *parg);
 
 /*============================ LOCAL VARIABLES ===============================*/
 /*============================ GLOBAL VARIABLES ==============================*/
@@ -85,6 +86,7 @@ static void os_task_return     (void           *arg);
  */
 
 OS_ERR  osTaskCreate(   OS_HANDLE      *pHandle,
+                        const char     *name,
                         OS_TASK        *entry,
                         void           *argument,
                         CPU_STK        *stack,
@@ -120,6 +122,8 @@ OS_ERR  osTaskCreate(   OS_HANDLE      *pHandle,
         OSExitCriticalSection();
         return OS_ERR_OUT_OF_MEMORY;
     }
+    
+    //! malloc stack
     options &= ~OS_TASK_OPT_STK_HEAP;
 #if OS_TASK_STACK_ON_HEAP_EN > 0
     if (stack == NULL) {
@@ -134,20 +138,18 @@ OS_ERR  osTaskCreate(   OS_HANDLE      *pHandle,
 #endif
     OSExitCriticalSection();
     
-    //! initial TCB.
+    //! initial stack,
 #if (OS_STAT_TASK_STK_CHK_EN > 0u)
     os_task_stk_clr(stack, stackSize, options);
 #endif
 #if OS_CPU_STK_GROWTH_DOWN == 1u
-    if (stackSize != 0u) {
-        psp = OSTaskStkInit(stack + stackSize - 1u, (void *)&os_task_return, (void *)entry, argument);
-    } else {
-        psp = OSTaskStkInit(stack, (void *)&os_task_return, (void *)entry, argument);
-    }
+    psp = OSTaskStkInit(stack + stackSize - 1u, (void *)&os_task_wrapper, (void *)entry, argument);
 #else
-    psp = OSTaskStkInit(stack, (void *)&os_task_return, (void *)entry, argument);
+    psp = OSTaskStkInit(stack,                  (void *)&os_task_wrapper, (void *)entry, argument);
 #endif
-    OS_TCBInit(ptcb, priority, psp, stack, stackSize, options);
+    
+    //! initial TCB.
+    OS_TCBInit(ptcb, name, priority, psp, stack, stackSize, options);
     
 #if OS_HOOKS_EN > 0u
     OSTaskCreateHook(ptcb);
@@ -245,10 +247,14 @@ OS_ERR osTaskChangePrio(OS_HANDLE taskHandle, UINT8 newprio)
  *  \note       This function is INTERNAL to OS and your application should not call it.
  */
 
-static void os_task_return(void *parg)
+static void os_task_wrapper(OS_TASK *task, void *parg)
 {
+    void *ret;
+    
+    ret = task(parg);
+    
 #if OS_HOOKS_EN > 0
-    OSTaskReturnHook(osTCBCur, parg);   //!< Call hook to let user decide on what to do
+    OSTaskReturnHook(osTCBCur, ret);   //!< Call hook to let user decide on what to do
 #endif
 
 #if OS_TASK_DEL_EN > 0u

@@ -229,19 +229,23 @@ void osIntExit(void)
     }
     
     OSEnterCriticalSection();
-    if (osIntNesting > 0u) {                            //!< Prevent osIntNesting from wrapping
-        osIntNesting--;
-    }
-    if (osIntNesting == 0u) {                           //!< Reschedule only if all ISRs complete ...
-        if (osLockNesting == 0u) {                      //!< ... and scheduler is not locked.
-            OS_SchedulerPrio();
-            if (osTCBNextRdy != osTCBCur) {             //!< No Ctx Sw if current task is highest rdy
-                OSExitCriticalSection();
-                OSIntCtxSw();                           //!< Perform interrupt level ctx switch
-                return;
-            }
+    do {
+        if (osIntNesting > 0u) {
+            osIntNesting--;
         }
-    }
+        if (osIntNesting != 0u) {           //!< Reschedule only if all ISRs complete ...
+            break;
+        }
+        if (osLockNesting != 0u) {          //!< ... and scheduler is not locked.
+            break;
+        }
+        OS_SchedulerPrio();
+        if (osTCBNextRdy != osTCBCur) {
+            OSExitCriticalSection();
+            OSIntCtxSw();                   //!< Perform interrupt level ctx switch
+            return;
+        }
+    } while (0);
     OSExitCriticalSection();
 }
 
@@ -440,6 +444,86 @@ static void OS_WaitListRemove(OS_TCB *ptcb)
 }
 
 /*
+ *  \brief      MAKE TASK WAIT FOR EVENT TO OCCUR
+ * 
+ *  \remark     This function is called by other OS services to suspend a task because an event has
+ *              not occurred.
+ * 
+ *  \param      pevent   is a pointer to the event control block for which the task will be waiting for.
+ * 
+ *              pnode    is a pointer to a structure which contains data about the task waiting for
+ *                       event to occur.
+ *
+ *              ticks    is the desired amount of ticks that the task will wait for the event to
+ *                       occur.
+ * 
+ *  \return     none
+ * 
+ *  \note       1) This function assumes that interrupts are DISABLED.
+ *              2) This function is INTERNAL to OS and your application should not call it.
+ */
+void OS_WaitableObjAddTask( OS_WAITABLE_OBJ    *pobj,
+                            OS_WAIT_NODE       *pnode,
+                            OS_LIST_NODE       *plist,
+                            UINT32              ticks)
+{
+    //! initial wait node.
+    pnode->OSWaitNodeTCB        = osTCBCur;
+    pnode->OSWaitNodeECB        = pobj;
+    pnode->OSWaitNodeListHead   = plist;
+    pnode->OSWaitNodeRes        = OS_STAT_PEND_OK;
+    list_init(&pnode->OSWaitNodeList);
+    
+    osTCBCur->OSTCBWaitNode = pnode;                    //!< Store node in task's TCB
+    osTCBCur->OSTCBDly      = ticks;
+    
+    OS_WaitNodeInsert(pobj, plist, pnode);
+    OS_SchedulerUnreadyTask(osTCBCur);
+    OS_WaitListInsert(osTCBCur);
+}
+
+/*
+ *  \brief      MAKE TASK READY TO RUN BASED ON EVENT OCCURING
+ * 
+ *  \remark     This function is called by other OS services and is used to make a task ready-to-run because
+ *              desired event occur. Only the thread in the head of the wait-node list will be set to ready.
+ * 
+ *  \param      pevent     is a pointer to the event control block corresponding to the event.
+ * 
+ *              plist      a pointer to the wait-node list of the event object.
+ * 
+ *              pendRes    is used to indicate the readied task's pending status:
+ * 
+ *                           OS_STAT_PEND_OK      Task ready due to a event-set, not a timeout or
+ *                                                an abort.
+ *                           OS_STAT_PEND_ABORT   Task ready due to an abort(or event was deleted).
+ * 
+ *  \return     none
+ * 
+ *  \note       1) This function assumes that interrupts are DISABLED.
+ *              2) The list plist points to should not be empty!.
+ */
+OS_TCB *OS_WaitableObjRdyTask(OS_WAITABLE_OBJ *pobj, OS_LIST_NODE *plist, UINT8 pendRes)
+{
+    OS_WAIT_NODE   *pnode;
+    OS_TCB         *ptcb;
+
+    
+    pnode   = CONTAINER_OF(plist->Next, OS_WAIT_NODE, OSWaitNodeList);
+    ptcb    = pnode->OSWaitNodeTCB;
+        
+    pnode->OSWaitNodeRes        = pendRes;
+    pnode->OSWaitNodeListHead   = NULL;
+    pnode->OSWaitNodeECB        = NULL;
+    pnode->OSWaitNodeTCB        = NULL;
+    
+    OS_WaitNodeRemove(ptcb);                //!< Remove this task from event's wait-node list
+    OS_WaitListRemove(ptcb);
+    OS_SchedulerReadyTask(ptcb);            //!< Put task in the ready list
+    return ptcb;
+}
+
+/*
  *  \brief      PROCESS SYSTEM TICK
  * 
  *  \remark     This function is used to signal to OS the occurrence of a 'system tick' (also known
@@ -471,14 +555,14 @@ void osSysTick(void)
     OSEnterCriticalSection();
     if (osSysClockScanHandOld > osSysClockScanHand) { //! if the hand has made a revolution.
         //! all ptcb in osWaitList has timeout.
-        for (list = osWaitList.Next; list != &osWaitList; ) {
+        while (!LIST_IS_EMPTY(osWaitList)) {
+            list = osWaitList.Next;
             ptcb = CONTAINER_OF(list, OS_TCB, OSTCBList);
-            list = list->Next;
             pnode = ptcb->OSTCBWaitNode;
 
             pnode->OSWaitNodeRes = OS_STAT_PEND_TO;         //!< Indicate PEND timeout.
-            OS_WaitNodeRemove(ptcb);
 
+            OS_WaitNodeRemove(ptcb);
             OS_WaitListRemove(ptcb);
             OS_SchedulerReadyTask(ptcb);
         }
@@ -496,23 +580,21 @@ void osSysTick(void)
         }
     }
     
-    //! to see if there is any ptcb overflow in osWaitList.
-    if (osWaitList.Next != &osWaitList) {   //! see if osWaitList is empyt.
-        for (list = osWaitList.Next; list != &osWaitList; ) {
-            ptcb = CONTAINER_OF(list, OS_TCB, OSTCBList);
-            list = list->Next;
-                                                            //! to see if it has overflow.
-            if (ptcb->OSTCBDly > osSysClockScanHand) {     //!< no.
-                break;                      //!< The list has been sorted, so we just break.
-            } else {                                        //!< yes
-                pnode = ptcb->OSTCBWaitNode;
+    //! to see if there is any ptcb overflow in the list.
+    while (!LIST_IS_EMPTY(osWaitList)) {
+        list = osWaitList.Next;
+        ptcb = CONTAINER_OF(list, OS_TCB, OSTCBList);
+                                                        //! to see if it has overflow.
+        if (ptcb->OSTCBDly > osSysClockScanHand) {      //!< no.
+            break;                                      //!< The list has been sorted, so we just break.
+        } else {                                        //!< yes
+            pnode = ptcb->OSTCBWaitNode;
 
-                pnode->OSWaitNodeRes = OS_STAT_PEND_TO; //!  ... then indicate that it has been timeout.
-                OS_WaitNodeRemove(ptcb);
+            pnode->OSWaitNodeRes = OS_STAT_PEND_TO;     //! to indicate that it has been timeout.
 
-                OS_WaitListRemove(ptcb);
-                OS_SchedulerReadyTask(ptcb);
-            }
+            OS_WaitNodeRemove(ptcb);
+            OS_WaitListRemove(ptcb);
+            OS_SchedulerReadyTask(ptcb);
         }
     }
     OSExitCriticalSection();
@@ -587,21 +669,15 @@ OS_ERR osTaskSleep(UINT32 ticks)
 #if OS_STAT_EN > 0u
 void osStatInit(void)
 {
-    if (osIntNesting != 0u) {                   //!< See if trying to call from an ISR
-        return;
-    }
-    if (osLockNesting != 0u) {                  //!< See if called with scheduler locked
-        return;
-    }
-    
     osTaskSleep(2u);                            //!< Synchronize with clock tick
     OSEnterCriticalSection();
     osIdleCtr       = 0u;                       //!< Clear idle counter
     OSExitCriticalSection();
     
     osTaskSleep(OS_TICKS_PER_SEC);              //!< Determine MAX. idle counter value for 1 second
+
     OSEnterCriticalSection();
-    osIdleCtrMax    = osIdleCtr;                //!< Store maximum idle counter count in 1 second
+    osIdleCtrMax        = osIdleCtr;            //!< Store maximum idle counter count in 1 second
     osTaskStatRunning   = TRUE;
     OSExitCriticalSection();
 }
@@ -621,6 +697,7 @@ static void os_init_statistics_task(void)
 {
 
     osTaskCreate(NULL,
+                "os_task_statistics",
                 os_task_statistics,
                 NULL,
                 osTaskStatStk,
@@ -643,6 +720,7 @@ static void os_init_idle_task(void)
 {
 
     osTaskCreate(NULL,
+                 "os_task_idle",
                 os_task_idle,
                 NULL,
                 osTaskIdleStk,
@@ -724,17 +802,9 @@ static void *os_task_statistics(void *parg)
         osTaskSleep(OS_INFINITE);
     }
     
-    OSEnterCriticalSection();
-    osIdleCtr = osIdleCtrMax * 100u;        //!< Initial CPU usage as 0%
-    OSExitCriticalSection();
-    
     for (;;) {
-        OSEnterCriticalSection();
-        lastIdleCtr = osIdleCtr;            //!< Obtain the of the idle counter for the past second
-        osIdleCtr   = 0u;                   //!< Reset the idle counter for the next second
-        OSExitCriticalSection();
-        osCPUUsage  = 100u - lastIdleCtr / osIdleCtrMax;
-        
+        osTaskSleep(OS_TICKS_PER_SEC);          //!< Accumulate osIdleCtr for the next 1/10 second
+
 #if (OS_STAT_TASK_STK_CHK_EN > 0u)
         OSEnterCriticalSection();
         for (list = osWaitList.Next; list != &osWaitList; list = list->Next) {
@@ -747,8 +817,6 @@ static void *os_task_statistics(void *parg)
 #if OS_HOOKS_EN > 0u
         OSTaskStatHook();                       //!< Invoke user definable hook
 #endif
-        
-        osTaskSleep(OS_TICKS_PER_SEC);          //!< Accumulate osIdleCtr for the next 1/10 second
     }
 }
 #endif
@@ -779,12 +847,13 @@ static void *os_task_statistics(void *parg)
  * 
  *  \note       This function is INTERNAL to OS and your application should not call it.
  */
-void OS_TCBInit(OS_TCB  *ptcb,
-                UINT8    prio,
-                CPU_STK  *psp,
-                CPU_STK  *pstk,
-                UINT32   stkSize,
-                UINT16   opt)
+void OS_TCBInit(OS_TCB     *ptcb,
+                const char *name,
+                UINT8       prio,
+                CPU_STK    *psp,
+                CPU_STK    *pstk,
+                UINT32      stkSize,
+                UINT16      opt)
 {
     ptcb->OSTCBObjHeader.OSObjType = OS_OBJ_TYPE_SET(OS_OBJ_TYPE_TCB);
     
@@ -805,11 +874,10 @@ void OS_TCBInit(OS_TCB  *ptcb,
     ptcb->OSTCBPrio         = prio;                     //!< Load task priority into TCB
     
 #if OS_TASK_PROFILE_EN > 0u                             //!< Initialize profiling variables
+    ptcb->OSTCBName         = name;
     ptcb->OSTCBStkSize      = stkSize;
     ptcb->OSTCBStkUsed      = 0u;
     ptcb->OSTCBCtxSwCtr     = 0u;
-    ptcb->OSTCBCyclesStart  = 0u;
-    ptcb->OSTCBCyclesTot    = 0u;
 #endif
 
 #if OS_HOOKS_EN > 0u
@@ -871,89 +939,6 @@ void OS_TaskStkChk(OS_TCB *ptcb)
     OSExitCriticalSection();
 }
 #endif
-
-/*
- *  \brief      MAKE TASK WAIT FOR EVENT TO OCCUR
- * 
- *  \remark     This function is called by other OS services to suspend a task because an event has
- *              not occurred.
- * 
- *  \param      pevent   is a pointer to the event control block for which the task will be waiting for.
- * 
- *              pnode    is a pointer to a structure which contains data about the task waiting for
- *                       event to occur.
- *
- *              ticks    is the desired amount of ticks that the task will wait for the event to
- *                       occur.
- * 
- *  \return     none
- * 
- *  \note       1) This function assumes that interrupts are DISABLED.
- *              2) This function is INTERNAL to OS and your application should not call it.
- */
-void OS_WaitableObjAddTask( OS_WAITABLE_OBJ    *pobj,
-                            OS_WAIT_NODE       *pnode,
-                            OS_LIST_NODE       *plist,
-                            UINT32              ticks)
-{
-    //! initial wait node.
-    pnode->OSWaitNodeTCB        = osTCBCur;
-    pnode->OSWaitNodeECB        = pobj;
-    pnode->OSWaitNodeListHead   = plist;
-    pnode->OSWaitNodeRes        = OS_STAT_PEND_OK;
-    list_init(&pnode->OSWaitNodeList);
-    OS_WaitNodeInsert(pobj, plist, pnode);
-    
-    osTCBCur->OSTCBWaitNode = pnode;                    //!< Store node in task's TCB
-    osTCBCur->OSTCBDly      = ticks;
-    
-    OS_SchedulerUnreadyTask(osTCBCur);
-    OS_WaitListInsert(osTCBCur);
-}
-
-/*
- *  \brief      MAKE TASK READY TO RUN BASED ON EVENT OCCURING
- * 
- *  \remark     This function is called by other OS services and is used to make a task ready-to-run because
- *              desired event occur. Only the thread in the head of the wait-node list will be set to ready.
- * 
- *  \param      pevent     is a pointer to the event control block corresponding to the event.
- * 
- *              plist      a pointer to the wait-node list of the event object.
- * 
- *              pendRes    is used to indicate the readied task's pending status:
- * 
- *                           OS_STAT_PEND_OK      Task ready due to a event-set, not a timeout or
- *                                                an abort.
- *                           OS_STAT_PEND_ABORT   Task ready due to an abort(or event was deleted).
- * 
- *  \return     none
- * 
- *  \note       1) This function assumes that interrupts are DISABLED.
- *              2) The list plist points to should not be empty!.
- */
-OS_TCB *OS_WaitableObjRdyTask(OS_WAITABLE_OBJ *pobj, OS_LIST_NODE *plist, UINT8 pendRes)
-{
-    OS_WAIT_NODE   *pnode;
-    OS_TCB         *ptcb;
-
-    
-    pnode   = CONTAINER_OF(plist->Next, OS_WAIT_NODE, OSWaitNodeList);
-    ptcb    = pnode->OSWaitNodeTCB;
-        
-    OS_WaitNodeRemove(ptcb);                //!< Remove this task from event's wait-node list
-    pnode->OSWaitNodeRes        = pendRes;
-    pnode->OSWaitNodeListHead   = NULL;
-    pnode->OSWaitNodeECB        = NULL;
-    pnode->OSWaitNodeTCB        = NULL;
-    
-    ptcb->OSTCBWaitNode = NULL;
-    ptcb->OSTCBDly      = 0u;
-    
-    OS_WaitListRemove(ptcb);
-    OS_SchedulerReadyTask(ptcb);            //!< Put task in the ready list
-    return ptcb;
-}
 
 #if OS_TASK_DEL_EN > 0u
 #if OS_MUTEX_EN > 0u
@@ -1037,7 +1022,6 @@ void OS_ChangeTaskPrio(OS_TCB *ptcb, UINT8 newprio)
     OS_WAIT_NODE       *pnode;
 
 
-    OSEnterCriticalSection();
     pnode = ptcb->OSTCBWaitNode;
     if (pnode != NULL) {                        //!< if the task is waiting for any object or sleep?
         pobj = pnode->OSWaitNodeECB;
@@ -1064,7 +1048,6 @@ void OS_ChangeTaskPrio(OS_TCB *ptcb, UINT8 newprio)
         ptcb->OSTCBPrio = newprio;              //!< Set new task priority
         OS_SchedulerReadyTask(ptcb);            //!< Place TCB @ new priority
     }
-    OSExitCriticalSection();
 }
 
 void OS_BitmapSet(OS_PRIO_BITMAP *pmap, UINT8 bit)
@@ -1095,7 +1078,7 @@ void OS_BitmapClr(OS_PRIO_BITMAP *pmap, UINT8 bit)
     }
 }
 
-UINT8 OS_BitmapGetHigestPrio(OS_PRIO_BITMAP *pmap)
+UINT8 OS_BitmapGetLeadingZero(OS_PRIO_BITMAP *pmap)
 {
     UINT16 y;
     UINT16 bit;

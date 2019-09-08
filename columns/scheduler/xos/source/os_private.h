@@ -255,11 +255,10 @@ struct os_tcb {
 
     
 #if OS_TASK_PROFILE_EN > 0u
+    const char         *OSTCBName;
     UINT16              OSTCBStkSize;               //!< Size of task stack (in number of stack elements)
     UINT16              OSTCBStkUsed;               //!< Number of BYTES used from the stack
     UINT32              OSTCBCtxSwCtr;              //!< Number of times the task was switched in
-    UINT32              OSTCBCyclesTot;             //!< Total number of ticks the task has been running
-    UINT32              OSTCBCyclesStart;           //!< Snapshot of tick at start of task
 #endif
     
 };
@@ -346,6 +345,7 @@ void        OS_TaskStkChk          (OS_TCB         *ptcb);
 void        OS_WaitNodeRemove      (OS_TCB         *ptcb);
 
 void        OS_TCBInit             (OS_TCB         *ptcb,
+                                    const char     *name,
                                     UINT8           prio,
                                     CPU_STK        *psp,
                                     CPU_STK        *pstk,
@@ -372,7 +372,7 @@ void        OS_BitmapSet           (OS_PRIO_BITMAP *pmap,
 void        OS_BitmapClr           (OS_PRIO_BITMAP *pmap,
                                     UINT8           prio);
 
-UINT8       OS_BitmapGetHigestPrio (OS_PRIO_BITMAP *pmap);
+UINT8       OS_BitmapGetLeadingZero(OS_PRIO_BITMAP *pmap);
 
 
 #endif

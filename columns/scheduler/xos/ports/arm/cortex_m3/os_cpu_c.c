@@ -38,7 +38,7 @@ uint32_t OSCriticalNesting = 0;                      //!<  关中断计数器（
 *********************************************************************************************************
 */
 
-CPU_STK *OSTaskStkInit(CPU_STK *ptos, void *pret, void *task, void *parg)
+CPU_STK *OSTaskStkInit(CPU_STK *ptos, void *wrapper, void *task, void *parg)
 {
     CPU_STK *stk;
 
@@ -49,13 +49,13 @@ CPU_STK *OSTaskStkInit(CPU_STK *ptos, void *pret, void *task, void *parg)
 
                                                     //!< ARM Cortex-M has a full-descending stack.
     *(  stk)  = (uint32_t)0x01000000;               //!< xPSR
-    *(--stk)  = (uint32_t)task;                     //!< PC: the task entry.
-    *(--stk)  = (uint32_t)pret;                     //!< R14 (LR)
+    *(--stk)  = (uint32_t)wrapper;                  //!< PC: the task wrapper.
+    *(--stk)  = (uint32_t)0x0D0D0D0D;               //!< R14 (LR)
     *(--stk)  = (uint32_t)0x0C0C0C0C;               //!< R12
     *(--stk)  = (uint32_t)0x03030303;               //!< R3
     *(--stk)  = (uint32_t)0x02020202;               //!< R2
-    *(--stk)  = (uint32_t)0x01010101;               //!< R1
-    *(--stk)  = (uint32_t)parg;                     //!< R0: the argument passed to task.
+    *(--stk)  = (uint32_t)parg;                     //!< R1: the argument passed to task.
+    *(--stk)  = (uint32_t)task;                     //!< R0: the task entry.
 
     *(--stk)  = (uint32_t)0xFFFFFFFD;               //!< EXEC_RETURN: to select whether PSP or MSP to use and specify the CPU mode.
                                                     //!  Refer to DUI0552A on page 2-27, table 2-17.
@@ -74,9 +74,10 @@ CPU_STK *OSTaskStkInit(CPU_STK *ptos, void *pret, void *task, void *parg)
 
 void OSEnterCriticalSection(void)
 {
-	__set_BASEPRI( OS_CPU_CFG_HIGHEST_INTERRUPT_PRIORITY_USED );
-	__DSB();
-	__ISB();
+//	__set_BASEPRI( OS_CPU_CFG_HIGHEST_INTERRUPT_PRIORITY_USED );
+//	__DSB();
+//	__ISB();
+    __disable_irq();
     OSCriticalNesting++;
 }
 
@@ -84,7 +85,8 @@ void OSExitCriticalSection(void)
 {
 	OSCriticalNesting--;
 	if ( OSCriticalNesting == 0u ) {
-		__set_BASEPRI( 0 );
+//		__set_BASEPRI( 0 );
+        __enable_irq();
 	}
 }
 

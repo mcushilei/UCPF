@@ -266,6 +266,7 @@ OS_ERR      osQueueQuery            (OS_HANDLE      hQueue,
  *! \Brief  TASK MANAGEMENT
  */
 OS_ERR      osTaskCreate           (OS_HANDLE      *pHandle,
+                                    const char     *name,
                                     OS_TASK        *Entry,
                                     void           *argument,
                                     CPU_STK        *stack,

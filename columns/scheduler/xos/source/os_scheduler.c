@@ -100,7 +100,7 @@ void OS_SchedulerPrio(void)
     OS_LIST_NODE   *node;
 
 
-    prio = OS_BitmapGetHigestPrio(&osRdyBitmap);
+    prio = OS_BitmapGetLeadingZero(&osRdyBitmap);
     if (prio != osTCBCur->OSTCBPrio) {
         node = osRdyList[prio].Next;
         //! move this task to the end of the ready queue.
@@ -126,7 +126,7 @@ void OS_SchedulerNext(void)
     OS_LIST_NODE   *node;
 
 
-    prio = OS_BitmapGetHigestPrio(&osRdyBitmap);
+    prio = OS_BitmapGetLeadingZero(&osRdyBitmap);
     node = osRdyList[prio].Next;
     //! move this task to the end of the ready queue.
     list_remove(node);
