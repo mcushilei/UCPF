@@ -1,5 +1,5 @@
 /*******************************************************************************
- *  Copyright(C)2015-2019 by Dreistein<mcu_shilei@hotmail.com>                *
+ *  Copyright(C)2015 by Dreistein<mcu_shilei@hotmail.com>                     *
  *                                                                            *
  *  This program is free software; you can redistribute it and/or modify it   *
  *  under the terms of the GNU Lesser General Public License as published     *
@@ -16,23 +16,13 @@
 *******************************************************************************/
 
 
-#ifndef __KERNEL_PORTS_ARM_PORTS_H__
-#define __KERNEL_PORTS_ARM_PORTS_H__
+//! \note do not move this pre-processor statement to other places
+#include "..\app_cfg.h"
+
+#ifndef __OS_PORTS_CORTEX_M4F_APP_CFG_H__
+#define __OS_PORTS_CORTEX_M4F_APP_CFG_H__
 
 /*============================ INCLUDES ======================================*/
-#include ".\app_cfg.h"
-
-
-#if     defined(__CORTEX_M0P__)
-    #include ".\cortex_m0plus\ports.h"
-#elif   defined(__CORTEX_M3__)
-    #include ".\cortex_m3\os_cpu_h.h"
-#elif   defined(__CORTEX_M4__) || defined(__CORTEX_M4F__)
-    #include ".\cortex_m4\os_cpu_h.h"
-#else
-    #error "No supported CPU."
-#endif
-
 /*============================ MACROS ========================================*/
 /*============================ MACROFIED FUNCTIONS ===========================*/
 /*============================ TYPES =========================================*/

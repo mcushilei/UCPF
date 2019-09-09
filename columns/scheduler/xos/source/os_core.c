@@ -786,7 +786,6 @@ static void *os_task_idle(void *parg)
 #if OS_STAT_EN > 0u
 static void *os_task_statistics(void *parg)
 {
-    UINT32              lastIdleCtr;        //!< Val. reached by idle ctr at run time in 1 sec.
     OS_LIST_NODE       *list;
     OS_TCB             *ptcb;
 
