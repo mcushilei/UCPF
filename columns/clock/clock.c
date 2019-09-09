@@ -26,6 +26,14 @@
 /*============================ MACROS ========================================*/
 #define CLOCK_TICKS_A_DAY   (24u * 60u * 60u)
 
+#ifndef CLOCK_CRITICAL_SECTION_BEGIN
+#define CLOCK_CRITICAL_SECTION_BEGIN()
+#endif
+
+#ifndef CLOCK_CRITICAL_SECTION_END
+#define CLOCK_CRITICAL_SECTION_END()
+#endif
+
 /*============================ MACROFIED FUNCTIONS ===========================*/
 /*============================ TYPES =========================================*/
 typedef struct {
@@ -101,7 +109,8 @@ void clock_tick_tock(void)
         return;                         //! ...before clock has been initialised.
     }
 
-    __CLOCK_SAFE_ATOM_CODE(
+    CLOCK_CRITICAL_SECTION_BEGIN();
+    do {
         //! move hand forward.
         ++realClock.Hand;
         //! and then to see if it has run over.
@@ -120,7 +129,8 @@ void clock_tick_tock(void)
                 clock_alarm_process(pAC);
             }
         }
-    )
+    } while (0);
+    CLOCK_CRITICAL_SECTION_END();
 }
 
 bool clock_init(void)
@@ -135,7 +145,8 @@ bool clock_set_time(uint32_t time)
 {
     bool forward = false;
     
-    __CLOCK_SAFE_ATOM_CODE(
+    CLOCK_CRITICAL_SECTION_BEGIN();
+    do {
         if (time > realClock.Hand) {
             forward = true;
         }
@@ -160,7 +171,8 @@ bool clock_set_time(uint32_t time)
                 }
             }
         }
-    )
+    } while (0);
+    CLOCK_CRITICAL_SECTION_END();
     return true;
 }
 
@@ -174,10 +186,10 @@ bool alarmclock_config(
     ac->pRoutine = pRoutine;
     list_init(&ac->ListNode);
     //! start it.
-    __CLOCK_SAFE_ATOM_CODE(
-        ac->Count = value;
-        clock_list_insert(ac);
-    )
+    CLOCK_CRITICAL_SECTION_BEGIN();
+    ac->Count = value;
+    clock_list_insert(ac);
+    CLOCK_CRITICAL_SECTION_END();
 
     return true;
 }
@@ -185,21 +197,21 @@ bool alarmclock_config(
 void alarmclock_start(alarmclock_t *ac, uint32_t value)
 {
     value %= CLOCK_TICKS_A_DAY;
-    __CLOCK_SAFE_ATOM_CODE(
-        //! remove it from running list.
-        clock_list_remove(ac);
-        ac->Count = value;
-        //! start it again.
-        clock_list_insert(ac);
-    )
+    CLOCK_CRITICAL_SECTION_BEGIN();
+    //! remove it from running list.
+    clock_list_remove(ac);
+    ac->Count = value;
+    //! start it again.
+    clock_list_insert(ac);
+    CLOCK_CRITICAL_SECTION_END();
 }
 
 void alarmclock_stop(alarmclock_t *ac)
 {
-    __CLOCK_SAFE_ATOM_CODE(
-        //! remove it from running list.
-        clock_list_remove(ac);
-    )
+    CLOCK_CRITICAL_SECTION_BEGIN();
+    //! remove it from running list.
+    clock_list_remove(ac);
+    CLOCK_CRITICAL_SECTION_END();
 }
 
 bool alarmclock_is_timeout(alarmclock_t *ac)
