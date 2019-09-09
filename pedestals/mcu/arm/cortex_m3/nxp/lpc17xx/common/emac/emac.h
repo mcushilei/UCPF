@@ -1,5 +1,5 @@
 /*******************************************************************************
- *  Copyright(C)2018-2019 by Dreistein<mcu_shilei@hotmail.com>                *
+ *  Copyright(C)2017 by Dreistein<mcu_shilei@hotmail.com>                     *
  *                                                                            *
  *  This program is free software; you can redistribute it and/or modify it   *
  *  under the terms of the GNU Lesser General Public License as published     *
@@ -15,21 +15,39 @@
  *  along with this program; if not, see http://www.gnu.org/licenses/.        *
 *******************************************************************************/
 
-//! Do not move this pre-processor statement to other places
-#ifndef __UCPF_PEDESTALS_H__
-#define __UCPF_PEDESTALS_H__
+//! \note do not move this pre-processor statement to other places
+#ifndef __DRIVER_LPC17XX_EMAC_C__
+#ifndef __DRIVER_LPC17XX_EMAC_H__
+#define __DRIVER_LPC17XX_EMAC_H__
 
 /*============================ INCLUDES ======================================*/
 #include ".\app_cfg.h"
-#include ".\utilities\utilities.h"
-#include ".\mcu\driver.h"
-
+#include "..\device.h"
+#include ".\reg_emac.h"
 
 /*============================ MACROS ========================================*/
+
+enum {
+    FULL_DUPLES_100M = 1,
+    HALF_DUPLES_100M,
+    FULL_DUPLES_10M,
+    HALF_DUPLES_10M,
+};
+
 /*============================ MACROFIED FUNCTIONS ===========================*/
 /*============================ TYPES =========================================*/
 /*============================ GLOBAL VARIABLES ==============================*/
 /*============================ PROTOTYPES ====================================*/
+extern uint8_t MAC_Init(void);
+extern void  MAC_SetMacAddr(uint8_t *mac_ptr);
+extern void  MAC_TxDisable(void);
+extern void  MAC_TxEnable(void);
+extern void  MAC_RxDisable(void);
+extern void  MAC_RxEnable(void);
+extern uint8_t MAC_GetUsableDescLen(void);
+extern uint8_t MAC_RecFrameProcess(void *rValue);
+extern void  MAC_RegTxDoneCallback(void (*CallbackFun)(void));
+extern void  MAC_RegRxDoneCallback(void (*CallbackFun)(void));
 
-#endif  //!< #ifndef __UCPF_PEDESTALS_H__
-/* EOF */
+#endif
+#endif

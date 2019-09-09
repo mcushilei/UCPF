@@ -1,5 +1,5 @@
 /*******************************************************************************
- *  Copyright(C)2018-2019 by Dreistein<mcu_shilei@hotmail.com>                *
+ *  Copyright(C)2017 by Dreistein<mcu_shilei@hotmail.com>                     *
  *                                                                            *
  *  This program is free software; you can redistribute it and/or modify it   *
  *  under the terms of the GNU Lesser General Public License as published     *
@@ -15,21 +15,38 @@
  *  along with this program; if not, see http://www.gnu.org/licenses/.        *
 *******************************************************************************/
 
-//! Do not move this pre-processor statement to other places
-#ifndef __UCPF_PEDESTALS_H__
-#define __UCPF_PEDESTALS_H__
+
+#ifndef __DRIVER_ARM_M3_LPC1768_DRIVER_H__
+#define __DRIVER_ARM_M3_LPC1768_DRIVER_H__
 
 /*============================ INCLUDES ======================================*/
 #include ".\app_cfg.h"
-#include ".\utilities\utilities.h"
-#include ".\mcu\driver.h"
-
+#include ".\device.h"
+#include "..\common\scon\pm.h"
+#include "..\common\uart\uart.h"
+#include "..\common\io\io.h"
+//#include "..\common\wdt\wdt.h"
+#include "..\common\spi\spi.h"
+//#include "..\common\flash\flash.h"
+#include "..\common\i2c\i2c.h"
+#include "..\common\rtc\rtc.h"
+#include "..\common\counter\counter.h"
+#include "..\common\adc\adc.h"
+//#include "..\common\emac\emac.h"
 
 /*============================ MACROS ========================================*/
 /*============================ MACROFIED FUNCTIONS ===========================*/
 /*============================ TYPES =========================================*/
 /*============================ GLOBAL VARIABLES ==============================*/
+/*============================ LOCAL VARIABLES ===============================*/
 /*============================ PROTOTYPES ====================================*/
 
-#endif  //!< #ifndef __UCPF_PEDESTALS_H__
+/*! \note initialize driver
+ *  \param none
+ *  \retval true hal initialization succeeded.
+ *  \retval false hal initialization failed
+ */  
+extern bool driver_init( void );
+
+#endif
 /* EOF */

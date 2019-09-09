@@ -1,5 +1,5 @@
 /*******************************************************************************
- *  Copyright(C)2018-2019 by Dreistein<mcu_shilei@hotmail.com>                *
+ *  Copyright(C)2016-2018 by Dreistein<mcu_shilei@hotmail.com>                *
  *                                                                            *
  *  This program is free software; you can redistribute it and/or modify it   *
  *  under the terms of the GNU Lesser General Public License as published     *
@@ -15,15 +15,24 @@
  *  along with this program; if not, see http://www.gnu.org/licenses/.        *
 *******************************************************************************/
 
-//! Do not move this pre-processor statement to other places
-#ifndef __UCPF_PEDESTALS_H__
-#define __UCPF_PEDESTALS_H__
+
+#ifndef __DRIVER_ARM_M4_DRIVER_H__
+#define __DRIVER_ARM_M4_DRIVER_H__
 
 /*============================ INCLUDES ======================================*/
 #include ".\app_cfg.h"
-#include ".\utilities\utilities.h"
-#include ".\mcu\driver.h"
 
+#if     defined(__TI__)
+#   include ".\TI\driver.h"
+#elif   defined(__FREESCALE__)
+#   include ".\freescale\driver.h"
+#elif   defined(__AMBIQ__)
+#   include ".\ambiq\driver.h"
+#elif   defined(__ST__)
+#   include ".\st\driver.h"
+#else
+#   error "Unsupported arm device, please check your configuration."
+#endif
 
 /*============================ MACROS ========================================*/
 /*============================ MACROFIED FUNCTIONS ===========================*/
@@ -31,5 +40,6 @@
 /*============================ GLOBAL VARIABLES ==============================*/
 /*============================ PROTOTYPES ====================================*/
 
-#endif  //!< #ifndef __UCPF_PEDESTALS_H__
+
+#endif
 /* EOF */
