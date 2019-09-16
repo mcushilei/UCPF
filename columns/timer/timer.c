@@ -22,17 +22,10 @@
 /*============================ INCLUDES ======================================*/
 #include "./app_cfg.h"
 #include "./timer.h"
+#include "./timer_plug.h"
 
 /*============================ MACROS ========================================*/
 #define TIMER_TIMEOUT_FLAG_MSK          (0x01u)
-
-#ifndef TIMER_CRITICAL_SECTION_BEGIN
-#define TIMER_CRITICAL_SECTION_BEGIN()
-#endif
-
-#ifndef TIMER_CRITICAL_SECTION_END
-#define TIMER_CRITICAL_SECTION_END()
-#endif
 
 /*============================ MACROFIED FUNCTIONS ===========================*/
 /*============================ TYPES =========================================*/
@@ -98,7 +91,7 @@ static void timer_timeout_processs(timer_t *timer)
     }
     timer->Flag |= TIMER_TIMEOUT_FLAG_MSK;
     if (timer->pRoutine != NULL) {
-        timer->pRoutine(timer->RoutineArg);
+        timer->pRoutine(timer);
     }
 
     timer_timerout_callback(timer);
@@ -117,6 +110,9 @@ void timer_tick(void)
 
 void timer_watchman(void)
 {
+    list_node_t *pNode;
+    timer_t *pTimer;
+
     if (!isInitOK) {
         return;
     }
@@ -125,10 +121,10 @@ void timer_watchman(void)
     if (scanHandOld > scanHand) {   //! Has the hand made a revolution?...
                                     //! ...Yes
         //! All the timers in timerListToday has timeout. so empty it.
-        for (list_node_t *pNode = timerListToday.Next; pNode != &timerListToday; ) {
-            timer_t *pTimer = CONTAINER_OF(pNode, timer_t, ListNode);
-            pNode = pNode->Next;
-            list_remove(&pTimer->ListNode);
+        while (!LIST_IS_EMPTY(timerListToday)) {
+            pNode = timerListToday.Next;
+            pTimer = CONTAINER_OF(pNode, timer_t, ListNode);
+            list_remove(pNode);
             timer_timeout_processs(pTimer);
         }
 
@@ -145,33 +141,31 @@ void timer_watchman(void)
         }
     }
 
-    for (list_node_t *pNode = timerListToday.Next; pNode != &timerListToday; ) {    //! to check if there is any timer has timeout.
-        timer_t *pTimer = CONTAINER_OF(pNode, timer_t, ListNode);
+    while (!LIST_IS_EMPTY(timerListToday)) {    //! to check if there is any timer has timeout.
+        pNode = timerListToday.Next;
+        pTimer = CONTAINER_OF(pNode, timer_t, ListNode);
         if (pTimer->Count > scanHand) { //!< no.
             break;                      //!< The list has been sorted, so we just break here.
         } else {                        //!< yes
-            pNode = pNode->Next;
-            list_remove(&pTimer->ListNode);
+            list_remove(pNode);
             timer_timeout_processs(pTimer);
         }
     }
-    TIMER_CRITICAL_SECTION_END();
     
     scanHandOld = scanHand;
+    TIMER_CRITICAL_SECTION_END();
 }
 
 bool timer_config(
     timer_t        *timer,
     uint32_t        initValue,
     uint32_t        reloadValue,
-	timer_routine_t *pRoutine,
-    void            *RoutineArg)
+	timer_routine_t *pRoutine)
 {
     initValue     = initValue;
     timer->Period = reloadValue;
     timer->Flag   = 0;
     timer->pRoutine     = pRoutine;
-    timer->RoutineArg   = RoutineArg;
     list_init(&timer->ListNode);
     if (initValue != 0u) {
         //! start it.

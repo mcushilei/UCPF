@@ -40,65 +40,57 @@ bool is_leap_year(uint32_t year)
     return false;
 }
 
-static bool validate_date(const date_t *pDate)
+static bool __correct_date(date_t *pDate)
 {
-    if (pDate->Year == 0) {
-        return false;
-    }
+    bool ret = true;
 
-    if (pDate->Month == 0) {
-        return false;
-    } else if (pDate->Month > 12) {
-        return false;
-    }
-
-    if (pDate->Day == 0) {
-        return false;
-    } else {
-        uint8_t month = pDate->Month;
-
-        if (is_leap_year(pDate->Year)) {
-            if (pDate->Day > daysOfMonthLeap[month]) {
-                return false;
-            }
-        } else {
-            if (pDate->Day > daysOfMonth[month]) {
-                return false;
-            }
-        }
-    }
-    
-    return true;
-}
-
-static void correct_date(date_t *pDate)
-{
     if (pDate->Year == 0) {
         pDate->Year = 1;
+        ret = false;
     }
 
     if (pDate->Month == 0) {
         pDate->Month = 1;
+        ret = false;
     } else if (pDate->Month > 12) {
         pDate->Month = 12;
+        ret = false;
     }
 
     if (pDate->Day == 0) {
         pDate->Day = 1;
+        ret = false;
     } else {
         uint8_t month = pDate->Month;
 
         if (is_leap_year(pDate->Year)) {
             if (pDate->Day > daysOfMonthLeap[month]) {
                 pDate->Day = daysOfMonthLeap[month];
+                ret = false;
             }
         } else {
             if (pDate->Day > daysOfMonth[month]) {
                 pDate->Day = daysOfMonth[month];
+                ret = false;
             }
         }
     }
+
+    return ret;
 }
+
+bool validate_date(const date_t *pDate)
+{
+    date_t date = *pDate;
+    return __correct_date(&date);
+}
+
+//! correct a date if it's invalid.
+void correct_date(date_t *pDate)
+{
+    __correct_date(pDate);
+}
+
 
 //! count days elapsed in a year.(include the current day)
 uint32_t days_in_year(const date_t *pDate)
@@ -159,49 +151,56 @@ uint32_t count_leap_years_between(uint32_t year1, uint32_t year2)
     return count_leap_years(year2) - count_leap_years(year1);
 }
 
-//! calculate pEnd - pStart.
+//! calculate pEnd - pStart. eg: 2019/1/3 - 2019/1/4 = -1, 2019/1/4 - 2019/1/1 = 2.
 int32_t count_days_between(const date_t *pStart, const date_t *pEnd)
 {
     int32_t         days;
     uint32_t        years;
-    const date_t   *pDate;
+    date_t          start;
+    date_t          end;
+    date_t          date;
     bool            negative = false;
 
+    start = *pStart;
+    end   = *pEnd;
+    correct_date(&start);
+    correct_date(&end);
+
     do {
-        if (pEnd->Year > pStart->Year) {
+        if (end.Year > start.Year) {
             break;
         }
         
-        if (pEnd->Year == pStart->Year) {
-            if (pEnd->Month > pStart->Month) {
+        if (end.Year == start.Year) {
+            if (end.Month > start.Month) {
                 break;
             }
             
-            if (pEnd->Month == pStart->Month) {
-                if (pEnd->Day >= pStart->Day) {
-                    return pEnd->Day - pStart->Day;
+            if (end.Month == start.Month) {
+                if (end.Day >= start.Day) {
+                    return end.Day - start.Day;
                 } else {
-                    days = pStart->Day - pEnd->Day;
+                    days = start.Day - end.Day;
                     return -days;
                 }
             }
         }
         
-        pDate  = pStart;
-        pStart = pEnd;
-        pEnd   = pDate;
+        date  = start;
+        start = end;
+        end   = date;
         negative = true;
     } while (0);
 
-    if (pStart->Year != pEnd->Year) {
-        if (is_leap_year(pStart->Year)) {
+    if (start.Year != end.Year) {
+        if (is_leap_year(start.Year)) {
             days = 366u - days_in_year(pStart);
         } else {
             days = 365u - days_in_year(pStart);
         }
-        years = count_leap_years_between(pStart->Year, pEnd->Year);
+        years = count_leap_years_between(start.Year, end.Year);
         days += 366u * years;
-        days += 365u * (pEnd->Year - pStart->Year - 1u - years);
+        days += 365u * (end.Year - start.Year - 1u - years);
         days += days_in_year(pEnd);
     } else {
         days = days_in_year(pEnd) - days_in_year(pStart);

@@ -20,6 +20,7 @@
 #include "./app_cfg.h"
 #include "./os.h"
 #include "../../timer/timer.h"
+#include "../../clock/clock.h"
 
 /*============================ MACROS ========================================*/
 /*============================ MACROFIED FUNCTIONS ===========================*/
@@ -39,11 +40,19 @@ static VOID CALLBACK timer_routine(PVOID lpParam, BOOLEAN isTimeOut)
 {
     if (isTimeOut) {
         timer_tick();
+        timer_watchman();
+    }
+}
+
+static VOID CALLBACK clock_routine(PVOID lpParam, BOOLEAN isTimeOut)
+{
+    if (isTimeOut) {
+        clock_tick_tock();
     }
 }
 
 
-static bool timer_tick_start(void *routine)
+static bool os_tick_start(void)
 {
     // Create the timer queue.
     hTimerQueue = CreateTimerQueue();
@@ -52,14 +61,19 @@ static bool timer_tick_start(void *routine)
     }
 
     // Set a timer to call the timer routine every 10 milliseconds.
-    if (!CreateTimerQueueTimer(&hTimer, hTimerQueue, routine, NULL, 10, 10, 0)) {
+    if (!CreateTimerQueueTimer(&hTimer, hTimerQueue, timer_routine, NULL, 10, 10, 0)) {
+        return false;
+    }
+
+    // Set a timer to call the timer routine every 1 second.
+    if (!CreateTimerQueueTimer(&hTimer, hTimerQueue, clock_routine, NULL, 1000, 1000, 0)) {
         return false;
     }
 
     return true;
 }
 
-static bool timer_tick_stop(void)
+static bool os_tick_stop(void)
 {
     // Delete all timers in the timer queue and the queue itself.
     if (!DeleteTimerQueueEx(hTimerQueue, NULL)) {
@@ -71,13 +85,38 @@ static bool timer_tick_stop(void)
 
 bool osInit (void)
 {
+    //! init critical section.
     InitializeCriticalSectionAndSpinCount(&__globalCriticalSection, 0x00000400);
+
+    //! init system timer.
     if (!timer_init()) {
         return false;
     }
-    if (!timer_tick_start(timer_routine)) {
+
+    //! init real-time-clock
+    static const date_time_t startTime = { .Year = 2000, .Month = 1, .Day = 1, .Hour = 0, .Minute = 0, .Second = 0 };
+    date_time_t nowTime;
+    struct tm *ptm;
+    time_t rawtime;
+
+    time(&rawtime);
+    ptm = gmtime(&rawtime);
+
+    nowTime.Year     = 1900 + ptm->tm_year;
+    nowTime.Month    = 1 + ptm->tm_mon;
+    nowTime.Day      = ptm->tm_mday;
+    nowTime.Hour     = ptm->tm_hour;
+    nowTime.Minute   = ptm->tm_min;
+    nowTime.Second   = ptm->tm_sec;
+    if (!clock_init(&startTime, &nowTime)) {
         return false;
     }
+
+    //! start system tick-clock.
+    if (!os_tick_start()) {
+        return false;
+    }
+
     return true;
 }
 
@@ -364,22 +403,52 @@ OS_ERR osQueueRead (OS_HANDLE hQueue, void *buffer, UINT32 timeMS)
 
 
 
+typedef struct os_timer_t OS_TIMER;
 
+struct os_timer_t {
+    timer_t             OSTimerData;
+    UINT16              OSTimerOpt;
+    OS_TIMER_ROUTINE   *OSTimerRoutine;
+    void               *OSTimerRoutineArg;
+};
 
-OS_ERR osTimerCreat(OS_HANDLE      *pTimerHandle,
-                    uint32_t		initValue,
-                    uint32_t		reloadValue,
-                    void           *pRoutine,
-                    void           *RoutineArg)
+static void os_timer_routine_wrapper(timer_t *timer)
 {
-    timer_t *timer = NULL;
+    OS_TIMER *osTimer;
+    
+    osTimer = CONTAINER_OF(timer, OS_TIMER, OSTimerData);
+    if (NULL != osTimer->OSTimerRoutine) {
+        osTimer->OSTimerRoutine(osTimer->OSTimerRoutineArg);
+    }
+}
 
-    timer = malloc(sizeof(timer_t));
+OS_ERR osTimerCreat(OS_HANDLE          *pTimerHandle,
+                    UINT32		        initValue,
+                    UINT32		        reloadValue,
+                    OS_TIMER_ROUTINE   *fnRoutine,
+                    void               *RoutineArg,
+                    UINT16              opt)
+{
+    OS_TIMER *timer = NULL;
+
+    OS_CRITICAL_SECTION_BEGIN();
+    timer = malloc(sizeof(OS_TIMER));
     if (timer == NULL) {
+        OS_CRITICAL_SECTION_END();
         return OS_ERR_OUT_OF_MEMORY;
     }
+    OS_CRITICAL_SECTION_END();
 
-    timer_config(timer, initValue, reloadValue, pRoutine, RoutineArg);
+    initValue /= 10u;
+    reloadValue /= 10u;
+
+    timer->OSTimerOpt = 0;
+    if (initValue != 0u && reloadValue == 0u) {
+        timer->OSTimerOpt |= opt;
+    }
+    timer->OSTimerRoutine       = fnRoutine;
+    timer->OSTimerRoutineArg    = RoutineArg;
+    timer_config(&timer->OSTimerData, initValue, reloadValue, &os_timer_routine_wrapper);
     *pTimerHandle = timer;
 
     return OS_ERR_NONE;
@@ -387,42 +456,49 @@ OS_ERR osTimerCreat(OS_HANDLE      *pTimerHandle,
 
 OS_ERR osTimerDelete(OS_HANDLE hTimer)
 {
-    timer_t *timer = (timer_t *)hTimer;
-    timer_stop(timer);
+    OS_TIMER *timer = (OS_TIMER *)hTimer;
 
+    OS_CRITICAL_SECTION_BEGIN();
+    timer_stop(&timer->OSTimerData);
     free(timer);
+    OS_CRITICAL_SECTION_END();
 
     return OS_ERR_NONE;
 }
 
-OS_ERR osTimerStart(OS_HANDLE hTimer, uint32_t timeMS)
+OS_ERR osTimerStart(OS_HANDLE hTimer, UINT32 timeMS)
 {
-    timer_t *timer = (timer_t *)hTimer;
-    timer_start(timer, timeMS);
+    OS_TIMER *timer = (OS_TIMER *)hTimer;
+    
+    timeMS /= 10u;
+
+    OS_CRITICAL_SECTION_BEGIN();
+    timer_start(&timer->OSTimerData, timeMS);
+    OS_CRITICAL_SECTION_END();
+    
     return OS_ERR_NONE;
 }
 
 OS_ERR osTimerStop(OS_HANDLE hTimer)
 {
-    timer_t *timer = (timer_t *)hTimer;
-    timer_stop(timer);
+    OS_TIMER *timer = (OS_TIMER *)hTimer;
+    
+    OS_CRITICAL_SECTION_BEGIN();
+    timer_stop(&timer->OSTimerData);
+    OS_CRITICAL_SECTION_END();
+    
     return OS_ERR_NONE;
 }
 
-void timer_timerout_callback(timer_t *hTimer)
+void timer_timerout_callback(OS_TIMER *hTimer)
 {
-    timer_t *timer = (timer_t *)hTimer;
-    if (timer->Period == 0u) {
+    OS_TIMER *timer = (OS_TIMER *)hTimer;
+    
+    if (timer->OSTimerOpt & OS_TIMER_OPT_AUTO_DELETE) {
         free(timer);
     }
 }
 
 
-
-
-void osRebootSystem(void)
-{
-    ExitProcess(0);
-}
 
 /* EOF */

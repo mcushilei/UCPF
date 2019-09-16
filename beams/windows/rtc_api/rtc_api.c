@@ -1,5 +1,5 @@
 /*******************************************************************************
- *  Copyright(C)2018-2019 by Dreistein<mcu_shilei@hotmail.com>                *
+ *  Copyright(C)2019 by Dreistein<mcu_shilei@hotmail.com>                     *
  *                                                                            *
  *  This program is free software; you can redistribute it and/or modify it   *
  *  under the terms of the GNU Lesser General Public License as published     *
@@ -15,37 +15,65 @@
  *  along with this program; if not, see http://www.gnu.org/licenses/.        *
 *******************************************************************************/
 
-#ifndef __COLUMNS_CLOCK_H__
-#define __COLUMNS_CLOCK_H__
+
+
 
 /*============================ INCLUDES ======================================*/
 #include "./app_cfg.h"
-#include "../list/list.h"
-#include "../calendar/calendar.h"
+#include "./rtc_api.h"
 
 /*============================ MACROS ========================================*/
 /*============================ MACROFIED FUNCTIONS ===========================*/
 /*============================ TYPES =========================================*/
-typedef struct clock_alarm_t    clock_alarm_t;
-typedef void clock_alarm_routine_t(clock_alarm_t *alarm, bool isTimeout);
+typedef struct {
+    clock_alarm_t           ClockAlarm;
+    uint32_t                DayOfMonth; //! only used for day-alarm; bit0: 1st, bit1: 2nd ...
+    uint8_t                 DayOfWeek;  //! only used for day-alarm; bit0: Mon, Bit1: Tur ...
+} rtc_alarm_t;
 
-struct clock_alarm_t {
-	list_node_t             ListNode;
-	clock_alarm_routine_t  *Routine;
-    uint32_t                Time;       //! second of day for day-alarm; absolute value in second for date-alarm.
-};
-
+/*============================ PRIVATE PROTOTYPES ============================*/
+/*============================ PRIVATE VARIABLES =============================*/
 /*============================ PUBLIC VARIABLES ==============================*/
-/*============================ PUBLIC PROTOTYPES =============================*/
-extern void clock_tick_tock(void);
-extern bool clock_init(const date_time_t *originDate, const date_time_t *currentTime);
-extern bool clock_set_time(const date_time_t *newTime);
-extern date_time_t  clock_get_time(void);
-extern uint32_t     clock_get_ticktock(void);
-extern bool clock_add_alarm(clock_alarm_t *alarm, time24_t *time, clock_alarm_routine_t *routine);
-extern void clock_remove_alarm(clock_alarm_t *alarm);
-extern bool clock_add_timer(clock_alarm_t *alarm, const date_time_t *time, clock_alarm_routine_t *routine);
-extern void clock_remove_timer(clock_alarm_t *alarm);
+/*============================ IMPLEMENTATION ================================*/
 
-#endif  //! #ifndef __COLUMNS_CLOCK_H__
+date_time_t rtc_api_get_time(void)
+{
+    //date_time_t value;
+    //struct tm *ptm;
+    //time_t rawtime;
+
+    //time(&rawtime);
+    //ptm = gmtime(&rawtime);
+
+    //value.Date.Year     = 1900 + ptm->tm_year;
+    //value.Date.Month    = 1 + ptm->tm_mon;
+    //value.Date.Day      = ptm->tm_mday;
+    //value.Time.Hour     = ptm->tm_hour;
+    //value.Time.Minute   = ptm->tm_min;
+    //value.Time.Second   = ptm->tm_sec;
+
+    return clock_get_time();
+}
+
+void rtc_api_set_time(date_time_t *value)
+{
+}
+
+uint32_t rtc_api_get_ticktock(void)
+{
+    return clock_get_ticktock();
+}
+
+void clock_alarm_routine_wrapper(rtc_alarm_t *alarm)
+{
+    uint32_t dayOfWeek = 0;
+    uint32_t dayOfMonth = 0;
+
+    //! to check trigger condition.
+    if (((1u << dayOfWeek) & alarm->DayOfWeek) || ((1u << dayOfMonth) & alarm->DayOfMonth)) {
+        //! handle the real routine of the alarm.
+    }
+
+}
+
 /* EOF */

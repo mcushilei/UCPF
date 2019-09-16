@@ -36,10 +36,12 @@
 typedef struct os_timer_t OS_TIMER;
 
 struct os_timer_t {
-    OS_OBJ_HEAD     OSMutexObjHeader;
+    OS_OBJ_HEAD         OSMutexObjHeader;
 
-    timer_t         OSTimerData;
-    UINT16          OSTimerOpt;
+    timer_t             OSTimerData;
+    UINT16              OSTimerOpt;
+    OS_TIMER_ROUTINE   *OSTimerRoutine;
+    void               *OSTimerRoutineArg;
 };
 
 
@@ -96,12 +98,26 @@ ROOT void OSInitHookEnd(void)
     timer_init();
 }
 
-OS_ERR osTimerCreat(OS_HANDLE      *pTimerHandle,
-                    UINT32		    initValue,
-                    UINT32		    reloadValue,
-                    void           *pRoutine,
-                    void           *RoutineArg,
-                    UINT16          opt)
+
+
+
+
+static void os_timer_routine_wrapper(timer_t *timer)
+{
+    OS_TIMER *osTimer;
+    
+    osTimer = CONTAINER_OF(timer, OS_TIMER, OSTimerData);
+    if (NULL != osTimer->OSTimerRoutine) {
+        osTimer->OSTimerRoutine(osTimer->OSTimerRoutineArg);
+    }
+}
+
+OS_ERR osTimerCreat(OS_HANDLE          *pTimerHandle,
+                    UINT32		        initValue,
+                    UINT32		        reloadValue,
+                    OS_TIMER_ROUTINE   *fnRoutine,
+                    void               *RoutineArg,
+                    UINT16              opt)
 {
     OS_TIMER *timer = NULL;
 
@@ -118,7 +134,9 @@ OS_ERR osTimerCreat(OS_HANDLE      *pTimerHandle,
     if (initValue != 0u && reloadValue == 0u) {
         timer->OSTimerOpt |= opt;
     }
-    timer_config(&timer->OSTimerData, initValue, reloadValue, (timer_routine_t *)pRoutine, RoutineArg);
+    timer->OSTimerRoutine       = fnRoutine;
+    timer->OSTimerRoutineArg    = RoutineArg;
+    timer_config(&timer->OSTimerData, initValue, reloadValue, &os_timer_routine_wrapper);
     *pTimerHandle = timer;
 
     return OS_ERR_NONE;

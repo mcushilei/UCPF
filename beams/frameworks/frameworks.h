@@ -15,37 +15,36 @@
  *  along with this program; if not, see http://www.gnu.org/licenses/.        *
 *******************************************************************************/
 
-#ifndef __COLUMNS_CLOCK_H__
-#define __COLUMNS_CLOCK_H__
+#ifndef __BEAMS_FRAMEWORKS_H__
+#define __BEAMS_FRAMEWORKS_H__
 
 /*============================ INCLUDES ======================================*/
-#include "./app_cfg.h"
-#include "../list/list.h"
-#include "../calendar/calendar.h"
+#include ".\app_cfg.h"
+
+#if     defined(__PRJ_TEMPLATE__)
+#   include ".\template\framework.h"
+#elif   defined(__PRJ_TEMPLATE_WIN__)
+#   include "./template_win/framework.h"
+#elif   defined(__PRJ_KANGJI_GATEWAY_WIN__)
+#   include "./kangji_gateway_win/framework.h"
+#elif   defined(__PRJ_KANGJI_GATEWAY__)
+#   include "./kangji_gateway/framework.h"
+#elif   defined(__PRJ_WINDOWS__)
+#   include ".\windows\framework.h"
+#elif   defined(__PRJ_XOS_DEVELOP__)
+#   include ".\xos_develop\framework.h"
+#elif   defined(__PRJ_JIEDIXIANGKONGZHIQI__)
+#   include ".\jiedixiangkongzhiqi\framework.h"
+#endif
 
 /*============================ MACROS ========================================*/
 /*============================ MACROFIED FUNCTIONS ===========================*/
 /*============================ TYPES =========================================*/
-typedef struct clock_alarm_t    clock_alarm_t;
-typedef void clock_alarm_routine_t(clock_alarm_t *alarm, bool isTimeout);
+/*============================ GLOBAL VARIABLES ==============================*/
+/*============================ LOCAL VARIABLES ===============================*/
+/*============================ PROTOTYPES ====================================*/
 
-struct clock_alarm_t {
-	list_node_t             ListNode;
-	clock_alarm_routine_t  *Routine;
-    uint32_t                Time;       //! second of day for day-alarm; absolute value in second for date-alarm.
-};
 
-/*============================ PUBLIC VARIABLES ==============================*/
-/*============================ PUBLIC PROTOTYPES =============================*/
-extern void clock_tick_tock(void);
-extern bool clock_init(const date_time_t *originDate, const date_time_t *currentTime);
-extern bool clock_set_time(const date_time_t *newTime);
-extern date_time_t  clock_get_time(void);
-extern uint32_t     clock_get_ticktock(void);
-extern bool clock_add_alarm(clock_alarm_t *alarm, time24_t *time, clock_alarm_routine_t *routine);
-extern void clock_remove_alarm(clock_alarm_t *alarm);
-extern bool clock_add_timer(clock_alarm_t *alarm, const date_time_t *time, clock_alarm_routine_t *routine);
-extern void clock_remove_timer(clock_alarm_t *alarm);
 
-#endif  //! #ifndef __COLUMNS_CLOCK_H__
+#endif  //!< __BEAMS_FRAMEWORKS_H__
 /* EOF */

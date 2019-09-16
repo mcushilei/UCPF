@@ -147,12 +147,13 @@ OS_ERR osQueueStopEnqueue(OS_HANDLE *hQueue)
     if (osIntNesting > 0u) {            //!< See if called from ISR ...
         return OS_ERR_USE_IN_ISR;       //!< ... can't use from an ISR
     }
-    if (OS_OBJ_TYPE_GET(pqueue->OSQueueObjHead.OSObjType) != OS_OBJ_TYPE_QUEUE) { //!< Validate object's type
-        return OS_ERR_OBJ_TYPE;
-    }
 
 
     OSEnterCriticalSection();
+    if (OS_OBJ_TYPE_GET(pqueue->OSQueueObjHead.OSObjType) != OS_OBJ_TYPE_QUEUE) { //!< Validate object's type
+        OSExitCriticalSection();
+        return OS_ERR_OBJ_TYPE;
+    }
     pqueue->OSQueueOpt |= OS_QUEUE_STOP_ENQUEUE;
     OSExitCriticalSection();
     
@@ -190,12 +191,13 @@ OS_ERR osQueueDelete(OS_HANDLE hQueue, UINT16 opt)
     if (osIntNesting > 0u) {            //!< See if called from ISR ...
         return OS_ERR_USE_IN_ISR;       //!< ... can't DELETE from an ISR
     }
-    if (OS_OBJ_TYPE_GET(pqueue->OSQueueObjHead.OSObjType) != OS_OBJ_TYPE_QUEUE) { //!< Validate object's type
-        return OS_ERR_OBJ_TYPE;
-    }
 
 
     OSEnterCriticalSection();
+    if (OS_OBJ_TYPE_GET(pqueue->OSQueueObjHead.OSObjType) != OS_OBJ_TYPE_QUEUE) { //!< make sure that it is a queue.
+        OSExitCriticalSection();
+        return OS_ERR_OBJ_TYPE;
+    }
     if (!LIST_IS_EMPTY(pqueue->OSQueueEnqueueWaitList) || !LIST_IS_EMPTY(pqueue->OSQueueDequeueWaitList)) {     //!< check wait list if it's empty.
         taskPend    = TRUE;
     } else {
@@ -269,18 +271,19 @@ OS_ERR osQueueWrite(OS_HANDLE hQueue, const void *buffer, UINT32 timeout)
         return OS_ERR_NULL_POINTER;
     }
 #endif
-    if (osIntNesting > 0u && timeout != 0u) {       //!< it's no possible to pend a ISR.
+    if (osIntNesting > 0u && timeout != 0u) {       //!< it's not possible to pend a ISR.
         return OS_ERR_USE_IN_ISR;
     }
-    if (osLockNesting > 0u && timeout != 0u) {      //!< See if it tries to pend a task when scheduler is locked.
+    if (osLockNesting > 0u && timeout != 0u) {      //!< See if it tries to pend ourself when scheduler is locked.
         return OS_ERR_PEND_LOCKED;
-    }
-    if (OS_OBJ_TYPE_GET(pqueue->OSQueueObjHead.OSObjType) != OS_OBJ_TYPE_QUEUE) { //!< Validate object's type
-        return OS_ERR_OBJ_TYPE;
     }
 
 
     OSEnterCriticalSection();
+    if (OS_OBJ_TYPE_GET(pqueue->OSQueueObjHead.OSObjType) != OS_OBJ_TYPE_QUEUE) { //!< Validate object's type
+        OSExitCriticalSection();
+        return OS_ERR_OBJ_TYPE;
+    }
     if (pqueue->OSQueueOpt & OS_QUEUE_STOP_ENQUEUE) {
         OSExitCriticalSection();
         return OS_ERR_PEND_ABORT;
@@ -366,17 +369,19 @@ OS_ERR osQueueRead(OS_HANDLE hQueue, void *buffer, UINT32 timeout)
         return OS_ERR_NULL_POINTER;
     }
 #endif
-    if (osIntNesting > 0u) {                    //!< See if called from an ISR. ISRs should not be consumers.
+    if (osIntNesting > 0u) {                    //!< ISRs should not be consumers.
         return OS_ERR_USE_IN_ISR;
     }
-    if (osLockNesting > 0u && timeout != 0u) {  //!< See if called with scheduler locked.
+    if (osLockNesting > 0u && timeout != 0u) {  //!< See if we try to be suspended with scheduler locked.
         return OS_ERR_PEND_LOCKED;
     }
+
+    
+    OSEnterCriticalSection();
     if (OS_OBJ_TYPE_GET(pqueue->OSQueueObjHead.OSObjType) != OS_OBJ_TYPE_QUEUE) { //!< Validate object's type
+        OSExitCriticalSection();
         return OS_ERR_OBJ_TYPE;
     }
-
-    OSEnterCriticalSection();
     if (pqueue->OSQueueReadToken == 0u) {       //!< queue is empty.
         if (timeout == 0u) {
             OSExitCriticalSection();
@@ -442,11 +447,12 @@ OS_ERR osQueueQuery(OS_HANDLE hQueue, OS_QUEUE_INFO *pInfo)
         return OS_ERR_NULL_POINTER;
     }
 #endif
-    if (OS_OBJ_TYPE_GET(pqueue->OSQueueObjHead.OSObjType) != OS_OBJ_TYPE_QUEUE) {    //!< Validate object's type
-        return OS_ERR_OBJ_TYPE;
-    }
 
     OSEnterCriticalSection();
+    if (OS_OBJ_TYPE_GET(pqueue->OSQueueObjHead.OSObjType) != OS_OBJ_TYPE_QUEUE) {    //!< Validate object's type
+        OSExitCriticalSection();
+        return OS_ERR_OBJ_TYPE;
+    }
     pInfo->OSQueueInfoLength    = pqueue->OSQueueLength;
     pInfo->OSQueueInfoHead      = pqueue->OSQueueHead;
     pInfo->OSQueueInfoTail      = pqueue->OSQueueTail;

@@ -63,5 +63,8 @@ extern uint32_t time_to_seconds(const time24_t *pTime);
 extern uint32_t seconds_to_time(time24_t *pTime, uint32_t seconds);
 extern int32_t  count_seconds_between(const time24_t *pStart, const time24_t *pEnd);
 
+extern bool validate_date(const date_t *pDate);
+extern void correct_date(date_t *pDate);
+
 #endif  //! #ifndef __CALENDAR_H__
 /* EOF */

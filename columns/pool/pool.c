@@ -54,7 +54,7 @@ bool pool_init(pool_t *pool, pool_uint_t level, void *mem, size_t blockSize)
     if (NULL == pool || (0u == level)
         || (NULL == mem)
         || (blockSize < sizeof(void *))
-        || ( (size_t)mem & (((size_t)1 << sizeof(void *)) - 1) != 0u ) ) {
+        || ( ((size_t)mem & (((size_t)1 << sizeof(void *)) - 1)) != 0u ) ) {
         return false;
     }
 
@@ -77,7 +77,7 @@ bool pool_init(pool_t *pool, pool_uint_t level, void *mem, size_t blockSize)
 bool pool_free(pool_t *pool, void *mem)
 {    
     if ((NULL == pool) || (NULL == mem)
-        || ( (size_t)mem & (((size_t)1 << sizeof(void *)) - 1) != 0u ) ) {
+        || ( ((size_t)mem & (((size_t)1 << sizeof(void *)) - 1)) != 0u ) ) {
         return false;
     }
 

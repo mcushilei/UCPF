@@ -146,11 +146,13 @@ OS_ERR osFlagDelete(OS_HANDLE hFlag, UINT16 opt)
     if (osIntNesting > 0u) {            //!< Can't DELETE from an ISR
         return OS_ERR_USE_IN_ISR;
     }
-    if (OS_OBJ_TYPE_GET(pflag->OSFlagObjHeader.OSObjType) != OS_OBJ_TYPE_FLAG) {    //!< Validate object's type
-        return OS_ERR_OBJ_TYPE;
-    }
+    
 
     OSEnterCriticalSection();
+    if (OS_OBJ_TYPE_GET(pflag->OSFlagObjHeader.OSObjType) != OS_OBJ_TYPE_FLAG) {    //!< Validate object's type
+        OSExitCriticalSection();
+        return OS_ERR_OBJ_TYPE;
+    }
     if (!LIST_IS_EMPTY(pflag->OSFlagWaitList)) {    //!< Is any tasks taskPend on this flag...
         taskPend    = TRUE;                         //!< ...Yes
         taskSched   = TRUE;
@@ -230,11 +232,13 @@ OS_ERR osFlagPend(OS_HANDLE hFlag, UINT32 timeout)
     if (osLockNesting > 0u && timeout != 0u) {  //!< Can't PEND when locked
         return OS_ERR_PEND_LOCKED;
     }
-    if (OS_OBJ_TYPE_GET(pflag->OSFlagObjHeader.OSObjType) != OS_OBJ_TYPE_FLAG) {    //!< Validate object's type
-        return OS_ERR_OBJ_TYPE;
-    }
+    
 
     OSEnterCriticalSection();
+    if (OS_OBJ_TYPE_GET(pflag->OSFlagObjHeader.OSObjType) != OS_OBJ_TYPE_FLAG) {    //!< Validate object's type
+        OSExitCriticalSection();
+        return OS_ERR_OBJ_TYPE;
+    }
     consume = pflag->OSFlagFlags & OS_FLAG_MANUAL_RESET_BIT;
     ready   = pflag->OSFlagFlags & OS_FLAG_STATUS_BIT;
     if (ready != 0u) {                          //!< See if flag has benn set.
@@ -298,11 +302,13 @@ OS_ERR osFlagSet(OS_HANDLE hFlag)
         return OS_ERR_INVALID_HANDLE;
     }
 #endif
+
+    
+    OSEnterCriticalSection();
     if (OS_OBJ_TYPE_GET(pflag->OSFlagObjHeader.OSObjType) != OS_OBJ_TYPE_FLAG) {    //!< Validate object's type
+        OSExitCriticalSection();
         return OS_ERR_OBJ_TYPE;
     }
-
-    OSEnterCriticalSection();
     pflag->OSFlagFlags |= OS_FLAG_STATUS_BIT;               //!< Set the flags.
     if (!LIST_IS_EMPTY(pflag->OSFlagWaitList)) {            //!< See if any task is waiting for this flag.
         while (!LIST_IS_EMPTY(pflag->OSFlagWaitList)) {     //!< Yes, Ready ALL tasks waiting for this flag.
@@ -339,11 +345,13 @@ OS_ERR osFlagReset(OS_HANDLE hFlag)
         return OS_ERR_INVALID_HANDLE;
     }
 #endif
+
+    
+    OSEnterCriticalSection();
     if (OS_OBJ_TYPE_GET(pflag->OSFlagObjHeader.OSObjType) != OS_OBJ_TYPE_FLAG) {    //!< Validate object's type
+        OSExitCriticalSection();
         return OS_ERR_OBJ_TYPE;
     }
-
-    OSEnterCriticalSection();
     pflag->OSFlagFlags &= ~OS_FLAG_STATUS_BIT;       //!< Reset the flags
     OSExitCriticalSection();
     
@@ -378,11 +386,13 @@ OS_ERR osFlagQuery(OS_HANDLE hFlag, OS_FLAG_INFO *pInfo)
         return OS_ERR_PDATA_NULL;
     }
 #endif
-    if (OS_OBJ_TYPE_GET(pflag->OSFlagObjHeader.OSObjType) != OS_OBJ_TYPE_FLAG) {    //!< Validate object's type
-        return OS_ERR_OBJ_TYPE;
-    }
+    
 
     OSEnterCriticalSection();
+    if (OS_OBJ_TYPE_GET(pflag->OSFlagObjHeader.OSObjType) != OS_OBJ_TYPE_FLAG) {    //!< Validate object's type
+        OSExitCriticalSection();
+        return OS_ERR_OBJ_TYPE;
+    }
     flag = pflag->OSFlagFlags;
     if (flag & OS_FLAG_MANUAL_RESET_BIT) {      //!< Is this a manual-rest flag?
         pInfo->OSFlagManualReset = FALSE;

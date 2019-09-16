@@ -1,5 +1,5 @@
 /*******************************************************************************
- *  Copyright(C)2018-2019 by Dreistein<mcu_shilei@hotmail.com>                *
+ *  Copyright(C)2019 by Dreistein<mcu_shilei@hotmail.com>                     *
  *                                                                            *
  *  This program is free software; you can redistribute it and/or modify it   *
  *  under the terms of the GNU Lesser General Public License as published     *
@@ -15,37 +15,45 @@
  *  along with this program; if not, see http://www.gnu.org/licenses/.        *
 *******************************************************************************/
 
-#ifndef __COLUMNS_CLOCK_H__
-#define __COLUMNS_CLOCK_H__
+#ifndef __ENVIRONMENT_CFG_H__
+#define __ENVIRONMENT_CFG_H__
 
 /*============================ INCLUDES ======================================*/
-#include "./app_cfg.h"
-#include "../list/list.h"
-#include "../calendar/calendar.h"
+#include "./json_checker/JSON_checker_port.h"
+
+#include "./cJSON/cJSON_port.h"
 
 /*============================ MACROS ========================================*/
+#define BLOCK_MEM_BLOCK_SIZE    (512u)
+
+
 /*============================ MACROFIED FUNCTIONS ===========================*/
+
+#define TIMER_CRITICAL_SECTION_BEGIN    OS_CRITICAL_SECTION_BEGIN
+#define TIMER_CRITICAL_SECTION_END      OS_CRITICAL_SECTION_END
+
+#define CLOCK_CRITICAL_SECTION_BEGIN    OS_CRITICAL_SECTION_BEGIN
+#define CLOCK_CRITICAL_SECTION_END      OS_CRITICAL_SECTION_END
+
+
+#define PRINT_LOG
+
+#ifdef PRINT_LOG
+#define RTT_LOG(fmt, ...)  printf("\r\n[I]"fmt, ##__VA_ARGS__)
+#else
+#define RTT_LOG(fmt, ...)
+#endif
+
+#ifdef __DEBUG__
+#define DBG_LOG(fmt, ...)  printf("\r\n[D][%s:%d]"fmt, __func__, __LINE__, ##__VA_ARGS__)
+#else
+#define DBG_LOG(fmt, ...)
+#endif
+
+
 /*============================ TYPES =========================================*/
-typedef struct clock_alarm_t    clock_alarm_t;
-typedef void clock_alarm_routine_t(clock_alarm_t *alarm, bool isTimeout);
+/*============================ GLOBAL VARIABLES ==============================*/
+/*============================ PROTOTYPES ====================================*/
 
-struct clock_alarm_t {
-	list_node_t             ListNode;
-	clock_alarm_routine_t  *Routine;
-    uint32_t                Time;       //! second of day for day-alarm; absolute value in second for date-alarm.
-};
-
-/*============================ PUBLIC VARIABLES ==============================*/
-/*============================ PUBLIC PROTOTYPES =============================*/
-extern void clock_tick_tock(void);
-extern bool clock_init(const date_time_t *originDate, const date_time_t *currentTime);
-extern bool clock_set_time(const date_time_t *newTime);
-extern date_time_t  clock_get_time(void);
-extern uint32_t     clock_get_ticktock(void);
-extern bool clock_add_alarm(clock_alarm_t *alarm, time24_t *time, clock_alarm_routine_t *routine);
-extern void clock_remove_alarm(clock_alarm_t *alarm);
-extern bool clock_add_timer(clock_alarm_t *alarm, const date_time_t *time, clock_alarm_routine_t *routine);
-extern void clock_remove_timer(clock_alarm_t *alarm);
-
-#endif  //! #ifndef __COLUMNS_CLOCK_H__
+#endif  //! #ifndef __ENVIRONMENT_CFG_H__
 /* EOF */

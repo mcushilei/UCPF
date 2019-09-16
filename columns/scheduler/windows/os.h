@@ -21,6 +21,15 @@
 
 /*============================ INCLUDES ======================================*/
 #include "./app_cfg.h"
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <math.h>
+#include <time.h>
+#include <windows.h>
 
 /*============================ MACROS ========================================*/
 /*============================ MACROFIED FUNCTIONS ===========================*/
@@ -30,36 +39,36 @@
 
 
 #define OS_TIMER_TYPE                       OS_HANDLE
-#define OS_TIMER_CREATE(__T, __INIT, __RELOAD, __ROUTINE, __ARG)\
-    osTimerCreat(&__T, __INIT, __RELOAD, __ROUTINE, __ARG)
-#define OS_TIMER_DELETE(__T)                osTimerDelete(__T)
-#define OS_TIMER_START(__T, __TIME)         osTimerStart(__T, __TIME)
-#define OS_TIMER_STOP(__T)                  osTimerStop(__T)
+#define OS_TIMER_CREATE(__TMR, __INIT, __RELOAD, __ROUTINE, __ARG)\
+    osTimerCreat(&(__TMR), __INIT, __RELOAD, __ROUTINE, (void *)(__ARG), OS_TIMER_OPT_AUTO_DELETE)
+#define OS_TIMER_DELETE(__TMR)              osTimerDelete(__TMR)
+#define OS_TIMER_START(__TMR, __TIME)       osTimerStart(__TMR, __TIME)
+#define OS_TIMER_STOP(__TMR)                osTimerStop(__TMR)
 
 
 #define OS_QUEUE_TYPE                       OS_HANDLE
-#define OS_QUEUE_CREATE(__Q, __L, __SIZE)   osQueueCreate(&__Q, __L, __SIZE)
+#define OS_QUEUE_CREATE(__Q, __L, __SIZE)   osQueueCreate(&(__Q), __L, __SIZE)
 #define OS_QUEUE_DELETE(__Q)                osSemDelete(__Q)
 #define OS_QUEUE_WRITE(__Q, __BUF, __TIME)  osQueueWrite(__Q, __BUF, __TIME)
 #define OS_QUEUE_READ(__Q, __BUF, __TIME)   osQueueRead(__Q, __BUF, __TIME)
 
 
 #define OS_SEMAPHORE_TYPE                   OS_HANDLE
-#define OS_SEMAPHORE_CREATE(__SEM, __CNT)   osSemCreate(&__SEM, __CNT)
+#define OS_SEMAPHORE_CREATE(__SEM, __CNT)   osSemCreate(&(__SEM), __CNT)
 #define OS_SEMAPHORE_DELETE(__SEM)          osSemDelete(__SEM, 0)
 #define OS_SEMAPHORE_RELEASE(__SEM)         osSemPost(__SEM, 1u)
 #define OS_SEMAPHORE_WAIT(__SEM, __TIME)    osSemPend(__SEM, __TIME)
 
 
 #define OS_MUTEX_TYPE                       OS_HANDLE
-#define OS_MUTEX_CREATE(__MUTEX)            osMutexCreate(&__MUTEX, 0)
+#define OS_MUTEX_CREATE(__MUTEX)            osMutexCreate(&(__MUTEX), 0)
 #define OS_MUTEX_DELETE(__MUTEX)            osMutexDelete(__MUTEX, 0)
 #define OS_MUTEX_RELEASE(__MUTEX)           osMutexPost(__MUTEX)
 #define OS_MUTEX_WAIT(__MUTEX, __TIME)      osMutexPend(__MUTEX, __TIME)
 
 
 #define OS_FLAG_TYPE                        OS_HANDLE
-#define OS_FLAG_CREATE(__FLAG, __BMANUAL, __BINITVAL) osFlagCreate(&__FLAG, __BINITVAL, __BMANUAL)
+#define OS_FLAG_CREATE(__FLAG, __BMANUAL, __BINITVAL) osFlagCreate(&(__FLAG), __BINITVAL, __BMANUAL)
 #define OS_FLAG_DELETE(__FLAG)              osFlagDelete(__FLAG, 0)
 #define OS_FLAG_SET(__FLAG)                 osFlagSet(__FLAG)
 #define OS_FLAG_RESET(__FLAG)               osFlagReset(__FLAG)
@@ -71,9 +80,13 @@
 #define OS_TASK_ENTRY(__TASK)               DWORD WINAPI __TASK(void *pArg)
 #define OS_TASK_ARG                         (pArg)
 #define OS_TASK_SLEEP(__T)                  osTaskDelay(__T)
+#define OS_TASK_EXIT(__V)                   return (DWORD)(__V)
 
 
 #define OS_INFINITE                         INFINITE
+
+
+#define OS_TIMER_OPT_AUTO_DELETE        (0x0001)
 
 /*============================ TYPES =========================================*/
 enum {
@@ -110,6 +123,7 @@ typedef struct {
     void    *QueueBuffer;
 } os_queue_t;
 
+typedef void OS_TIMER_ROUTINE(void *arg);
 
 /*============================ PUBLIC VARIABLES ==============================*/
 extern CRITICAL_SECTION __globalCriticalSection;
@@ -146,13 +160,17 @@ extern OS_ERR osQueueWrite  (OS_HANDLE hQueue, void *buffer, UINT32 timeMS);
 extern OS_ERR osQueueRead   (OS_HANDLE hQueue, void *buffer, UINT32 timeMS);
 
 
-extern OS_ERR osTimerCreat  (OS_HANDLE *pTimerHandle, uint32_t initValue, uint32_t reloadValue, void *pRoutine, void *RoutineArg);
+extern OS_ERR osTimerCreat( OS_HANDLE          *pTimerHandle,
+                            UINT32		        initValue,
+                            UINT32		        reloadValue,
+                            OS_TIMER_ROUTINE   *fnRoutine,
+                            void               *RoutineArg,
+                            UINT16              opt);
 extern OS_ERR osTimerDelete (OS_HANDLE hTimer);
 extern OS_ERR osTimerStart  (OS_HANDLE hTimer, uint32_t timeMS);
 extern OS_ERR osTimerStop   (OS_HANDLE hTimer);
 
 
-extern void osRebootSystem(void);
 
 #endif
 /* EOF */

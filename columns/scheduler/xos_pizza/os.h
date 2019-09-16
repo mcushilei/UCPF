@@ -29,11 +29,11 @@
 
 
 #define OS_TIMER_TYPE                       OS_HANDLE
-#define OS_TIMER_CREATE(__TIME, __INIT, __RELOAD, __ROUTINE, __ARG)\
-    osTimerCreat(&(__TIME), __INIT, __RELOAD, __ROUTINE, __ARG, OS_TIMER_OPT_AUTO_DELETE)
-#define OS_TIMER_DELETE(__TIME)             osTimerDelete(__TIME)
-#define OS_TIMER_START(__TIME, __T)         osTimerStart(__TIME, OS_MS2TICK(__T))
-#define OS_TIMER_STOP(__TIME)               osTimerStop(__TIME)
+#define OS_TIMER_CREATE(__TMR, __INIT, __RELOAD, __ROUTINE, __ARG)\
+    osTimerCreat(&(__TMR), __INIT, __RELOAD, __ROUTINE, (void *)(__ARG), OS_TIMER_OPT_AUTO_DELETE)
+#define OS_TIMER_DELETE(__TMR)              osTimerDelete(__TMR)
+#define OS_TIMER_START(__TMR, __T)          osTimerStart(__TMR, OS_MS2TICK(__T))
+#define OS_TIMER_STOP(__TMR)                osTimerStop(__TMR)
 
 
 #define OS_QUEUE_TYPE                       OS_HANDLE
@@ -66,7 +66,7 @@
 
 
 #define OS_TASK_CREATE(__HANDLE, __NAME, __ENTRY, __ARG,  __STACK_SIZE, __RIO, __OPT)   \
-    osTaskCreate( &(__HANDLE), __NAME, __ENTRY, __ARG,  NULL, __STACK_SIZE, __OPT, __RIO );
+    osTaskCreate( &(__HANDLE), __NAME, __ENTRY, (void *)(__ARG),  NULL, __STACK_SIZE, __OPT, __RIO );
 #define OS_TASK_ENTRY(__TASK)               void *__TASK(void *pArg)
 #define OS_TASK_ARG                         (pArg)
 #define OS_TASK_SLEEP(__T)                  osTaskSleep(OS_MS2TICK(__T))
@@ -81,13 +81,20 @@
 
 /*============================ MACROFIED FUNCTIONS ===========================*/
 /*============================ TYPES =========================================*/
+typedef void OS_TIMER_ROUTINE(void *arg);
+
 /*============================ GLOBAL VARIABLES ==============================*/
 /*============================ PROTOTYPES ====================================*/
 extern void    *osHeapMalloc    (size_t size);
 extern void    *osHeapRealloc   (void *mem, size_t size);
 extern void     osHeapFree      (void *mem);
 
-extern OS_ERR   osTimerCreat    (OS_HANDLE *pTimerHandle, UINT32 initValue, UINT32 reloadValue, void *pRoutine, void *RoutineArg, UINT16 opt);
+extern OS_ERR   osTimerCreat    (OS_HANDLE *pTimerHandle,
+                                 UINT32 initValue,
+                                 UINT32 reloadValue,
+                                 OS_TIMER_ROUTINE *fnRoutine,
+                                 void *RoutineArg,
+                                 UINT16 opt);
 extern OS_ERR   osTimerDelete   (OS_HANDLE hTimer);
 extern OS_ERR   osTimerStart    (OS_HANDLE hTimer, UINT32 timeMS);
 extern OS_ERR   osTimerStop     (OS_HANDLE hTimer);

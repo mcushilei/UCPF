@@ -1,5 +1,5 @@
 /*******************************************************************************
- *  Copyright(C)2018-2019 by Dreistein<mcu_shilei@hotmail.com>                *
+ *  Copyright(C)2019 by Dreistein<mcu_shilei@hotmail.com>                     *
  *                                                                            *
  *  This program is free software; you can redistribute it and/or modify it   *
  *  under the terms of the GNU Lesser General Public License as published     *
@@ -15,37 +15,42 @@
  *  along with this program; if not, see http://www.gnu.org/licenses/.        *
 *******************************************************************************/
 
-#ifndef __COLUMNS_CLOCK_H__
-#define __COLUMNS_CLOCK_H__
+//! Do not move this pre-processor statement to other places
+#ifndef __WINDOWS_SOCKET_H__
+#define __WINDOWS_SOCKET_H__
+
 
 /*============================ INCLUDES ======================================*/
-#include "./app_cfg.h"
-#include "../list/list.h"
-#include "../calendar/calendar.h"
+#include ".\app_cfg.h"
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#include <iphlpapi.h>
 
 /*============================ MACROS ========================================*/
 /*============================ MACROFIED FUNCTIONS ===========================*/
 /*============================ TYPES =========================================*/
-typedef struct clock_alarm_t    clock_alarm_t;
-typedef void clock_alarm_routine_t(clock_alarm_t *alarm, bool isTimeout);
+typedef struct {
+    SOCKET so;
+    HANDLE WriteEvent;
+    HANDLE ReadEvent;
+} socket_t;
 
-struct clock_alarm_t {
-	list_node_t             ListNode;
-	clock_alarm_routine_t  *Routine;
-    uint32_t                Time;       //! second of day for day-alarm; absolute value in second for date-alarm.
+enum {
+    SOCKET_ERR_NONE         = 0,
+    SOCKET_ERR_TIMEOUT,
+    SOCKET_ERR_FAIL,
 };
 
-/*============================ PUBLIC VARIABLES ==============================*/
-/*============================ PUBLIC PROTOTYPES =============================*/
-extern void clock_tick_tock(void);
-extern bool clock_init(const date_time_t *originDate, const date_time_t *currentTime);
-extern bool clock_set_time(const date_time_t *newTime);
-extern date_time_t  clock_get_time(void);
-extern uint32_t     clock_get_ticktock(void);
-extern bool clock_add_alarm(clock_alarm_t *alarm, time24_t *time, clock_alarm_routine_t *routine);
-extern void clock_remove_alarm(clock_alarm_t *alarm);
-extern bool clock_add_timer(clock_alarm_t *alarm, const date_time_t *time, clock_alarm_routine_t *routine);
-extern void clock_remove_timer(clock_alarm_t *alarm);
+/*============================ GLOBAL VARIABLES ==============================*/
+/*============================ PROTOTYPES ====================================*/
+extern bool socket_api_init(void);
+extern bool socket_api_deinit(void);
 
-#endif  //! #ifndef __COLUMNS_CLOCK_H__
+extern socket_t *socket_api_create(void);
+extern int socket_api_connect(socket_t *pSocket, const char *host, const char *port);
+extern int socket_api_send(socket_t *pSocket, const uint8_t *buf, uint32_t *len);
+extern int socket_api_recv(socket_t *pSocket, uint8_t *buf, uint32_t *len, uint32_t timeout);
+extern int socket_api_close(socket_t *pSocket);
+
+#endif  //!< #ifndef __WINDOWS_SOCKET_H__
 /* EOF */

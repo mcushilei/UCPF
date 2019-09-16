@@ -131,11 +131,13 @@ OS_ERR osSemDelete(OS_HANDLE hSemaphore, UINT16 opt)
     if (osIntNesting > 0u) {            //!< See if called from ISR ...
         return OS_ERR_USE_IN_ISR;       //!< ... can't DELETE from an ISR
     }
-    if (OS_OBJ_TYPE_GET(psem->OSSemObjHead.OSObjType) != OS_OBJ_TYPE_SEM) { //!< Validate object's type
-        return OS_ERR_OBJ_TYPE;
-    }
+    
 
     OSEnterCriticalSection();
+    if (OS_OBJ_TYPE_GET(psem->OSSemObjHead.OSObjType) != OS_OBJ_TYPE_SEM) { //!< Validate object's type
+        OSExitCriticalSection();
+        return OS_ERR_OBJ_TYPE;
+    }
     if (psem->OSSemWaitList.Next != &psem->OSSemWaitList) {     //!< check wait list if it's empty.
         taskPend    = TRUE;
     } else {
@@ -208,17 +210,19 @@ OS_ERR osSemPend(OS_HANDLE hSemaphore, UINT32 timeout)
         return OS_ERR_INVALID_HANDLE;
     }
 #endif
-    if (OS_OBJ_TYPE_GET(psem->OSSemObjHead.OSObjType) != OS_OBJ_TYPE_SEM) {     //!< Validate object's type
-        return OS_ERR_OBJ_TYPE;
-    }
     if (osIntNesting > 0u) {                    //!< Should not be called from an ISR.
         return OS_ERR_USE_IN_ISR;
     }
     if (osLockNesting > 0u && timeout != 0u) {  //!< Can't PEND when locked
         return OS_ERR_PEND_LOCKED;
     }
+    
 
     OSEnterCriticalSection();
+    if (OS_OBJ_TYPE_GET(psem->OSSemObjHead.OSObjType) != OS_OBJ_TYPE_SEM) {     //!< Validate object's type
+        OSExitCriticalSection();
+        return OS_ERR_OBJ_TYPE;
+    }
     if (psem->OSSemToken > 0u) {
         psem->OSSemToken--;
         OSExitCriticalSection();
@@ -280,15 +284,16 @@ OS_ERR osSemPost(OS_HANDLE hSemaphore, UINT16 cnt)
         return OS_ERR_INVALID_HANDLE;
     }
 #endif
-    if (OS_OBJ_TYPE_GET(psem->OSSemObjHead.OSObjType) != OS_OBJ_TYPE_SEM) {     //!< Validate object's type
-        return OS_ERR_OBJ_TYPE;
-    }
-    
     if (cnt == 0u) {
         return OS_ERR_NONE;
     }
+    
 
     OSEnterCriticalSection();
+    if (OS_OBJ_TYPE_GET(psem->OSSemObjHead.OSObjType) != OS_OBJ_TYPE_SEM) {     //!< Validate object's type
+        OSExitCriticalSection();
+        return OS_ERR_OBJ_TYPE;
+    }
     if (cnt <= (65535u - psem->OSSemToken)) {       //!< Make sure semaphore will not overflow
         psem->OSSemToken += cnt;
         if (!LIST_IS_EMPTY(psem->OSSemWaitList)) {          //!< if any tasks waiting for semaphore
@@ -332,7 +337,6 @@ OS_ERR osSemPost(OS_HANDLE hSemaphore, UINT16 cnt)
 OS_ERR osSemPendAbort(OS_HANDLE hSemaphore)
 {
     OS_SEM     *psem = (OS_SEM *)hSemaphore;
-    OS_ERR      err;
 
 
 #if OS_ARG_CHK_EN > 0u
@@ -340,24 +344,24 @@ OS_ERR osSemPendAbort(OS_HANDLE hSemaphore)
         return OS_ERR_INVALID_HANDLE;
     }
 #endif
+
+    
+    OSEnterCriticalSection();
     if (OS_OBJ_TYPE_GET(psem->OSSemObjHead.OSObjType) != OS_OBJ_TYPE_SEM) { //!< Validate object's type
+        OSExitCriticalSection();
         return OS_ERR_OBJ_TYPE;
     }
-
-    OSEnterCriticalSection();
     if (!LIST_IS_EMPTY(psem->OSSemWaitList)) {           //!< See if any task waiting on semaphore?
         while (!LIST_IS_EMPTY(psem->OSSemWaitList)) {    //!< Yes, ready ALL tasks waiting on semaphore
             OS_WaitableObjRdyTask((OS_WAITABLE_OBJ *)psem, &psem->OSSemWaitList, OS_STAT_PEND_ABORT);
         }
         OSExitCriticalSection();
         OS_SchedulerRunPrio();
-        err = OS_ERR_PEND_ABORT;
-    } else {
-        OSExitCriticalSection();
-        err = OS_ERR_NONE;
+        return OS_ERR_NONE;
     }
+    OSExitCriticalSection();
     
-    return err;
+    return OS_ERR_NONE;
 }
 #endif
 
@@ -377,13 +381,12 @@ OS_ERR osSemPendAbort(OS_HANDLE hSemaphore)
  *  \return     OS_ERR_NONE             The call was successful and the semaphore value was set.
  *              OS_ERR_INVALID_HANDLE   If 'hSemaphore' is an invalid handle.
  *              OS_ERR_OBJ_TYPE         If you didn't pass a event semaphore object.
- *              OS_ERR_DELETE_IN_USE     If tasks are waiting on the semaphore.
+ *              OS_ERR_INVALID_OPT      If tasks are waiting on the semaphore.
  */
 #if OS_SEM_SET_EN > 0u
 OS_ERR osSemSet(OS_HANDLE hSemaphore, UINT16 cnt)
 {
     OS_SEM     *psem = (OS_SEM *)hSemaphore;
-    OS_ERR      err;
 
 
 #if OS_ARG_CHK_EN > 0u
@@ -391,20 +394,21 @@ OS_ERR osSemSet(OS_HANDLE hSemaphore, UINT16 cnt)
         return OS_ERR_INVALID_HANDLE;
     }
 #endif
+
+    
+    OSEnterCriticalSection();
     if (OS_OBJ_TYPE_GET(psem->OSSemObjHead.OSObjType) != OS_OBJ_TYPE_SEM) { //!< Validate object's type
+        OSExitCriticalSection();
         return OS_ERR_OBJ_TYPE;
     }
-
-    err = OS_ERR_NONE;
-    OSEnterCriticalSection();
-    if (!LIST_IS_EMPTY(psem->OSSemWaitList)) {       //!< See if task(s) waiting?
-        err = OS_ERR_DELETE_IN_USE;
-    } else {
-        psem->OSSemToken = cnt;                           //!< No, OK to set the value
+    if (!LIST_IS_EMPTY(psem->OSSemWaitList)) {      //!< See if task(s) waiting?
+        OSExitCriticalSection();
+        return OS_ERR_INVALID_OPT;
     }
+    psem->OSSemToken = cnt;                         //!< No, OK to set the value
     OSExitCriticalSection();
     
-    return err;
+    return OS_ERR_NONE;
 }
 #endif
 
@@ -437,11 +441,13 @@ OS_ERR osSemQuery(OS_HANDLE hSemaphore, OS_SEM_INFO *pInfo)
         return OS_ERR_NULL_POINTER;
     }
 #endif
+
+    
+    OSEnterCriticalSection();
     if (OS_OBJ_TYPE_GET(psem->OSSemObjHead.OSObjType) != OS_OBJ_TYPE_SEM) {    //!< Validate object's type
+        OSExitCriticalSection();
         return OS_ERR_OBJ_TYPE;
     }
-
-    OSEnterCriticalSection();
     pInfo->OSCnt = psem->OSSemToken;    //!< Get semaphore count
     OSExitCriticalSection();
     

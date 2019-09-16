@@ -157,11 +157,13 @@ OS_ERR osMutexDelete(OS_HANDLE hMutex, UINT16 opt)
     if (osIntNesting > 0u) {        //!< Should not delete object from an ISR.
         return OS_ERR_USE_IN_ISR;
     }
+
+    
+    OSEnterCriticalSection();
     if (OS_OBJ_TYPE_GET(pmutex->OSMutexObjHeader.OSObjType) != OS_OBJ_TYPE_MUTEX) {   //!< Validate event block type.
+        OSExitCriticalSection();
         return OS_ERR_OBJ_TYPE;
     }
-
-    OSEnterCriticalSection();
     if (pmutex->OSMutexWaitList.Next != &pmutex->OSMutexWaitList) { //!< See if any tasks suspend for this mutex.
         taskPend    = TRUE;                                         //!< Yes
         taskSched   = TRUE;
@@ -267,11 +269,13 @@ OS_ERR osMutexPend(OS_HANDLE hMutex, UINT32 timeout)
     if (osLockNesting > 0u && timeout != 0u) {  //!< See if called with scheduler locked ...
         return OS_ERR_PEND_LOCKED;              //!  ... This usage is deprecated.
     }
-    if (OS_OBJ_TYPE_GET(pmutex->OSMutexObjHeader.OSObjType) != OS_OBJ_TYPE_MUTEX) {  //!< Validate object's type.
-        return OS_ERR_OBJ_TYPE;
-    }
+    
 
     OSEnterCriticalSection();
+    if (OS_OBJ_TYPE_GET(pmutex->OSMutexObjHeader.OSObjType) != OS_OBJ_TYPE_MUTEX) {  //!< Validate object's type.
+        OSExitCriticalSection();
+        return OS_ERR_OBJ_TYPE;
+    }
     if (pmutex->OSMutexOwnerTCB == NULL) {              //!< Has mutex been possessed by any other task?...
                                                         //!  ...No.
         list_insert(&pmutex->OSMutexOvlpList, osTCBCur->OSTCBOwnMutexList.Prev);
@@ -358,11 +362,13 @@ OS_ERR osMutexPost(OS_HANDLE hMutex)
     if (osIntNesting > 0u) {                //!< Should not be used from an ISR.
         return OS_ERR_USE_IN_ISR;
     }
+
+    
+    OSEnterCriticalSection();
     if (OS_OBJ_TYPE_GET(pmutex->OSMutexObjHeader.OSObjType) != OS_OBJ_TYPE_MUTEX) {   //!< Validate event block type
+        OSExitCriticalSection();
         return OS_ERR_OBJ_TYPE;
     }
-
-    OSEnterCriticalSection();
     if (osTCBCur != pmutex->OSMutexOwnerTCB) {      //!< See if the mutex owned by current task.
         OSExitCriticalSection();
         return OS_ERR_NOT_MUTEX_OWNER;
@@ -430,11 +436,13 @@ OS_ERR osMutexQuery(OS_HANDLE hMutex, OS_MUTEX_INFO *pInfo)
         return OS_ERR_PDATA_NULL;
     }
 #endif
+
+    
+    OSEnterCriticalSection();
     if (OS_OBJ_TYPE_GET(pmutex->OSMutexObjHeader.OSObjType) != OS_OBJ_TYPE_MUTEX) {  //!< Validate objext's type
+        OSExitCriticalSection();
         return OS_ERR_OBJ_TYPE;
     }
-
-    OSEnterCriticalSection();
     if (pmutex->OSMutexOwnerTCB == NULL) {                  //!< Does any task own this mutex?
         pInfo->OSOwnerPrio   = 0u;
     } else {
