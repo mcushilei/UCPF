@@ -20,8 +20,10 @@
 
 /*============================ INCLUDES ======================================*/
 #include "./app_cfg.h"
-#include "./clock_plug.h"
 #include "./clock.h"
+#include "./clock_plug.h"
+#include "../scheduler/os.h"
+
 
 /*============================ MACROS ========================================*/
 /*============================ MACROFIED FUNCTIONS ===========================*/

@@ -151,24 +151,24 @@ typedef struct {
  */
 #if (OS_FLAG_EN > 0u) && (OS_MAX_FLAGS > 0u)
 
-OS_ERR      osFlagCreate           (OS_HANDLE      *pFlagHandle,
+extern OS_ERR   osFlagCreate       (OS_HANDLE      *pFlagHandle,
                                     BOOL            initValue,
                                     BOOL            manualReset);
 
 #if OS_FLAG_DEL_EN > 0u
-OS_ERR      osFlagDelete           (OS_HANDLE       hFlag,
+extern OS_ERR   osFlagDelete       (OS_HANDLE       hFlag,
                                     UINT16          opt);
 #endif
 
-OS_ERR      osFlagPend             (OS_HANDLE       hFlag,
+extern OS_ERR   osFlagPend         (OS_HANDLE       hFlag,
                                     UINT32          timeout);
 
-OS_ERR      osFlagSet              (OS_HANDLE       hFlag);
+extern OS_ERR   osFlagSet          (OS_HANDLE       hFlag);
 
-OS_ERR      osFlagReset            (OS_HANDLE       hFlag);
+extern OS_ERR   osFlagReset        (OS_HANDLE       hFlag);
 
 #if OS_FLAG_QUERY_EN > 0u
-OS_ERR      osFlagQuery            (OS_HANDLE       hFlag,
+extern OS_ERR   osFlagQuery        (OS_HANDLE       hFlag,
                                     OS_FLAG_INFO   *pInfo);
 #endif  //!< #if OS_FLAG_QUERY_EN > 0u
 #endif  //!< #if (OS_FLAG_EN > 0u) && (OS_MAX_FLAGS > 0u)
@@ -178,21 +178,21 @@ OS_ERR      osFlagQuery            (OS_HANDLE       hFlag,
  */
 #if (OS_MUTEX_EN > 0u) && (OS_MAX_MUTEXES > 0u)
 
-OS_ERR      osMutexCreate          (OS_HANDLE      *pMutexHandle,
+extern OS_ERR   osMutexCreate      (OS_HANDLE      *pMutexHandle,
                                     UINT8           ceilingPrio);
 
 #if OS_MUTEX_DEL_EN > 0u
-OS_ERR      osMutexDelete          (OS_HANDLE       hMutex,
+extern OS_ERR   osMutexDelete      (OS_HANDLE       hMutex,
                                     UINT16          opt);
 #endif
 
-OS_ERR      osMutexPend            (OS_HANDLE       hMutex,
+extern OS_ERR   osMutexPend        (OS_HANDLE       hMutex,
                                     UINT32          timeout);
 
-OS_ERR      osMutexPost            (OS_HANDLE       hMutex);
+extern OS_ERR   osMutexPost        (OS_HANDLE       hMutex);
 
 #if OS_MUTEX_QUERY_EN > 0u
-OS_ERR      osMutexQuery           (OS_HANDLE       hMutex,
+extern OS_ERR   osMutexQuery       (OS_HANDLE       hMutex,
                                     OS_MUTEX_INFO  *pInfo);
 #endif  //!< #if OS_MUTEX_QUERY_EN > 0u
 #endif  //!< #if (OS_MUTEX_EN > 0u) && (OS_MAX_MUTEXES > 0u)
@@ -202,31 +202,31 @@ OS_ERR      osMutexQuery           (OS_HANDLE       hMutex,
  */
 #if (OS_SEM_EN > 0u) && (OS_MAX_SEMAPHORES > 0u)
 
-OS_ERR      osSemCreate            (OS_HANDLE      *pSemHandle,
+extern OS_ERR   osSemCreate        (OS_HANDLE      *pSemHandle,
                                     UINT16          cnt);
 
 #if OS_SEM_DEL_EN > 0u
-OS_ERR      osSemDelete            (OS_HANDLE       hSemaphore,
+extern OS_ERR   osSemDelete        (OS_HANDLE       hSemaphore,
                                     UINT16          opt);
 #endif
 
-OS_ERR      osSemPend              (OS_HANDLE       hSemaphore,
+extern OS_ERR   osSemPend          (OS_HANDLE       hSemaphore,
                                     UINT32          timeout);
 
-OS_ERR      osSemPost              (OS_HANDLE       hSemaphore,
+extern OS_ERR   osSemPost          (OS_HANDLE       hSemaphore,
                                     UINT16          cnt);
 
 #if OS_SEM_PEND_ABORT_EN > 0u
-OS_ERR      osSemPendAbort         (OS_HANDLE       hSemaphore);
+extern OS_ERR   osSemPendAbort     (OS_HANDLE       hSemaphore);
 #endif
 
 #if OS_SEM_SET_EN > 0u
-OS_ERR      osSemSet               (OS_HANDLE       hSemaphore,
+extern OS_ERR   osSemSet           (OS_HANDLE       hSemaphore,
                                     UINT16          cnt);
 #endif
 
 #if OS_SEM_QUERY_EN > 0u
-OS_ERR      osSemQuery             (OS_HANDLE       hSemaphore,
+extern OS_ERR   osSemQuery         (OS_HANDLE       hSemaphore,
                                     OS_SEM_INFO    *pInfo);
 #endif  //!< #if OS_SEM_QUERY_EN > 0u
 #endif  //!< #if (OS_SEM_EN > 0u) && (OS_MAX_SEMAPHORES > 0u)
@@ -236,36 +236,36 @@ OS_ERR      osSemQuery             (OS_HANDLE       hSemaphore,
  *! \Brief  QUEUE MANAGEMENT
  */
 #if (OS_QUEUE_EN > 0u) && (OS_MAX_QUEUES > 0u)
-OS_ERR      osQueueCreate           (OS_HANDLE     *hQueue,
-                                     void          *buffer,
-                                     UINT16         queueSize,
-                                     size_t         elementSize);
+extern OS_ERR   osQueueCreate      (OS_HANDLE     *hQueue,
+                                    void          *buffer,
+                                    UINT16         queueSize,
+                                    size_t         elementSize);
 
 #if OS_QUEUE_DEL_EN > 0
-OS_ERR      osQueueStopEnqueue      (OS_HANDLE     *hQueue);
+extern OS_ERR   osQueueStopEnqueue (OS_HANDLE      hQueue);
 
-OS_ERR      osQueueDelete           (OS_HANDLE      hQueue,
-                                     UINT16         opt);
+extern OS_ERR   osQueueDelete      (OS_HANDLE      hQueue,
+                                    UINT16         opt);
 #endif
 
-OS_ERR      osQueueWrite            (OS_HANDLE      hQueue,
-                                     const void    *buffer,
-                                     UINT32         timeout);
+extern OS_ERR   osQueueWrite       (OS_HANDLE      hQueue,
+                                    const void    *buffer,
+                                    UINT32         timeout);
 
-OS_ERR      osQueueRead             (OS_HANDLE      hQueue,
-                                     void          *buffer,
-                                     UINT32         timeout);
+extern OS_ERR   osQueueRead        (OS_HANDLE      hQueue,
+                                    void          *buffer,
+                                    UINT32         timeout);
 
 #if OS_QUEUE_QUERY_EN > 0u
-OS_ERR      osQueueQuery            (OS_HANDLE      hQueue,
-                                     OS_QUEUE_INFO *pInfo);
+extern OS_ERR   osQueueQuery       (OS_HANDLE      hQueue,
+                                    OS_QUEUE_INFO *pInfo);
 #endif  //!< #if OS_QUEUE_QUERY_EN > 0u
 #endif  //!< #if (OS_QUEUE_EN > 0u) && (OS_MAX_QUEUES > 0u)
 
 /*!
  *! \Brief  TASK MANAGEMENT
  */
-OS_ERR      osTaskCreate           (OS_HANDLE      *pHandle,
+extern OS_ERR   osTaskCreate       (OS_HANDLE      *pHandle,
                                     const char     *name,
                                     OS_TASK        *Entry,
                                     void           *argument,
@@ -275,41 +275,45 @@ OS_ERR      osTaskCreate           (OS_HANDLE      *pHandle,
                                     UINT8           priority);
 
 #if OS_TASK_CHANGE_PRIO_EN > 0u
-OS_ERR      osTaskChangePrio       (OS_HANDLE       handle,
+extern OS_ERR   osTaskChangePrio   (OS_HANDLE       handle,
                                     UINT8           newprio);
 #endif
 
-OS_ERR      osTaskSleep            (UINT32          ticks);
+extern OS_ERR   osTaskSleep        (UINT32          ticks);
 
 /*!
  *! \Brief  TIME MANAGEMENT
  */
-void        osSysTick              (void);
+extern void     osSysTick               (void);
 
 /*!
  *! \Brief  MISCELLANEOUS
  */
-void        osInit                 (void);
+extern void     osInit                  (void);
 #if OS_STAT_EN > 0u
-void        osStatInit             (void);
+extern void     osStatInit              (void);
 #endif
-void        osStart                (void);
+extern void     osStart                 (void);
 
-void        osIntEnter             (void);
-void        osIntExit              (void);
+extern void     osIntEnter              (void);
+extern void     osIntExit               (void);
 
 #if OS_SCHED_LOCK_EN > 0u
-void        osLockSched            (void);
-void        osUnlockSched          (void);
+extern void     osLockSched             (void);
+extern void     osUnlockSched           (void);
 #endif
 
-UINT16      osVersion              (void);
+extern UINT16   osVersion               (void);
 
-UINT32      osGetSysTickCount      (void);
+extern UINT32   osGetSysTickCount       (void);
 
-#define OS_MS_PER_TICK              (1000u / OS_TICKS_PER_SEC)
-#define OS_MS2TICK(__ms)            ((__ms) / (OS_MS_PER_TICK))
+#define OS_MS_PER_TICK                  (1000u / OS_TICKS_PER_SEC)
+#define OS_MS2TICK(__ms)                ((__ms) / (OS_MS_PER_TICK))
 
+extern void     OSEnterCriticalSection  (void);
+extern void     OSExitCriticalSection   (void);
+extern CPU_REG  OSDisableInterrupt      (void);
+extern void     OSResumeInterrupt       (CPU_REG level);
 
 /*!
  *! \Brief  Enable and disable interrupt

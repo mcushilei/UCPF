@@ -31,12 +31,12 @@
 /*============================ PUBLIC VARIABLES ==============================*/
 /*============================ IMPLEMENTATION ================================*/
 
-static ALIGN(8) char heapMemory0[1024 * 15];
-_Pragma("location=\"ahb_ram\"") static ALIGN(8) char heapMemory1[1024 * 30];
+static ALIGN(8) char heapMemory0[1024 * 60];
+//_Pragma("location=\"ahb_ram\"") static ALIGN(8) char heapMemory1[1024 * 30];
 
 static const heap_memory_cfg_t heapCfg[] = {
     {&heapMemory0, sizeof(heapMemory0)},
-    {&heapMemory1, sizeof(heapMemory1)},
+//    {&heapMemory1, sizeof(heapMemory1)},
 };
 
 void OSHeapInit(void)

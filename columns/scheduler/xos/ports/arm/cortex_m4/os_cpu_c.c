@@ -91,6 +91,8 @@ CPU_STK *OSTaskStkInit(CPU_STK *ptos, void *wrapper, void *task, void *parg)
 void OSEnterCriticalSection(void)
 {
     __disable_irq();
+	__DSB();
+	__ISB();
     OSCriticalNesting++;
 }
 
@@ -99,6 +101,8 @@ void OSExitCriticalSection(void)
 	OSCriticalNesting--;
 	if ( OSCriticalNesting == 0u ) {
         __enable_irq();
+        __DSB();
+        __ISB();
 	}
 }
 

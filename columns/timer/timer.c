@@ -15,7 +15,6 @@
 *  along with this program; if not, see http://www.gnu.org/licenses/.        *
 *******************************************************************************/
 
-
 //! \brief normal precision timer that count in millisecond. abstract: a clock 
 //!        with only one hand which has a one-day cycle.
 
@@ -23,6 +22,8 @@
 #include "./app_cfg.h"
 #include "./timer.h"
 #include "./timer_plug.h"
+#include "../scheduler/os.h"
+
 
 /*============================ MACROS ========================================*/
 #define TIMER_TIMEOUT_FLAG_MSK          (0x01u)
@@ -30,7 +31,7 @@
 /*============================ MACROFIED FUNCTIONS ===========================*/
 /*============================ TYPES =========================================*/
 /*============================ PROTOTYPES ====================================*/
-extern void timer_timerout_callback(timer_t *timer);
+extern void timer_timerout_hook(timer_t *timer);
 
 /*============================ LOCAL VARIABLES ===============================*/
 static volatile uint32_t    scanHand;
@@ -94,7 +95,7 @@ static void timer_timeout_processs(timer_t *timer)
         timer->pRoutine(timer);
     }
 
-    timer_timerout_callback(timer);
+    timer_timerout_hook(timer);
 }
 
 //! This function should be called periodly.

@@ -431,13 +431,10 @@ OS_ERR osTimerCreat(OS_HANDLE          *pTimerHandle,
 {
     OS_TIMER *timer = NULL;
 
-    OS_CRITICAL_SECTION_BEGIN();
     timer = malloc(sizeof(OS_TIMER));
     if (timer == NULL) {
-        OS_CRITICAL_SECTION_END();
         return OS_ERR_OUT_OF_MEMORY;
     }
-    OS_CRITICAL_SECTION_END();
 
     initValue /= 10u;
     reloadValue /= 10u;
@@ -448,7 +445,9 @@ OS_ERR osTimerCreat(OS_HANDLE          *pTimerHandle,
     }
     timer->OSTimerRoutine       = fnRoutine;
     timer->OSTimerRoutineArg    = RoutineArg;
+    OS_CRITICAL_SECTION_BEGIN();
     timer_config(&timer->OSTimerData, initValue, reloadValue, &os_timer_routine_wrapper);
+    OS_CRITICAL_SECTION_END();
     *pTimerHandle = timer;
 
     return OS_ERR_NONE;
@@ -490,7 +489,7 @@ OS_ERR osTimerStop(OS_HANDLE hTimer)
     return OS_ERR_NONE;
 }
 
-void timer_timerout_callback(OS_TIMER *hTimer)
+void timer_timerout_hook(OS_TIMER *hTimer)
 {
     OS_TIMER *timer = (OS_TIMER *)hTimer;
     

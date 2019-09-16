@@ -36,7 +36,7 @@
 typedef struct os_timer_t OS_TIMER;
 
 struct os_timer_t {
-    OS_OBJ_HEAD         OSMutexObjHeader;
+    OS_OBJ_HEAD         OSTimerObjHeader;
 
     timer_t             OSTimerData;
     UINT16              OSTimerOpt;
@@ -127,9 +127,8 @@ OS_ERR osTimerCreat(OS_HANDLE          *pTimerHandle,
         OSExitCriticalSection();
         return OS_ERR_OUT_OF_MEMORY;
     }
-    OSExitCriticalSection();
 
-    timer->OSMutexObjHeader.OSObjType = OS_OBJ_TYPE_SET(7);
+    timer->OSTimerObjHeader.OSObjType = OS_OBJ_TYPE_SET(7);
     timer->OSTimerOpt = 0;
     if (initValue != 0u && reloadValue == 0u) {
         timer->OSTimerOpt |= opt;
@@ -138,6 +137,7 @@ OS_ERR osTimerCreat(OS_HANDLE          *pTimerHandle,
     timer->OSTimerRoutineArg    = RoutineArg;
     timer_config(&timer->OSTimerData, initValue, reloadValue, &os_timer_routine_wrapper);
     *pTimerHandle = timer;
+    OSExitCriticalSection();
 
     return OS_ERR_NONE;
 }
@@ -176,12 +176,16 @@ OS_ERR osTimerStop(OS_HANDLE hTimer)
     return OS_ERR_NONE;
 }
 
-void timer_timerout_callback(OS_TIMER *hTimer)
+void timer_timerout_hook(timer_t *timer)
 {
-    OS_TIMER *timer = (OS_TIMER *)hTimer;
+    OS_TIMER *osTimer;
     
-    if (timer->OSTimerOpt & OS_TIMER_OPT_AUTO_DELETE) {
-        pool_free(&osTimerObjPool, timer);
+    osTimer = CONTAINER_OF(timer, OS_TIMER, OSTimerData);
+    
+    if (osTimer->OSTimerOpt & OS_TIMER_OPT_AUTO_DELETE) {
+        OSEnterCriticalSection();
+        pool_free(&osTimerObjPool, osTimer);
+        OSExitCriticalSection();
     }
 }
 

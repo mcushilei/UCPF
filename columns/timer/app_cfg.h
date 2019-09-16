@@ -1,5 +1,5 @@
 /*******************************************************************************
- *  Copyright(C)2016-2018 by Dreistein<mcu_shilei@hotmail.com>                *
+ *  Copyright(C)2016-2019 by Dreistein<mcu_shilei@hotmail.com>                *
  *                                                                            *
  *  This program is free software; you can redistribute it and/or modify it   *
  *  under the terms of the GNU Lesser General Public License as published     *
@@ -23,14 +23,6 @@
 
 /*============================ INCLUDES ======================================*/
 /*============================ MACROS ========================================*/
-#define TIMER_TICK_CYCLE    (10u)       //! in ms
-
-#if     defined(__OS_WINDOWS__) || defined(__OS_RTOS__)
-#define __TIMER_SAFE_ATOM_CODE(...)  OS_CRITICAL_SECTION(__VA_ARGS__)
-#else
-#define __TIMER_SAFE_ATOM_CODE(...)     SAFE_ATOM_CODE(__VA_ARGS__)
-#endif
-
 /*============================ MACROFIED FUNCTIONS ===========================*/
 /*============================ TYPES =========================================*/
 /*============================ GLOBAL VARIABLES ==============================*/

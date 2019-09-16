@@ -134,9 +134,9 @@ OS_ERR osQueueCreate(OS_HANDLE *hQueue, void *buffer, UINT16 queueSize, size_t e
  *              OS_ERR_OBJ_TYPE        If you didn't pass a queue object.
  */
 #if OS_QUEUE_DEL_EN > 0
-OS_ERR osQueueStopEnqueue(OS_HANDLE *hQueue)
+OS_ERR osQueueStopEnqueue(OS_HANDLE hQueue)
 {
-    OS_QUEUE   *pqueue = (OS_QUEUE *)*hQueue;
+    OS_QUEUE   *pqueue = (OS_QUEUE *)hQueue;
 
 
 #if OS_ARG_CHK_EN > 0u
