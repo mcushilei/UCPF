@@ -39,7 +39,7 @@ struct clock_alarm_t {
 /*============================ PUBLIC PROTOTYPES =============================*/
 extern void clock_tick_tock(void);
 extern bool clock_init(const date_time_t *originDate, const date_time_t *currentTime);
-extern bool clock_set_time(const date_time_t *newTime);
+extern bool         clock_set_time(const date_time_t *newTime);
 extern date_time_t  clock_get_time(void);
 extern uint32_t     clock_get_ticktock(void);
 extern bool clock_add_alarm(clock_alarm_t *alarm, time24_t *time, clock_alarm_routine_t *routine);
