@@ -78,7 +78,7 @@ typedef enum {
 #define __Vendor_SysTickConfig    0         /*!< Set to 1 if different SysTick Config is used     */
 
 
-#include "..\..\..\common\common.h"         /* Cortex-M3 processor and core peripherals           */
+#include "../../../../CMSIS/Include/core_cm3.h"     /* Cortex-M3 processor and core peripherals           */
 
 /*============================ MACROS ========================================*/
 

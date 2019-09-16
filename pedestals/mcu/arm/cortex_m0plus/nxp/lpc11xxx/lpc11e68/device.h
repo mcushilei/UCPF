@@ -77,7 +77,7 @@ typedef enum IRQn {
 #define __NVIC_PRIO_BITS            2       /*!< Number of Bits used for Priority Levels          */
 #define __Vendor_SysTickConfig      0       /*!< Set to 1 if different SysTick Config is used     */
 
-#include "..\..\..\common\common.h"
+#include "../../../../CMSIS/Include/core_cm0plus.h"
 
 /*============================ MACROS ========================================*/
 #define MAX_MAIN CLOCK_FREQ             (100MHz)

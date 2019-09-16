@@ -27,6 +27,10 @@
 /*============================ MACROS ========================================*/
 /*============================ MACROFIED FUNCTIONS ===========================*/
 
+#ifndef SAFE_ATOM_CODE
+#define SAFE_ATOM_CODE(...) __VA_ARGS__
+#endif
+
 #define __GPIO_INTERFACE_DEF(__N, __VALUE)                              \
     {                                                                   \
         &gpio##__N##_set_direction,                                     \
