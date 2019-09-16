@@ -182,14 +182,72 @@ Reset_Handler
         BX      R0
 
         PUBWEAK NMI_Handler
-        SECTION .text:CODE:NOROOT:REORDER(1)
+        SECTION .text:CODE:NOROOT:REORDER(2)
 NMI_Handler
         B NMI_Handler
 
         PUBWEAK HardFault_Handler
-        SECTION .text:CODE:NOROOT:REORDER(1)
+        SECTION .text:CODE:NOROOT:REORDER(2)
 HardFault_Handler
-        B HardFault_Handler
+    IMPORT  err_log
+    IMPORT  framework_fault_handle
+        TST     LR, #0x04
+        ITE     EQ
+        MRSEQ   R0, MSP
+        MRSNE   R0, PSP
+        
+        TST     LR, #0x04
+        ITE     EQ
+        MOVEQ   R2, #0xFFFFFFFF
+        MOVNE   R2, #0x11111111
+
+        LDR     R3, =err_log
+        LDR     R1, [R0, #0]                ;R0
+        STR     R1, [R3, #0]
+        LDR     R1, [R0, #4]                ;R1
+        STR     R1, [R3, #4]
+        LDR     R1, [R0, #8]                ;R2
+        STR     R1, [R3, #8]
+        LDR     R1, [R0, #12]               ;R3
+        STR     R1, [R3, #12]
+        LDR     R1, [R0, #16]               ;R12
+        STR     R1, [R3, #16]
+        LDR     R1, [R0, #20]               ;LR
+        STR     R1, [R3, #20]
+        LDR     R1, [R0, #24]               ;PC
+        STR     R1, [R3, #24]
+        LDR     R1, [R0, #28]               ;XPSR
+        STR     R1, [R3, #28]
+        
+        LDR     R1, =0xE000ED28             ;MFSR
+        LDRB    R1, [R1, #0]
+        STR     R1, [R3, #32]
+        LDR     R1, =0xE000ED29             ;BFSR
+        LDRB    R1, [R1, #0]
+        STR     R1, [R3, #36]
+        LDR     R1, =0xE000ED2A             ;UFSR
+        LDRH    R1, [R1, #0]
+        STR     R1, [R3, #40]
+        LDR     R1, =0xE000ED2C             ;HFSR
+        LDR     R1, [R1, #0]
+        STR     R1, [R3, #44]
+        LDR     R1, =0xE000ED30             ;DFSR
+        LDR     R1, [R1, #0]
+        STR     R1, [R3, #48]
+        LDR     R1, =0xE000ED3C             ;AFSR
+        LDR     R1, [R1, #0]
+        STR     R1, [R3, #52]
+        LDR     R1, =0xE000ED34             ;MMAR
+        LDR     R1, [R1, #0]
+        STR     R1, [R3, #56]
+        LDR     R1, =0xE000ED38             ;BFAR
+        LDR     R1, [R1, #0]
+        STR     R1, [R3, #60]
+
+        STR     R2, [R3, #64]
+
+        LDR     R3, =framework_fault_handle
+        BX      R3
 
         PUBWEAK MemManage_Handler
         SECTION .text:CODE:NOROOT:REORDER(1)
