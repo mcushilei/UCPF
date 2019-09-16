@@ -70,9 +70,6 @@ OSStartTheFirstThread
     ORR     R1, R1, #(NVIC_SYSTICK_PRI)
     STR     R1, [R0]
     
-    MOV     R0, #0                                  ; Set the PSP to 0 for initial context switch call
-    MSR     PSP, R0
-    
     LDR     R0, =SCB_VTOR_REG                       ; get vector table offset from VTOR register
     LDR     R0, [R0]                                ; load address of vector table
     LDR     R0, [R0, #0]                            ; Reset the MSP to the start address.
@@ -172,18 +169,18 @@ OSIntCtxSw
 ;********************************************************************************************************
 
 PendSV_Handler
-    MRS         R0, PSP                             ; PSP is current thread's stack pointer.
-    CBZ         R0, __NO_SAVE                       ; Skip context save if we are going to run the first thread, because
-                                                    ; PSP = 0 is invalid and there is no context of any thread.
+	LDR         R1, =osTCBCur
+    LDR         R1, [R1]
+    CBZ         R1, __NO_SAVE
 
-    STMDB       R0!, {R4 - R11, LR}                 ; Save regs r4-11 and LR on current thread's stack. R0-r3 have been saved automatically
+    MRS         R0, PSP                             ; PSP is current thread's stack pointer.
     
     TST         LR, #0x10                           ; If FPU is used, then PUSH VFP registers.
 	IT          EQ
 	VSTMDBEQ    R0!, {S16-S31}
+
+    STMDB       R0!, {R4 - R11, LR}                 ; PUSH regs r4-11 and LR on current thread's stack. R0-r3 have been saved automatically
     
-	LDR         R1, =osTCBCur
-    LDR         R1, [R1]
     STR         R0, [R1, #8]                        ; osTCBCur->OSTCBStkPtr = SP
 
 __NO_SAVE
@@ -199,9 +196,9 @@ __NO_SAVE
     
     LDR         R0, [R2, #8]                        ; R0 = osTCBCur->OSTCBStkPtr;
     
-    LDMIA       R0!, {R4-R11, LR}                   ; Restore r4-11 and r14 from new thread's stack.
+    LDMIA       R0!, {R4-R11, LR}                   ; POP r4-11 and r14 from new thread's stack.
 
-    TST         LR, #0x10                           ; If FPU is used, then PUSH VFP registers.
+    TST         LR, #0x10                           ; If FPU is used, then POP VFP registers.
 	IT          EQ
 	VLDMIAEQ    R0!, {S16-S31}
     
