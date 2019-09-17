@@ -336,6 +336,12 @@ int socket_api_connect(socket_t *pSocket, const char *host, const char *port)
     return SOCKET_ERR_NONE;
 }
 
+int socket_api_shutdown(socket_t *pSocket)
+{
+    shutdown(pSocket->so, SD_BOTH);
+    return SOCKET_ERR_NONE;
+}
+
 /*
  *  \brief  send data on a socket.
  *  \return AT_OK
@@ -351,11 +357,8 @@ int socket_api_recv(socket_t *pSocket, uint8_t *buf, uint32_t *len, uint32_t tim
     return tcp_read(pSocket , buf, len, timeout);
 }
 
-int socket_api_close(socket_t *pSocket)
+int socket_api_delete(socket_t *pSocket)
 {
-    DBG_LOG("close socket.");
-    shutdown(pSocket->so, SD_BOTH);
-    Sleep(1000);
     closesocket(pSocket->so);
     pSocket->so = INVALID_SOCKET;
 

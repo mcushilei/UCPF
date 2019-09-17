@@ -52,7 +52,7 @@ bool framework_init(void)
         DBG_LOG("socket_api_init() fail!");
     }
 
-    return true;
+    return app_main();
 }
 
 

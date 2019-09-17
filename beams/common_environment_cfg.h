@@ -23,30 +23,20 @@
  /*============================ INCLUDES ======================================*/
 #if     defined(__PRJ_TEMPLATE__)
 #   include ".\frameworks\template\config\environment_cfg.h"
+#elif   defined(__PRJ_TEMPLATE_WIN__)
+#   include "./frameworks/template_win/ports/environment_cfg.h"
+#elif   defined(__PRJ_KANGJI_GATEWAY_WIN__)
+#   include "./frameworks/kangji_gateway_win/ports/environment_cfg.h"
+#elif   defined(__PRJ_KANGJI_GATEWAY__)
+#   include "./frameworks/kangji_gateway/ports/environment_cfg.h"
 #elif   defined(__PRJ_WINDOWS__)
 #   include ".\frameworks\windows\config\environment_cfg.h"
-#elif   defined(__PRJ_SENSOR_VIBRATION__)
-#   include ".\frameworks\sensor_vibration\config\environment_cfg.h"
-#elif   defined(__PRJ_BATTERY_MONITOR__)
-#   include ".\frameworks\battery_monitor\config\environment_cfg.h"
-#elif   defined(__PRJ_BEIDOU_SHIP_TERMINAL__)
-#   include ".\frameworks\beidou_ship_terminal\config\environment_cfg.h"
-#elif   defined(__PRJ_BEIDOU_SHIP_TERMINAL_TEST__)
-#   include ".\frameworks\beidou_ship_terminal_test\config\environment_cfg.h"
-#elif   defined(__PRJ_LINE_VIBRATION__)
-#   include ".\frameworks\line_vibration\config\environment_cfg.h"
-#elif   defined(__PRJ_BEIDOU_SHIP_TERMINAL_USER_SIMULATOR__)
-#   include ".\frameworks\beidou_ship_terminal_user_simulator\config\environment_cfg.h"
-#elif   defined(__PRJ_SHIP_GPS__)
-#   include ".\frameworks\ship_gps\config\environment_cfg.h"
-#elif   defined(__PRJ_BEIDOU_HARBOUR__)
-#   include ".\frameworks\ship_gps_g2\config\environment_cfg.h"
-#elif   defined(__PRJ_LED_PANNEL__)
-#   include ".\frameworks\led_panel\config\environment_cfg.h"
-#elif   defined(__PRJ_BEIJING_NENGYUAN__)
-#   include ".\frameworks\beijing_alternative_energy\config\environment_cfg.h"
 #elif   defined(__PRJ_MSP432_TEMPLATE__)
 #   include ".\frameworks\ti_msp432_template\config\environment_cfg.h"
+#elif   defined(__PRJ_XOS_DEVELOP__)
+#   include ".\frameworks\xos_develop\config\environment_cfg.h"
+#elif   defined(__PRJ_JIEDIXIANGKONGZHIQI__)
+#   include ".\frameworks\jiedixiangkongzhiqi\ports\environment_cfg.h"
 #else
 #   error "Unknow Project"
 #endif

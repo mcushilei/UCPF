@@ -27,8 +27,9 @@
 /*============================ PUBLIC VARIABLES ==============================*/
 /*============================ PUBLIC PROTOTYPES =============================*/
 extern date_time_t  rtc_api_get_time(void);
-extern void         rtc_api_set_time(date_time_t *value);
+extern void         rtc_api_set_time(date_time_t value);
 extern uint32_t     rtc_api_get_ticktock(void);
+extern char        *rtc_api_get_time_string(char stringBuf[32]);
 
 #endif  //!< #ifndef __WINDOWS_RTC_API_H__
 /* EOF */

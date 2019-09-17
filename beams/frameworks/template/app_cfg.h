@@ -18,8 +18,8 @@
 //! \note do not move this pre-processor statement to other places
 #include "..\app_cfg.h"
 
-#ifndef __BEAMS_FRAMEWORKS_APP_CFG_H__
-#define __BEAMS_FRAMEWORKS_APP_CFG_H__
+#ifndef __FRAMEWORK_APP_CFG_H__
+#define __FRAMEWORK_APP_CFG_H__
 
 /*============================ INCLUDES ======================================*/
 #include "..\..\boards\boards.h"
@@ -31,5 +31,5 @@
 /*============================ GLOBAL VARIABLES ==============================*/
 /*============================ PROTOTYPES ====================================*/
 
-#endif  //! #ifndef __BEAMS_FRAMEWORKS_APP_CFG_H__
+#endif  //! #ifndef __FRAMEWORK_APP_CFG_H__
 /* EOF */

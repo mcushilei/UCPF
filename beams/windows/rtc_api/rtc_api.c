@@ -55,8 +55,9 @@ date_time_t rtc_api_get_time(void)
     return clock_get_time();
 }
 
-void rtc_api_set_time(date_time_t *value)
+void rtc_api_set_time(date_time_t value)
 {
+    clock_set_time(&value);
 }
 
 uint32_t rtc_api_get_ticktock(void)
@@ -74,6 +75,17 @@ void clock_alarm_routine_wrapper(rtc_alarm_t *alarm)
         //! handle the real routine of the alarm.
     }
 
+}
+
+char *rtc_api_get_time_string(char stringBuf[32])
+{
+    uint32_t stringOffset = 0u;
+
+    date_time_t tiemstamp = clock_get_time();
+    stringOffset += snprintf(stringBuf, 32u, "%u-%02u-%02u %02u:%02u:%02u", tiemstamp.Date.Year, tiemstamp.Date.Month, tiemstamp.Date.Day, tiemstamp.Time.Hour, tiemstamp.Time.Minute, tiemstamp.Time.Second);
+    stringBuf[stringOffset] = '\0';
+
+    return stringBuf;
 }
 
 /* EOF */

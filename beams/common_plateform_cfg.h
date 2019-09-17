@@ -23,30 +23,20 @@
 /*============================ INCLUDES ======================================*/
 #if     defined(__PRJ_TEMPLATE__)
 #   include ".\frameworks\template\config\plateform_cfg.h"
+#elif   defined(__PRJ_TEMPLATE_WIN__)
+#   include ".\frameworks\template_win\ports\plateform_cfg.h"
+#elif   defined(__PRJ_KANGJI_GATEWAY_WIN__)
+#   include "./frameworks/kangji_gateway_win/ports/plateform_cfg.h"
+#elif   defined(__PRJ_KANGJI_GATEWAY__)
+#   include "./frameworks/kangji_gateway/ports/plateform_cfg.h"
 #elif   defined(__PRJ_WINDOWS__)
 #   include ".\frameworks\windows\config\plateform_cfg.h"
-#elif   defined(__PRJ_SENSOR_VIBRATION__)
-#   include ".\frameworks\sensor_vibration\config\plateform_cfg.h"
-#elif   defined(__PRJ_BATTERY_MONITOR__)
-#   include ".\frameworks\battery_monitor\config\plateform_cfg.h"
-#elif   defined(__PRJ_BEIDOU_SHIP_TERMINAL__)
-#   include ".\frameworks\beidou_ship_terminal\config\plateform_cfg.h"
-#elif   defined(__PRJ_BEIDOU_SHIP_TERMINAL_TEST__)
-#   include ".\frameworks\beidou_ship_terminal_test\config\plateform_cfg.h"
-#elif   defined(__PRJ_LINE_VIBRATION__)
-#   include ".\frameworks\line_vibration\config\plateform_cfg.h"
-#elif   defined(__PRJ_BEIDOU_SHIP_TERMINAL_USER_SIMULATOR__)
-#   include ".\frameworks\beidou_ship_terminal_user_simulator\config\plateform_cfg.h"
-#elif   defined(__PRJ_SHIP_GPS__)
-#   include ".\frameworks\ship_gps\config\plateform_cfg.h"
-#elif   defined(__PRJ_BEIDOU_HARBOUR__)
-#   include ".\frameworks\ship_gps_g2\config\plateform_cfg.h"
-#elif   defined(__PRJ_LED_PANNEL__)
-#   include ".\frameworks\led_panel\config\plateform_cfg.h"
-#elif   defined(__PRJ_BEIJING_NENGYUAN__)
-#   include ".\frameworks\beijing_alternative_energy\config\plateform_cfg.h"
 #elif   defined(__PRJ_MSP432_TEMPLATE__)
 #   include ".\frameworks\ti_msp432_template\config\plateform_cfg.h"
+#elif   defined(__PRJ_XOS_DEVELOP__)
+#   include ".\frameworks\xos_develop\config\plateform_cfg.h"
+#elif   defined(__PRJ_JIEDIXIANGKONGZHIQI__)
+#   include ".\frameworks\jiedixiangkongzhiqi\ports\plateform_cfg.h"
 #else
 #   error "Unknow Project"
 #endif
@@ -124,6 +114,12 @@
 #   define __CORTEX_M4__                    //!< cortex-m4 core
 #   define __AMBIQ__                        //!< AMBIQ
 #   define __APOLLO2__                      //!< APOLLO2 series
+#elif   defined(__ST_STM32L471__)
+#   define __CPU_ARM__                      //!< arm series
+#   define __CORTEX_M4F__                   //!< cortex-m4 core with FPU
+#   define __ST__                           //!< ST
+#   define __STM32L4XX__                    //!< STM32L4XX series
+#   define STM32L471xx                      //!< STM32L471
 #else
 #   error "CPU must be specified!"
 #endif

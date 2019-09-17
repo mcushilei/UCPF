@@ -15,8 +15,8 @@
  *  along with this program; if not, see http://www.gnu.org/licenses/.        *
 *******************************************************************************/
 
-#ifndef __FRAMEWORKS_TEMPLATE_FRAMEWORK_H__
-#define __FRAMEWORKS_TEMPLATE_FRAMEWORK_H__
+#ifndef __FRAMEWORK_H__
+#define __FRAMEWORK_H__
 
 /*============================ INCLUDES ======================================*/
 #include ".\app_cfg.h"
@@ -28,5 +28,5 @@
 /*============================ PROTOTYPES ====================================*/
 extern bool framework_init(void);
 
-#endif  //! #ifndef __FRAMEWORKS_TEMPLATE_FRAMEWORK_H__
+#endif  //! #ifndef __FRAMEWORK_H__
 /* EOF */

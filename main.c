@@ -45,12 +45,8 @@ int main(void)
 {
     /* initialize whole system */
     if (!framework_init()) {
-        return 0;
+        return -1;
     }
-
-    app_main();
-
-    return 0;
 }
  
 /* EOF */

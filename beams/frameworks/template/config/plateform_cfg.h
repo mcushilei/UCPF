@@ -23,9 +23,7 @@
 /*============================ INCLUDES ======================================*/
 /*============================ MACROS ========================================*/
 
-//#define __OS_XOS__
-
-#if     defined(__LPC17XX__)
+#if     defined(__BOARD_LPC1700_KIT__)
 #define SYS_OSC_FREQ                (12000000ul)            //!< 
 #elif   defined(__LPC12XX__)
 #define SYS_OSC_FREQ                (12000000ul)            //!< 
@@ -36,13 +34,13 @@
 #define SYS_OSC_FREQ                (30000000ul)            //!<
 #endif
 
-#define __USER_FSM_CFG__
-#define SAFE_TASK_THREAD_SYNC   ENABLED
-#define FSM_MAX_TASKS           (10u)
-#define FSM_MAX_FLAGS           (4u)
-#define FSM_MAX_MUTEXES         (4u)
-#define FSM_MAX_SEMS            (4u)
-#define FSM_SAFE_ATOM_CODE(...) SAFE_ATOM_CODE(__VA_ARGS__)
+//#define __USER_FSM_CFG__
+//#define SAFE_TASK_THREAD_SYNC   ENABLED
+//#define FSM_MAX_TASKS           (10u)
+//#define FSM_MAX_FLAGS           (4u)
+//#define FSM_MAX_MUTEXES         (4u)
+//#define FSM_MAX_SEMS            (4u)
+//#define FSM_SAFE_ATOM_CODE(...) SAFE_ATOM_CODE(__VA_ARGS__)
 
 
 
