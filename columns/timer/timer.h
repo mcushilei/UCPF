@@ -16,8 +16,8 @@
 *******************************************************************************/
 
 
-#ifndef __SERVICE_TIMER_H__
-#define __SERVICE_TIMER_H__
+#ifndef __COLUMNS_TIMER_H__
+#define __COLUMNS_TIMER_H__
 
 /*============================ INCLUDES ======================================*/
 #include ".\app_cfg.h"
@@ -27,30 +27,22 @@
 /*============================ MACROFIED FUNCTIONS ===========================*/
 /*============================ TYPES =========================================*/
 typedef struct timer_t  timer_t;
-typedef void timer_routine_t(timer_t *timer);
+typedef void timer_callback_t(timer_t *timer);
 
 struct timer_t {
 	list_node_t         ListNode;
-	timer_routine_t    *pRoutine;
 	uint32_t            Count;
 	uint32_t            Period;
-	uint8_t             Flag;
 };
 
 /*============================ GLOBAL VARIABLES ==============================*/
 /*============================ PROTOTYPES ====================================*/
-extern bool timer_init(void);
+extern bool timer_init(timer_callback_t *callback);
 extern void timer_tick(void);
-extern void timer_watchman(void);
-extern bool timer_config(
-	timer_t        *timer,
-	uint32_t		initValue,
-	uint32_t		reloadValue,
-	timer_routine_t *pRoutine);
+extern bool timer_config(timer_t *timer, uint32_t initValue, uint32_t reloadValue);
 extern void timer_start(timer_t *timer, uint32_t value);
 extern void timer_stop(timer_t *timer);
-extern bool timer_is_timeout(timer_t *timer);
 extern bool timer_is_running(timer_t *timer);
 
-#endif  //! #ifndef __SERVICE_TIMER_H__
+#endif  //! #ifndef __COLUMNS_TIMER_H__
 /* EOF */

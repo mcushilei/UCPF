@@ -29,9 +29,11 @@
 /*!
  *! INCLUDE HEADER FILES
  */
-#include ".\os_cfg.h"
-#include "..\ports\ports.h"
-
+#include "./os_cfg.h"
+#include "../ports/ports.h"
+#if defined(__DEBUG__)
+#include "./os_private.h"
+#endif
 
 
 #define OS_INFINITE                 (0xFFFFFFFF)

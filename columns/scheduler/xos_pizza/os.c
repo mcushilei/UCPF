@@ -49,6 +49,8 @@ static  OS_MEM_POOL     osTimerObjPool;
 static  OS_TIMER        osTimerObjTbl[OS_MAX_TIMERS];
 
 /*============================ PRIVATE PROTOTYPES ============================*/
+static void os_timeout_callback(timer_t *timer);
+
 /*============================ PRIVATE VARIABLES =============================*/
 /*============================ PUBLIC VARIABLES ==============================*/
 /*============================ IMPLEMENTATION ================================*/
@@ -84,31 +86,23 @@ void osHeapFree(void *mem)
 
 
 
-ROOT void OSSysTickHook(void)
-{
-    timer_tick();
-    timer_watchman();
-}
-
-ROOT void OSInitHookEnd(void)
-{
-    memset((char *)osTimerObjTbl, 0, sizeof(osTimerObjTbl));
-    pool_init(&osTimerObjPool, UBOUND(osTimerObjTbl), osTimerObjTbl, sizeof(OS_TIMER));
-    
-    timer_init();
-}
 
 
 
-
-
-static void os_timer_routine_wrapper(timer_t *timer)
+static void os_timeout_callback(timer_t *timer)
 {
     OS_TIMER *osTimer;
     
     osTimer = CONTAINER_OF(timer, OS_TIMER, OSTimerData);
+    
     if (NULL != osTimer->OSTimerRoutine) {
         osTimer->OSTimerRoutine(osTimer->OSTimerRoutineArg);
+    }
+    
+    if (osTimer->OSTimerOpt & OS_TIMER_OPT_AUTO_DELETE) {
+        OSEnterCriticalSection();
+        pool_free(&osTimerObjPool, osTimer);
+        OSExitCriticalSection();
     }
 }
 
@@ -135,7 +129,7 @@ OS_ERR osTimerCreat(OS_HANDLE          *pTimerHandle,
     }
     timer->OSTimerRoutine       = fnRoutine;
     timer->OSTimerRoutineArg    = RoutineArg;
-    timer_config(&timer->OSTimerData, initValue, reloadValue, &os_timer_routine_wrapper);
+    timer_config(&timer->OSTimerData, initValue, reloadValue);
     *pTimerHandle = timer;
     OSExitCriticalSection();
 
@@ -176,17 +170,20 @@ OS_ERR osTimerStop(OS_HANDLE hTimer)
     return OS_ERR_NONE;
 }
 
-void timer_timerout_hook(timer_t *timer)
+
+
+ROOT void OSSysTickHook(void)
 {
-    OS_TIMER *osTimer;
-    
-    osTimer = CONTAINER_OF(timer, OS_TIMER, OSTimerData);
-    
-    if (osTimer->OSTimerOpt & OS_TIMER_OPT_AUTO_DELETE) {
-        OSEnterCriticalSection();
-        pool_free(&osTimerObjPool, osTimer);
-        OSExitCriticalSection();
-    }
+    timer_tick();
 }
+
+ROOT void OSInitHookEnd(void)
+{
+    memset((char *)osTimerObjTbl, 0, sizeof(osTimerObjTbl));
+    pool_init(&osTimerObjPool, UBOUND(osTimerObjTbl), osTimerObjTbl, sizeof(OS_TIMER));
+    
+    timer_init(&os_timeout_callback);
+}
+
 
 /* EOF */

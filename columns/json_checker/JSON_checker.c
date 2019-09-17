@@ -27,6 +27,7 @@ SOFTWARE.
 */
 #include "./JSON_checker_plug.h"
 #include "./JSON_checker.h"
+#include <string.h>
 
 #define GOOD 0xBABAB00E
 

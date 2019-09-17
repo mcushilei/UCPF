@@ -18,8 +18,8 @@
 //! \note do not move this pre-processor statement to other places
 #include "..\app_cfg.h"
 
-#ifndef __SERVICE_TIMER_APP_CFG_H__
-#define __SERVICE_TIMER_APP_CFG_H__
+#ifndef __COLUMNS_TIMER_APP_CFG_H__
+#define __COLUMNS_TIMER_APP_CFG_H__
 
 /*============================ INCLUDES ======================================*/
 /*============================ MACROS ========================================*/
@@ -28,5 +28,5 @@
 /*============================ GLOBAL VARIABLES ==============================*/
 /*============================ PROTOTYPES ====================================*/
 
-#endif  //! #ifndef __SERVICE_TIMER_APP_CFG_H__
+#endif  //! #ifndef __COLUMNS_TIMER_APP_CFG_H__
 /* EOF */

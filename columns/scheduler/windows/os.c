@@ -26,6 +26,8 @@
 /*============================ MACROFIED FUNCTIONS ===========================*/
 /*============================ TYPES =========================================*/
 /*============================ PROTOTYPES ====================================*/
+static void os_timer_timeout_callback(timer_t *timer);
+
 /*============================ GLOBAL VARIABLES ==============================*/
 CRITICAL_SECTION __globalCriticalSection;
 
@@ -40,7 +42,6 @@ static VOID CALLBACK timer_routine(PVOID lpParam, BOOLEAN isTimeOut)
 {
     if (isTimeOut) {
         timer_tick();
-        timer_watchman();
     }
 }
 
@@ -89,7 +90,7 @@ bool osInit (void)
     InitializeCriticalSectionAndSpinCount(&__globalCriticalSection, 0x00000400);
 
     //! init system timer.
-    if (!timer_init()) {
+    if (!timer_init(&os_timer_timeout_callback)) {
         return false;
     }
 
@@ -407,18 +408,23 @@ typedef struct os_timer_t OS_TIMER;
 
 struct os_timer_t {
     timer_t             OSTimerData;
-    UINT16              OSTimerOpt;
     OS_TIMER_ROUTINE   *OSTimerRoutine;
     void               *OSTimerRoutineArg;
+    UINT16              OSTimerOpt;
 };
 
-static void os_timer_routine_wrapper(timer_t *timer)
+static void os_timer_timeout_callback(timer_t *timer)
 {
     OS_TIMER *osTimer;
     
     osTimer = CONTAINER_OF(timer, OS_TIMER, OSTimerData);
+
     if (NULL != osTimer->OSTimerRoutine) {
         osTimer->OSTimerRoutine(osTimer->OSTimerRoutineArg);
+    }
+    
+    if (osTimer->OSTimerOpt & OS_TIMER_OPT_AUTO_DELETE) {
+        free(osTimer);
     }
 }
 
@@ -446,7 +452,7 @@ OS_ERR osTimerCreat(OS_HANDLE          *pTimerHandle,
     timer->OSTimerRoutine       = fnRoutine;
     timer->OSTimerRoutineArg    = RoutineArg;
     OS_CRITICAL_SECTION_BEGIN();
-    timer_config(&timer->OSTimerData, initValue, reloadValue, &os_timer_routine_wrapper);
+    timer_config(&timer->OSTimerData, initValue, reloadValue);
     OS_CRITICAL_SECTION_END();
     *pTimerHandle = timer;
 
@@ -489,12 +495,14 @@ OS_ERR osTimerStop(OS_HANDLE hTimer)
     return OS_ERR_NONE;
 }
 
-void timer_timerout_hook(OS_TIMER *hTimer)
+void timer_timeout_hook(timer_t *timer)
 {
-    OS_TIMER *timer = (OS_TIMER *)hTimer;
+    OS_TIMER *osTimer;
     
-    if (timer->OSTimerOpt & OS_TIMER_OPT_AUTO_DELETE) {
-        free(timer);
+    osTimer = CONTAINER_OF(timer, OS_TIMER, OSTimerData);
+    
+    if (osTimer->OSTimerOpt & OS_TIMER_OPT_AUTO_DELETE) {
+        free(osTimer);
     }
 }
 

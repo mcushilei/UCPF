@@ -22,6 +22,7 @@
 #include "./app_cfg.h"
 #include "../../../../heap_memory/heap_first_fit/heap_first_fit.h"
 #include "../../source/os_port.h"
+#include "./os_heap_mem_plug.h"
 
 /*============================ MACROS ========================================*/
 /*============================ MACROFIED FUNCTIONS ===========================*/
@@ -31,13 +32,6 @@
 /*============================ PUBLIC VARIABLES ==============================*/
 /*============================ IMPLEMENTATION ================================*/
 
-static ALIGN(8) char heapMemory0[1024 * 60];
-//_Pragma("location=\"ahb_ram\"") static ALIGN(8) char heapMemory1[1024 * 30];
-
-static const heap_memory_cfg_t heapCfg[] = {
-    {&heapMemory0, sizeof(heapMemory0)},
-//    {&heapMemory1, sizeof(heapMemory1)},
-};
 
 void OSHeapInit(void)
 {
