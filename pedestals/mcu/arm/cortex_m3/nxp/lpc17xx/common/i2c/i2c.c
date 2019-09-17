@@ -297,8 +297,6 @@ bool i2c_bus_get_status(i2c_reg_t *instance, uint8_t *pchStatus)
 
 bool i2c_bus_poll_status(i2c_reg_t *instance, uint8_t *pchStatus)
 {
-    uint32_t wStatus;
-    
     if (instance->CONSET & I2C_CONSET_SI_MSK) {
         i2c_bus_get_status(instance, pchStatus);
         return true;
