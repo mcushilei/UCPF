@@ -148,7 +148,6 @@ bool timer_config(
     uint32_t        initValue,
     uint32_t        reloadValue)
 {
-    initValue     = initValue;
     timer->Period = reloadValue;
     list_init(&timer->ListNode);
     if (initValue != 0u) {

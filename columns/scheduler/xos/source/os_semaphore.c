@@ -276,7 +276,6 @@ OS_ERR osSemPend(OS_HANDLE hSemaphore, UINT32 timeout)
 OS_ERR osSemPost(OS_HANDLE hSemaphore, UINT16 cnt)
 {
     OS_SEM     *psem = (OS_SEM *)hSemaphore;
-    OS_ERR      err;
 
 
 #if OS_ARG_CHK_EN > 0u
@@ -294,25 +293,23 @@ OS_ERR osSemPost(OS_HANDLE hSemaphore, UINT16 cnt)
         OSExitCriticalSection();
         return OS_ERR_OBJ_TYPE;
     }
-    if (cnt <= (65535u - psem->OSSemToken)) {       //!< Make sure semaphore will not overflow
-        psem->OSSemToken += cnt;
-        if (!LIST_IS_EMPTY(psem->OSSemWaitList)) {          //!< if any tasks waiting for semaphore
-            while (!LIST_IS_EMPTY(psem->OSSemWaitList)) {
-                psem->OSSemToken--;                         //!< decrement semaphore count...
-                OS_WaitableObjRdyTask((OS_WAITABLE_OBJ *)psem, &psem->OSSemWaitList, OS_STAT_PEND_OK);    //!< ...and ready HPT waiting on it.
-            }
-            OSExitCriticalSection();
-            OS_SchedulerRunPrio();
-        } else {
-            OSExitCriticalSection();
-        }
-        err = OS_ERR_NONE;
-    } else {                                        //!< To indicate a error usage.
+    if (cnt > (65535u - psem->OSSemToken)) {       //!< Make sure semaphore will not overflow
         OSExitCriticalSection();
-        err = OS_ERR_SEM_OVF;
+        return OS_ERR_SEM_OVF;
+    }
+    psem->OSSemToken += cnt;
+    if (!LIST_IS_EMPTY(psem->OSSemWaitList)) {          //!< if any tasks waiting for semaphore
+        while (!LIST_IS_EMPTY(psem->OSSemWaitList)) {
+            psem->OSSemToken--;                         //!< decrement semaphore count...
+            OS_WaitableObjRdyTask((OS_WAITABLE_OBJ *)psem, &psem->OSSemWaitList, OS_STAT_PEND_OK);    //!< ...and ready HPT waiting on it.
+        }
+        OSExitCriticalSection();
+        OS_SchedulerRunPrio();
+    } else {
+        OSExitCriticalSection();
     }
     
-    return err;
+    return OS_ERR_NONE;
 }
 
 /*

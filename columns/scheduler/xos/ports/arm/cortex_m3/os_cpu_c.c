@@ -16,8 +16,8 @@ uint32_t OSCriticalNesting = 0;                      //!<  the count value of ne
 *********************************************************************************************************
 *                                        INITIALIZE A TASK'S STACK
 *
-* Description: This function is called by either osTaskCreate() or osTaskCreate() to initialize the
-*              stack frame of the task being created.  This function is highly processor specific.
+* Description: This function is called by osTaskCreate() to initialize the stack frame
+*              of the task being created.  This function is highly hardware specific.
 *
 * Arguments  : ptos          is a pointer to the TOP of stack. It is assumed that 'ptos' points to
 *                            the first accessable memory location.
@@ -30,11 +30,10 @@ uint32_t OSCriticalNesting = 0;                      //!<  the count value of ne
 *              parg          is a pointer to a user supplied data area that will be passed to the task
 *                            when the task first executes.
 *
-* Returns    : Always returns the location of the new top-of-stack once the processor registers have
-*              been placed on the stack in the proper order.
+* Returns    : Always returns the location of the new top-of-stack once the stack frame has been placed
+*              on the stack in the proper order.
 *
 * Note(s)    : 1) Interrupts are enabled when your task starts executing.
-*              2) All tasks run in THREAD mode, using process stack.
 *********************************************************************************************************
 */
 

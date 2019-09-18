@@ -446,8 +446,10 @@ OS_ERR osTimerCreat(OS_HANDLE          *pTimerHandle,
     reloadValue /= 10u;
 
     timer->OSTimerOpt = 0;
-    if (initValue != 0u && reloadValue == 0u) {
-        timer->OSTimerOpt |= opt;
+    if (reloadValue == 0u) {
+        if (opt & OS_TIMER_OPT_AUTO_DELETE) {
+            timer->OSTimerOpt |= OS_TIMER_OPT_AUTO_DELETE;
+        }
     }
     timer->OSTimerRoutine       = fnRoutine;
     timer->OSTimerRoutineArg    = RoutineArg;

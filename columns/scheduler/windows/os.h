@@ -41,6 +41,8 @@
 #define OS_TIMER_TYPE                       OS_HANDLE
 #define OS_TIMER_CREATE(__TMR, __INIT, __RELOAD, __ROUTINE, __ARG)\
     osTimerCreat(&(__TMR), __INIT, __RELOAD, __ROUTINE, (void *)(__ARG), OS_TIMER_OPT_AUTO_DELETE)
+#define OS_TIMER_CREATE_EX(__TMR, __INIT, __RELOAD, __ROUTINE, __ARG, __OP)\
+    osTimerCreat(&(__TMR), __INIT, __RELOAD, __ROUTINE, (void *)(__ARG), __OP)
 #define OS_TIMER_DELETE(__TMR)              osTimerDelete(__TMR)
 #define OS_TIMER_START(__TMR, __TIME)       osTimerStart(__TMR, __TIME)
 #define OS_TIMER_STOP(__TMR)                osTimerStop(__TMR)

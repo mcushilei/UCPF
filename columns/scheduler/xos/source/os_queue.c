@@ -301,7 +301,6 @@ OS_ERR osQueueWrite(OS_HANDLE hQueue, const void *buffer, UINT32 timeout)
         OSExitCriticalSection();
         OS_SchedulerRunNext();
         
-        OSEnterCriticalSection();
         if (node.OSWaitNodeRes != OS_STAT_PEND_OK) {
             switch (node.OSWaitNodeRes) {
                 case OS_STAT_PEND_ABORT:
@@ -313,8 +312,14 @@ OS_ERR osQueueWrite(OS_HANDLE hQueue, const void *buffer, UINT32 timeout)
                      err = OS_ERR_TIMEOUT;
                      break;
             }
-            OSExitCriticalSection();
             return err;
+        }
+        OSEnterCriticalSection();
+        //! Different from other operating on object, we access the queue's structure twice here.
+        //! Before we going on, we have to make sure it has not been deleted. It might happen just before here.
+        if (OS_OBJ_TYPE_GET(pqueue->OSQueueObjHead.OSObjType) != OS_OBJ_TYPE_QUEUE) {
+            OSExitCriticalSection();
+            return OS_ERR_OBJ_TYPE;
         }
     } else {
         pqueue->OSQueueWriteToken--;    
@@ -378,7 +383,7 @@ OS_ERR osQueueRead(OS_HANDLE hQueue, void *buffer, UINT32 timeout)
 
     
     OSEnterCriticalSection();
-    if (OS_OBJ_TYPE_GET(pqueue->OSQueueObjHead.OSObjType) != OS_OBJ_TYPE_QUEUE) { //!< Validate object's type
+    if (OS_OBJ_TYPE_GET(pqueue->OSQueueObjHead.OSObjType) != OS_OBJ_TYPE_QUEUE) { //!< Validate object's type.
         OSExitCriticalSection();
         return OS_ERR_OBJ_TYPE;
     }
@@ -395,7 +400,6 @@ OS_ERR osQueueRead(OS_HANDLE hQueue, void *buffer, UINT32 timeout)
         OSExitCriticalSection();
         OS_SchedulerRunNext();
         
-        OSEnterCriticalSection();
         if (node.OSWaitNodeRes != OS_STAT_PEND_OK) {
             switch (node.OSWaitNodeRes) {
                 case OS_STAT_PEND_ABORT:
@@ -407,8 +411,12 @@ OS_ERR osQueueRead(OS_HANDLE hQueue, void *buffer, UINT32 timeout)
                      err = OS_ERR_TIMEOUT;
                      break;
             }
-            OSExitCriticalSection();
             return err;
+        }
+        OSEnterCriticalSection();
+        if (OS_OBJ_TYPE_GET(pqueue->OSQueueObjHead.OSObjType) != OS_OBJ_TYPE_QUEUE) { //!< make sure it has not been deleted.
+            OSExitCriticalSection();
+            return OS_ERR_OBJ_TYPE;
         }
     } else {
         pqueue->OSQueueReadToken--;  

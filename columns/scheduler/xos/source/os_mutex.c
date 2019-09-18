@@ -276,7 +276,7 @@ OS_ERR osMutexPend(OS_HANDLE hMutex, UINT32 timeout)
         OSExitCriticalSection();
         return OS_ERR_OBJ_TYPE;
     }
-    if (pmutex->OSMutexOwnerTCB == NULL) {              //!< Has mutex been possessed by any other task?...
+    if (pmutex->OSMutexOwnerTCB == NULL) {              //!< Has it been owned by any other task?...
                                                         //!  ...No.
         list_insert(&pmutex->OSMutexOvlpList, osTCBCur->OSTCBOwnMutexList.Prev);
         pmutex->OSMutexCnt       = 0u;
@@ -286,7 +286,7 @@ OS_ERR osMutexPend(OS_HANDLE hMutex, UINT32 timeout)
         return OS_ERR_NONE;
     }
     
-    if (pmutex->OSMutexOwnerTCB == osTCBCur) {          //!< Is mutex owned by CURRENT task?...
+    if (pmutex->OSMutexOwnerTCB == osTCBCur) {          //!< Has it been owned by CURRENT task?...
         if (pmutex->OSMutexCnt < 255u) {                //! ...Yes.
             pmutex->OSMutexCnt++;
             OSExitCriticalSection();

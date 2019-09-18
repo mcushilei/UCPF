@@ -272,9 +272,8 @@ static void os_task_wrapper(OS_TASK *task, void *parg)
 
     //! switch to another thread.
     osTCBCur = NULL;
-    OS_SchedulerNext();
     OSExitCriticalSection();
-    OSCtxSw();
+    OS_SchedulerRunNext();
     
 #else   //!< #if OS_TASK_DEL_EN > 0u
     //! this should be a fatal error!
