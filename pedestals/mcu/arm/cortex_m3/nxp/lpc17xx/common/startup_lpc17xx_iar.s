@@ -139,6 +139,11 @@ HardFault_Handler
         MRSEQ   R0, MSP 
         MRSNE   R0, PSP 
         
+        TST     LR, #0x04
+        ITE     EQ
+        MOVEQ   R2, #0xFFFFFFFF
+        MOVNE   R2, #0x11111111
+        
         LDR     R3, =err_log
         LDR     R1, [R0, #0]                ;R0
         STR     R1, [R3, #0]
@@ -181,7 +186,9 @@ HardFault_Handler
         LDR     R1, =0xE000ED38             ;BFAR
         LDR     R1, [R1, #0]
         STR     R1, [R3, #60]
-        
+
+        STR     R2, [R3, #64]
+       
         LDR     R3, =fault_reset
         BX      R3
                 

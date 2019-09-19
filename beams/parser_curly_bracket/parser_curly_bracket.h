@@ -1,5 +1,5 @@
 /*******************************************************************************
- *  Copyright(C)2017-2019 by Dreistein<mcu_shilei@hotmail.com>                *
+ *  Copyright(C)2019 by Dreistein<mcu_shilei@hotmail.com>                     *
  *                                                                            *
  *  This program is free software; you can redistribute it and/or modify it   *
  *  under the terms of the GNU Lesser General Public License as published     *
@@ -15,21 +15,35 @@
  *  along with this program; if not, see http://www.gnu.org/licenses/.        *
 *******************************************************************************/
 
-#ifndef __FRAMEWORK_H__
-#define __FRAMEWORK_H__
+#ifndef __PARSER_CURLY_BRACKET_H__
+#define __PARSER_CURLY_BRACKET_H__
 
 /*============================ INCLUDES ======================================*/
 #include "./app_cfg.h"
-#include "../../windows/socket_api/socket_api.h"
-#include "../../windows/rtc_api/rtc_api.h"
-#include "../../parser_curly_bracket/parser_curly_bracket.h"
 
 /*============================ MACROS ========================================*/
+#define CURLY_BRACKET_PARSER_MAX_LENGTH         (256u)
+
 /*============================ MACROFIED FUNCTIONS ===========================*/
 /*============================ TYPES =========================================*/
-/*============================ GLOBAL VARIABLES ==============================*/
-/*============================ PROTOTYPES ====================================*/
-extern bool framework_init(void);
+typedef void curly_bracket_paser_callback_t(char *buf, uint32_t len);
 
-#endif  //! #ifndef __FRAMEWORK_H__
+typedef struct {
+    curly_bracket_paser_callback_t  *Callback;
+    char        RcvQueueBuffer[CURLY_BRACKET_PARSER_MAX_LENGTH];
+    char        RcvFrameBuffer[CURLY_BRACKET_PARSER_MAX_LENGTH];
+    queue_t     RcvQueue;
+    uint32_t    RcvWriteIndex;
+    uint8_t     State;
+    uint8_t     Layer;
+    uint8_t     MaxLayer;
+} curly_bracket_paser_t;
+
+/*============================ PUBLIC VARIABLES ==============================*/
+/*============================ PUBLIC PROTOTYPES =============================*/
+extern bool curly_bracket_paser_init(curly_bracket_paser_t *pasrer, uint32_t maxLayer, curly_bracket_paser_callback_t *callback);
+extern bool curly_bracket_paser_deinit(curly_bracket_paser_t *pasrer);
+extern void curly_bracket_paser(curly_bracket_paser_t *pasrer, char byte, bool timeout);
+
+#endif  //!< #ifndef __PARSER_CURLY_BRACKET_H__
 /* EOF */

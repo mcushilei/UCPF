@@ -1,5 +1,5 @@
 /*******************************************************************************
- *  Copyright(C)2017-2019 by Dreistein<mcu_shilei@hotmail.com>                *
+ *  Copyright(C)2019 by Dreistein<mcu_shilei@hotmail.com>                     *
  *                                                                            *
  *  This program is free software; you can redistribute it and/or modify it   *
  *  under the terms of the GNU Lesser General Public License as published     *
@@ -15,21 +15,16 @@
  *  along with this program; if not, see http://www.gnu.org/licenses/.        *
 *******************************************************************************/
 
-#ifndef __FRAMEWORK_H__
-#define __FRAMEWORK_H__
+//! Do not move this pre-processor statement to other places
+#include "../app_cfg.h"
+
+#ifndef __PARSER_CURLY_BRACKET_APP_CFG_H__
+#define __PARSER_CURLY_BRACKET_APP_CFG_H__
 
 /*============================ INCLUDES ======================================*/
-#include "./app_cfg.h"
-#include "../../windows/socket_api/socket_api.h"
-#include "../../windows/rtc_api/rtc_api.h"
-#include "../../parser_curly_bracket/parser_curly_bracket.h"
-
 /*============================ MACROS ========================================*/
 /*============================ MACROFIED FUNCTIONS ===========================*/
 /*============================ TYPES =========================================*/
-/*============================ GLOBAL VARIABLES ==============================*/
-/*============================ PROTOTYPES ====================================*/
-extern bool framework_init(void);
 
-#endif  //! #ifndef __FRAMEWORK_H__
+#endif  //!< #ifndef __PARSER_CURLY_BRACKET_APP_CFG_H__
 /* EOF */

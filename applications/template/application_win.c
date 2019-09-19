@@ -59,6 +59,8 @@ void clock_alarm_routine(clock_alarm_t *alarm, bool isTimeout)
     }
 }
 
+
+
 /*! \note user's application
  *  \param none
  *  \retval true hal deinitialization succeeded.
@@ -74,6 +76,19 @@ int app_main(void)
     int32_t days = seconds_to_time(&startTime.Time, 622031716);
     date_plus_days(&startTime.Date, days);
     printf("\r\n%u-%02u-%02u %02u:%02u:%02u", startTime.Year, startTime.Month, startTime.Day, startTime.Hour, startTime.Minute, startTime.Second);
+
+
+    printf("\r\n");
+    curly_bracket_paser_t objPaser;
+    static char *test = "{{{{{{{ldhfa}djos{id}andf}dfoa}}{}hkds}hkd";
+    uint32_t bytesTrans = strlen(test);
+
+    curly_bracket_paser_init(&objPaser, 1, NULL);
+    for (uint32_t i = 0; i < bytesTrans; i++) {
+        curly_bracket_paser(&objPaser, test[i], false);
+    }
+
+
 
     //for (uint32_t i = 0u; i < 3u; i++) {
     //    clock_alarm_t *alarm = malloc(sizeof(clock_alarm_t));
