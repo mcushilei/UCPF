@@ -80,12 +80,14 @@ int app_main(void)
 
     printf("\r\n");
     curly_bracket_paser_t objPaser;
-    static char *test = "{{{{{{{ldhfa}djos{id}andf}dfoa}}{}hkds}hkd";
+    static char *test = "adjf098rfp}jaf{{{fj098du}}fup9ae{{{{ldhfa}djos{id}andf}dfoa}}{}hkds}hkd";
     uint32_t bytesTrans = strlen(test);
 
-    curly_bracket_paser_init(&objPaser, 1, NULL);
-    for (uint32_t i = 0; i < bytesTrans; i++) {
-        curly_bracket_paser(&objPaser, test[i], false);
+    curly_bracket_paser_init(&objPaser, 2, NULL);
+    for (uint32_t j = 0; j < 100; j++) {
+        for (uint32_t i = 0; i < bytesTrans; i++) {
+            curly_bracket_paser(&objPaser, test[i], false);
+        }
     }
 
 
