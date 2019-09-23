@@ -29,9 +29,10 @@
 /*============================ MACROFIED FUNCTIONS ===========================*/
 /*============================ TYPES =========================================*/
 typedef struct {
-    list_node_t     Alarm;          //! this alarm would be triggered every day.
-    list_node_t    *NextAlarmToTrigger;
-    list_node_t     DateAlarm;      //! this alarm would be only triggered one time.
+    list_node_t             Alarm;              //! this alarm would be triggered every day.
+    list_node_t            *NextAlarmToTrigger; //! scanhand point to the next alarm to check.
+    list_node_t             DateAlarm;          //! this alarm would be only triggered one time.
+    clock_alarm_callback_t *AlarmCallback;
     date_t          OriginDate;
     uint32_t        TickTock;       //! the elapsed second from OriginDate.
     uint32_t        TimeOfDay;      //! Only used by Alarm.
@@ -97,8 +98,8 @@ static void clock_date_alarm_list_remove(clock_alarm_t *alarm)
 
 static void clock_alarm_process(clock_alarm_t *alarm, bool isTimeout)
 {
-    if (alarm->Routine != NULL) {
-        alarm->Routine(alarm, isTimeout);
+    if (realClock.AlarmCallback != NULL) {
+        realClock.AlarmCallback(alarm, isTimeout);
     }
 }
 
@@ -152,7 +153,7 @@ void clock_tick_tock(void)
     CLOCK_CRITICAL_SECTION_END();
 }
 
-bool clock_init(const date_time_t *originDate, const date_time_t *currentTime)
+bool clock_init(const date_time_t *originDate, const date_time_t *currentTime, clock_alarm_callback_t *callback)
 {
     uint32_t sec = 0u;
     int32_t  days = 0;
@@ -176,13 +177,16 @@ bool clock_init(const date_time_t *originDate, const date_time_t *currentTime)
         return false;
     }
 
+    CLOCK_CRITICAL_SECTION_BEGIN();
     list_init(&realClock.Alarm);
     list_init(&realClock.DateAlarm);
     realClock.NextAlarmToTrigger = &realClock.Alarm;
+    realClock.AlarmCallback      = callback;
     realClock.OriginDate    = originDate->Date;
     realClock.TickTock      = days * SECONDS_OF_DAY + sec;
     realClock.TimeOfDay     = sec;
     realClock.IsRunning     = true;
+    CLOCK_CRITICAL_SECTION_END();
 
     return true;
 }
@@ -267,7 +271,7 @@ date_time_t clock_get_time(void)
     CLOCK_CRITICAL_SECTION_BEGIN();
     dateTime.Date = realClock.OriginDate;
     days = realClock.TickTock / SECONDS_OF_DAY;
-    sec = realClock.TickTock - days * SECONDS_OF_DAY;
+    sec  = realClock.TickTock - days * SECONDS_OF_DAY;
     CLOCK_CRITICAL_SECTION_END();
     date_plus_days(&dateTime.Date, days);
     seconds_to_time(&dateTime.Time, sec);
@@ -284,7 +288,7 @@ uint32_t clock_get_ticktock(void)
     return value;
 }
 
-bool clock_add_alarm(clock_alarm_t *alarm, time24_t *time, clock_alarm_routine_t *routine)
+bool clock_add_alarm(clock_alarm_t *alarm, time24_t *time)
 {
     uint32_t sec = 0u;
 
@@ -296,7 +300,6 @@ bool clock_add_alarm(clock_alarm_t *alarm, time24_t *time, clock_alarm_routine_t
 
     //! init it.
     list_init(&alarm->ListNode);
-    alarm->Routine  = routine;
     alarm->Time     = sec;
 
     //! insert it to running list.
@@ -315,7 +318,7 @@ void clock_remove_alarm(clock_alarm_t *alarm)
     CLOCK_CRITICAL_SECTION_END();
 }
 
-bool clock_add_timer(clock_alarm_t *alarm, const date_time_t *time, clock_alarm_routine_t *routine)
+bool clock_add_timer(clock_alarm_t *alarm, const date_time_t *time)
 {
     uint32_t sec = 0u;
     int32_t  days = 0;
@@ -338,7 +341,6 @@ bool clock_add_timer(clock_alarm_t *alarm, const date_time_t *time, clock_alarm_
 
     //! init it.
     list_init(&alarm->ListNode);
-    alarm->Routine  = routine;
     alarm->Time     = sec;
 
     //! insert it to running list.

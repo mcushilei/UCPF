@@ -94,25 +94,6 @@ bool osInit (void)
         return false;
     }
 
-    //! init real-time-clock
-    static const date_time_t startTime = { .Year = 2000, .Month = 1, .Day = 1, .Hour = 0, .Minute = 0, .Second = 0 };
-    date_time_t nowTime;
-    struct tm *ptm;
-    time_t rawtime;
-
-    time(&rawtime);
-    ptm = gmtime(&rawtime);
-
-    nowTime.Year     = 1900 + ptm->tm_year;
-    nowTime.Month    = 1 + ptm->tm_mon;
-    nowTime.Day      = ptm->tm_mday;
-    nowTime.Hour     = ptm->tm_hour;
-    nowTime.Minute   = ptm->tm_min;
-    nowTime.Second   = ptm->tm_sec;
-    if (!clock_init(&startTime, &nowTime)) {
-        return false;
-    }
-
     //! start system tick-clock.
     if (!os_tick_start()) {
         return false;
@@ -496,18 +477,6 @@ OS_ERR osTimerStop(OS_HANDLE hTimer)
     
     return OS_ERR_NONE;
 }
-
-void timer_timeout_hook(timer_t *timer)
-{
-    OS_TIMER *osTimer;
-    
-    osTimer = CONTAINER_OF(timer, OS_TIMER, OSTimerData);
-    
-    if (osTimer->OSTimerOpt & OS_TIMER_OPT_AUTO_DELETE) {
-        free(osTimer);
-    }
-}
-
 
 
 /* EOF */
