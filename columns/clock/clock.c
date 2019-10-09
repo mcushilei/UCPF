@@ -42,6 +42,7 @@ typedef struct {
 /*============================ PRIVATE PROTOTYPES ============================*/
 /*============================ PRIVATE VARIABLES =============================*/
 static real_clock_t realClock = {0};
+static const clock_alarm_t NULL_ALARM = { 0 };
 
 /*============================ PUBLIC VARIABLES ==============================*/
 /*============================ IMPLEMENTATION ================================*/
@@ -286,6 +287,15 @@ uint32_t clock_get_ticktock(void)
     value = realClock.TickTock;
     CLOCK_CRITICAL_SECTION_END();
     return value;
+}
+
+bool clock_init_alarm(clock_alarm_t *alarm)
+{
+    //! init it.
+    *alarm = NULL_ALARM;
+    list_init(&alarm->ListNode);
+
+    return true;
 }
 
 bool clock_add_alarm(clock_alarm_t *alarm, time24_t *time)
