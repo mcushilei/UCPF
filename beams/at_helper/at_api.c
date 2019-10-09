@@ -149,10 +149,6 @@ bool at_api_init_adaptor(void)
  */
 bool at_api_deinit_adaptor(void)
 {
-    for (uint32_t i = 0; i < AT_API_MAX_LINK_USED; i++) {
-        socket_api_delete(&link_array[i]);
-    }
-    
     OS_MUTEX_WAIT(at_adaptor_api_mutex, OS_INFINITE);
     if (at_adaptor_api && at_adaptor_api->deinit) {
         at_adaptor_api->deinit();
@@ -225,6 +221,9 @@ int socket_api_connect(socket_t *pSocket, const char *host, const char *port)
     OS_MUTEX_WAIT(at_adaptor_api_mutex, OS_INFINITE);
     if (at_adaptor_api && at_adaptor_api->connect && (at_device_status == AT_DEVICE_OK)) {
         ret = at_adaptor_api->connect(pSocket->index, host, port, SOCKET_PROTO_TCP);
+        if (AT_OK != ret) {
+            at_adaptor_api->close(pSocket->index);
+        }
     }
     OS_MUTEX_RELEASE(at_adaptor_api_mutex);
     
@@ -318,23 +317,6 @@ int socket_api_recv(socket_t *pSocket, char *buf, uint32_t *len, uint32_t timeou
 int socket_api_recvfrom(socket_t *pSocket, char *buf, uint32_t *len, char *ipaddr, int *port, uint32_t timeout)
 {
     return __socket_api_recv(pSocket, buf, len, ipaddr, port, timeout);
-}
-
-int socket_api_shutdown(socket_t *pSocket)
-{
-    int32_t ret = AT_FAILED;
-    
-    OS_MUTEX_WAIT(at_adaptor_api_mutex, OS_INFINITE);
-    if (at_adaptor_api && at_adaptor_api->close && (at_device_status == AT_DEVICE_OK)) {
-        ret = at_adaptor_api->close(pSocket->index);
-    }
-    OS_MUTEX_RELEASE(at_adaptor_api_mutex);
-    
-    if (AT_OK != ret) {
-        return SOCKET_ERR_FAIL;
-    }
-    
-    return SOCKET_ERR_NONE;
 }
 
 /* the closing may not be complete if the socket is in use. the socket will be

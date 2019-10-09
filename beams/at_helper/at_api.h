@@ -65,7 +65,6 @@ extern bool at_api_deinit_adaptor(void);
 extern socket_t *socket_api_create(void);
 extern int       socket_api_delete(socket_t *pSocket);
 extern int  socket_api_connect(socket_t *pSocket, const char* host, const char *port);
-extern int  socket_api_shutdown(socket_t *pSocket);
 extern int  socket_api_send(socket_t *pSocket, const char *buf, uint32_t *len);
 extern int  socket_api_recv(socket_t *pSocket, char *buf, uint32_t *len, uint32_t timeout);
 extern int  socket_api_bind(socket_t *pSocket, const char *host, const char *port);
