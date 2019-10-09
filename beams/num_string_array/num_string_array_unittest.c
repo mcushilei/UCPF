@@ -15,38 +15,35 @@
  *  along with this program; if not, see http://www.gnu.org/licenses/.        *
 *******************************************************************************/
 
-#ifndef __WINDOWS_RTC_API_H__
-#define __WINDOWS_RTC_API_H__
+
+
 
 /*============================ INCLUDES ======================================*/
 #include "./app_cfg.h"
+#include "./num_string_array.h"
 
 /*============================ MACROS ========================================*/
 /*============================ MACROFIED FUNCTIONS ===========================*/
 /*============================ TYPES =========================================*/
-typedef struct rtc_alarm_t  rtc_alarm_t;
-typedef void rtc_alarm_routine_t(rtc_alarm_t *rtcAlarm, void *arg);
-
-struct rtc_alarm_t {
-    clock_alarm_t           ClockAlarm;
-    rtc_alarm_routine_t    *Routine;
-    void                   *RoutineArg;
-    uint32_t                DayOfMonth; //! bit0: 1st, bit1: 2nd, ... bit30: 31st.
-    uint8_t                 DayOfWeek;  //! bit0: Mon, Bit1: Tur, ... bit6: Sun.
-};
-
-
+/*============================ PRIVATE PROTOTYPES ============================*/
+/*============================ PRIVATE VARIABLES =============================*/
 /*============================ PUBLIC VARIABLES ==============================*/
-/*============================ PUBLIC PROTOTYPES =============================*/
-extern bool         rtc_api_init(void);
-extern date_time_t  rtc_api_get_time(void);
-extern void         rtc_api_set_time(date_time_t value);
-extern uint32_t     rtc_api_get_ticktock(void);
-extern char        *rtc_api_get_time_string(char stringBuf[32]);
-extern rtc_alarm_t *rtc_alarm_creat(uint8_t weakMask, uint32_t monthMask, rtc_alarm_routine_t *routine, void *routineArg);
-extern bool         rtc_alarm_start(rtc_alarm_t *rtcAlarm, time24_t *time);
-extern bool         rtc_alarm_stop(rtc_alarm_t *rtcAlarm);
-extern bool         rtc_alarm_delete(rtc_alarm_t *rtcAlarm);
+/*============================ IMPLEMENTATION ================================*/
 
-#endif  //!< #ifndef __WINDOWS_RTC_API_H__
+void test(void)
+{
+    int32_t testUintValue[6] = {0};
+
+
+    char *pchar = " +0 , -1.23,6   ";
+    int length = check_num_array(pchar);
+    printf("\r\n length = %i", length);
+
+    num_array_string_to_int(pchar, testUintValue, UBOUND(testUintValue));
+    for (uint32_t i = 0; i < UBOUND(testUintValue); i++) {
+        printf("\r\ntestUintValue[%u] = %i", i, testUintValue[i]);
+    }
+
+}
+
 /* EOF */

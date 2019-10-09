@@ -25,33 +25,46 @@
 /*============================ MACROS ========================================*/
 /*============================ MACROFIED FUNCTIONS ===========================*/
 /*============================ TYPES =========================================*/
-typedef struct {
-    clock_alarm_t           ClockAlarm;
-    uint32_t                DayOfMonth; //! only used for day-alarm; bit0: 1st, bit1: 2nd ...
-    uint8_t                 DayOfWeek;  //! only used for day-alarm; bit0: Mon, Bit1: Tur ...
-} rtc_alarm_t;
-
 /*============================ PRIVATE PROTOTYPES ============================*/
+static void clock_alarm_callback(clock_alarm_t *alarm, bool isTimeout);
+
 /*============================ PRIVATE VARIABLES =============================*/
 /*============================ PUBLIC VARIABLES ==============================*/
+static rtc_alarm_t  rtcAlarm[32];
+static pool_t       rtcAlarmPool;
+static const date_time_t startTime = { .Year = 2000, .Month = 1, .Day = 1, .Hour = 0, .Minute = 0, .Second = 0 };
+
 /*============================ IMPLEMENTATION ================================*/
+
+bool rtc_api_init(void)
+{
+    //! init real-time-clock: load time from hardware RTC.
+    date_time_t nowTime;
+    struct tm *ptm;
+    time_t rawtime;
+
+    time(&rawtime);
+    ptm = gmtime(&rawtime);
+
+    nowTime.Year     = 1900 + ptm->tm_year;
+    nowTime.Month    = 1 + ptm->tm_mon;
+    nowTime.Day      = ptm->tm_mday;
+    nowTime.Hour     = ptm->tm_hour;
+    nowTime.Minute   = ptm->tm_min;
+    nowTime.Second   = ptm->tm_sec;
+    if (!clock_init(&startTime, &nowTime, &clock_alarm_callback)) {
+        return false;
+    }
+
+    if (!pool_init(&rtcAlarmPool, UBOUND(rtcAlarm), rtcAlarm, sizeof(rtc_alarm_t))) {
+        return false;
+    }
+
+    return true;
+}
 
 date_time_t rtc_api_get_time(void)
 {
-    //date_time_t value;
-    //struct tm *ptm;
-    //time_t rawtime;
-
-    //time(&rawtime);
-    //ptm = gmtime(&rawtime);
-
-    //value.Date.Year     = 1900 + ptm->tm_year;
-    //value.Date.Month    = 1 + ptm->tm_mon;
-    //value.Date.Day      = ptm->tm_mday;
-    //value.Time.Hour     = ptm->tm_hour;
-    //value.Time.Minute   = ptm->tm_min;
-    //value.Time.Second   = ptm->tm_sec;
-
     return clock_get_time();
 }
 
@@ -65,18 +78,6 @@ uint32_t rtc_api_get_ticktock(void)
     return clock_get_ticktock();
 }
 
-void clock_alarm_routine_wrapper(rtc_alarm_t *alarm)
-{
-    uint32_t dayOfWeek = 0;
-    uint32_t dayOfMonth = 0;
-
-    //! to check trigger condition.
-    if (((1u << dayOfWeek) & alarm->DayOfWeek) || ((1u << dayOfMonth) & alarm->DayOfMonth)) {
-        //! handle the real routine of the alarm.
-    }
-
-}
-
 char *rtc_api_get_time_string(char stringBuf[32])
 {
     uint32_t stringOffset = 0u;
@@ -87,5 +88,61 @@ char *rtc_api_get_time_string(char stringBuf[32])
 
     return stringBuf;
 }
+
+static void clock_alarm_callback(clock_alarm_t *alarm, bool isTimeout)
+{
+    uint32_t dayOfWeek = 0;
+    uint32_t dayOfMonth = 0;
+    rtc_alarm_t *rtcAlarm = CONTAINER_OF(alarm, rtc_alarm_t, ClockAlarm);
+    date_time_t endTime = clock_get_time();
+    int32_t days = count_days_between(&startTime.Date, &endTime.Date);
+    dayOfWeek = (days + 6 - 1) % 7u;
+    dayOfMonth = endTime.Day - 1;
+    //! to check trigger condition.
+    if ( ((1u << dayOfWeek) & rtcAlarm->DayOfWeek) || ((1u << dayOfMonth) & rtcAlarm->DayOfMonth) ) {
+        //! handle the real routine of the alarm.
+        if (NULL != rtcAlarm->Routine) {
+            rtcAlarm->Routine(rtcAlarm, rtcAlarm->RoutineArg);
+        }
+    }
+}
+
+rtc_alarm_t *rtc_alarm_creat(uint8_t weakMask, uint32_t monthMask, rtc_alarm_routine_t *routine, void *routineArg)
+{
+    rtc_alarm_t *rtcAlarm = pool_new(&rtcAlarmPool);
+    if (NULL == rtcAlarm) {
+        return false;
+    }
+
+    clock_init_alarm(&rtcAlarm->ClockAlarm);
+    rtcAlarm->DayOfWeek = weakMask;
+    rtcAlarm->DayOfMonth = monthMask;
+    rtcAlarm->Routine = routine;
+    rtcAlarm->RoutineArg = routineArg;
+
+    return rtcAlarm;
+}
+
+bool rtc_alarm_start(rtc_alarm_t *rtcAlarm, time24_t *time)
+{
+    return clock_add_alarm(&rtcAlarm->ClockAlarm, time);
+}
+
+bool rtc_alarm_stop(rtc_alarm_t *rtcAlarm)
+{
+    clock_remove_alarm(&rtcAlarm->ClockAlarm);
+    return true;
+}
+
+bool rtc_alarm_delete(rtc_alarm_t *rtcAlarm)
+{
+    OS_CRITICAL_SECTION_BEGIN();
+    clock_remove_alarm(&rtcAlarm->ClockAlarm);
+    pool_free(&rtcAlarmPool, rtcAlarm);
+    OS_CRITICAL_SECTION_END();
+    return true;
+}
+
+
 
 /* EOF */

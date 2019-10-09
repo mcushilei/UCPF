@@ -15,8 +15,8 @@
  *  along with this program; if not, see http://www.gnu.org/licenses/.        *
 *******************************************************************************/
 
-#ifndef __WINDOWS_RTC_API_H__
-#define __WINDOWS_RTC_API_H__
+#ifndef __NUM_STRING_ARRAY_H__
+#define __NUM_STRING_ARRAY_H__
 
 /*============================ INCLUDES ======================================*/
 #include "./app_cfg.h"
@@ -24,29 +24,11 @@
 /*============================ MACROS ========================================*/
 /*============================ MACROFIED FUNCTIONS ===========================*/
 /*============================ TYPES =========================================*/
-typedef struct rtc_alarm_t  rtc_alarm_t;
-typedef void rtc_alarm_routine_t(rtc_alarm_t *rtcAlarm, void *arg);
-
-struct rtc_alarm_t {
-    clock_alarm_t           ClockAlarm;
-    rtc_alarm_routine_t    *Routine;
-    void                   *RoutineArg;
-    uint32_t                DayOfMonth; //! bit0: 1st, bit1: 2nd, ... bit30: 31st.
-    uint8_t                 DayOfWeek;  //! bit0: Mon, Bit1: Tur, ... bit6: Sun.
-};
-
-
 /*============================ PUBLIC VARIABLES ==============================*/
 /*============================ PUBLIC PROTOTYPES =============================*/
-extern bool         rtc_api_init(void);
-extern date_time_t  rtc_api_get_time(void);
-extern void         rtc_api_set_time(date_time_t value);
-extern uint32_t     rtc_api_get_ticktock(void);
-extern char        *rtc_api_get_time_string(char stringBuf[32]);
-extern rtc_alarm_t *rtc_alarm_creat(uint8_t weakMask, uint32_t monthMask, rtc_alarm_routine_t *routine, void *routineArg);
-extern bool         rtc_alarm_start(rtc_alarm_t *rtcAlarm, time24_t *time);
-extern bool         rtc_alarm_stop(rtc_alarm_t *rtcAlarm);
-extern bool         rtc_alarm_delete(rtc_alarm_t *rtcAlarm);
+extern int check_num_array(const char *string);
+extern int num_array_string_to_int(const char *string, int *values, uint32_t valuesLength);
+extern int num_array_string_to_float(const char *string, float *values, uint32_t valuesLength);
 
-#endif  //!< #ifndef __WINDOWS_RTC_API_H__
+#endif  //!< #ifndef __NUM_STRING_ARRAY_H__
 /* EOF */
