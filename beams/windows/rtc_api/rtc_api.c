@@ -36,6 +36,18 @@ static const date_time_t startTime = { .Year = 2000, .Month = 1, .Day = 1, .Hour
 
 /*============================ IMPLEMENTATION ================================*/
 
+void utc_to_beijing(date_time_t *pDateTime)
+{
+    int32_t  d;
+    uint32_t s;
+
+    s = time_to_seconds(&pDateTime->Time);
+    s += 8u * SECONDS_OF_HOUR;
+
+    d = seconds_to_time(&pDateTime->Time, s);
+    date_plus_days(&pDateTime->Date, d);
+}
+
 bool rtc_api_init(void)
 {
     //! init real-time-clock: load time from hardware RTC.
@@ -52,6 +64,8 @@ bool rtc_api_init(void)
     nowTime.Hour     = ptm->tm_hour;
     nowTime.Minute   = ptm->tm_min;
     nowTime.Second   = ptm->tm_sec;
+    utc_to_beijing(&nowTime);
+
     if (!clock_init(&startTime, &nowTime, &clock_alarm_callback)) {
         return false;
     }
