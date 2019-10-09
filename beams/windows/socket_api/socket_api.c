@@ -30,10 +30,12 @@
 /*============================ LOCAL VARIABLES ===============================*/
 /*============================ IMPLEMENTATION ================================*/
 
-static int tcp_write(socket_t *pSocket, const uint8_t *pBuffer, uint32_t *bufferSize)
+static int tcp_write(socket_t *pSocket, const uint8_t *pBuffer, uint32_t *bufferSize, uint32_t timeout)
 {
     WSABUF          socketBuffer;
     WSAOVERLAPPED   oSend = {0};
+    bool            ioComplete = false;
+    DWORD           dwFlags;
     DWORD           bytesTrans = 0;
     int             socketErrorCode;
     DWORD           wRes;
@@ -55,23 +57,35 @@ static int tcp_write(socket_t *pSocket, const uint8_t *pBuffer, uint32_t *buffer
         NULL)) {
         socketErrorCode = WSAGetLastError();
         if (socketErrorCode != WSA_IO_PENDING) {
-            printf("\r\nWSASend failed. Error: %d", socketErrorCode);
             return SOCKET_ERR_FAIL;
         }
     }
 
-    wRes = WSAWaitForMultipleEvents(1, &oSend.hEvent, FALSE, WSA_INFINITE, FALSE);
-    if (wRes == WSA_WAIT_EVENT_0) {
-        DWORD dwFlags;
-        if (!WSAGetOverlappedResult(pSocket->so, &oSend, &bytesTrans, FALSE, &dwFlags)) {
-            ret = SOCKET_ERR_FAIL;
-        } else {
-            *bufferSize = bytesTrans;
+    do {
+        wRes = WSAWaitForMultipleEvents(1, &oSend.hEvent, false, timeout, false);
+        if (wRes == WSA_WAIT_EVENT_0) {
+            WSAResetEvent(oSend.hEvent);
+            if (WSAGetOverlappedResult(pSocket->so, &oSend, &bytesTrans, false, &dwFlags)) {
+                *bufferSize = bytesTrans;
+                ioComplete = true;
+            }
+        } else if (WSA_WAIT_TIMEOUT == wRes) {
+            ret = SOCKET_ERR_TIMEOUT;
+        } else if (WSA_WAIT_IO_COMPLETION == wRes) {
+            continue;
         }
-    } else if (WSA_WAIT_TIMEOUT == wRes) {
-        ret = SOCKET_ERR_TIMEOUT;
-    } else {
-        ret = SOCKET_ERR_FAIL;
+    } while (0);
+    if (!ioComplete) {
+        bool isOK = CancelIoEx(pSocket->so, &oSend);
+
+        if (isOK || GetLastError() != ERROR_NOT_FOUND) {
+            if (WSAGetOverlappedResult(pSocket->so, &oSend, &bytesTrans, true, &dwFlags)) {
+                *bufferSize = bytesTrans;
+                ret = SOCKET_ERR_NONE;
+            } else {
+                ret = SOCKET_ERR_FAIL;
+            }
+        }
     }
 
     return ret;
@@ -81,6 +95,7 @@ static int tcp_read(socket_t *pSocket, uint8_t *pBuffer, uint32_t *bufferSize, u
 {
     WSABUF          socketBuffer;
     WSAOVERLAPPED   oRecv = {0};
+    bool            ioComplete = false;
     DWORD           bytesTrans = 0;
     DWORD           dwFlags = 0;
     int             socketErrorCode;
@@ -107,17 +122,31 @@ static int tcp_read(socket_t *pSocket, uint8_t *pBuffer, uint32_t *bufferSize, u
         }
     }
 
-    wRes = WSAWaitForMultipleEvents(1, &oRecv.hEvent, FALSE, timeout, FALSE);//WSA_INFINITE timeout
-    if (wRes == WSA_WAIT_EVENT_0) {
-        if (!WSAGetOverlappedResult(pSocket->so, &oRecv, &bytesTrans, FALSE, &dwFlags)) {
-            ret = SOCKET_ERR_FAIL;
-        } else {
-            *bufferSize = bytesTrans;
+    do {
+        wRes = WSAWaitForMultipleEvents(1, &oRecv.hEvent, false, timeout, false);//WSA_INFINITE 
+        if (wRes == WSA_WAIT_EVENT_0) {
+            WSAResetEvent(oRecv.hEvent);
+            if (WSAGetOverlappedResult(pSocket->so, &oRecv, &bytesTrans, false, &dwFlags)) {
+                *bufferSize = bytesTrans;
+                ioComplete = true;
+            }
+        } else if (WSA_WAIT_TIMEOUT == wRes) {
+            ret = SOCKET_ERR_TIMEOUT;
+        } else if (WSA_WAIT_IO_COMPLETION == wRes) {
+            continue;
         }
-    } else if (WSA_WAIT_TIMEOUT == wRes) {
-        ret = SOCKET_ERR_TIMEOUT;
-    } else {
-        ret = SOCKET_ERR_FAIL;
+    } while (0);
+    if (!ioComplete) {
+        bool isOK = CancelIoEx(pSocket->so, &oRecv);
+
+        if (isOK || GetLastError() != ERROR_NOT_FOUND) {
+            if (WSAGetOverlappedResult(pSocket->so, &oRecv, &bytesTrans, true, &dwFlags)) {
+                *bufferSize = bytesTrans;
+                ret = SOCKET_ERR_NONE;
+            } else {
+                ret = SOCKET_ERR_FAIL;
+            }
+        }
     }
 
     return ret;
@@ -153,12 +182,12 @@ static int udp_write(socket_t *pSocket, struct sockaddr *pAddr, uint32_t addrSiz
         }
     }
 
-    wRes = WSAWaitForMultipleEvents(1, &oSend.hEvent, FALSE, WSA_INFINITE, FALSE);
+    wRes = WSAWaitForMultipleEvents(1, &oSend.hEvent, false, WSA_INFINITE, false);
     if (wRes != WSA_WAIT_EVENT_0) {
     } else {
         DWORD dwFlags;
         WSAResetEvent(oSend.hEvent);
-        if (!WSAGetOverlappedResult(pSocket->so, &oSend, &bytesTrans, FALSE, &dwFlags)) {
+        if (!WSAGetOverlappedResult(pSocket->so, &oSend, &bytesTrans, false, &dwFlags)) {
             socketErrorCode = WSAGetLastError();
             printf("\r\nWSAGetOverlappedResult failed. Error: %d", socketErrorCode);
         }
@@ -199,11 +228,11 @@ static int udp_read(socket_t *pSocket, struct sockaddr *pAddr, uint32_t *pAddrSi
         }
     }
 
-    wRes = WSAWaitForMultipleEvents(1, &oRecv.hEvent, FALSE, WSA_INFINITE, FALSE);
+    wRes = WSAWaitForMultipleEvents(1, &oRecv.hEvent, false, WSA_INFINITE, false);
     WSAResetEvent(oRecv.hEvent);
     if (wRes != WSA_WAIT_EVENT_0) {
     } else {
-        if (!WSAGetOverlappedResult(pSocket->so, &oRecv, &bytesTrans, FALSE, &dwFlags)) {
+        if (!WSAGetOverlappedResult(pSocket->so, &oRecv, &bytesTrans, false, &dwFlags)) {
             socketErrorCode = WSAGetLastError();
             printf("\r\nWSAGetOverlappedResult failed. Error: %d", socketErrorCode);
         }
@@ -216,10 +245,9 @@ static int udp_read(socket_t *pSocket, struct sockaddr *pAddr, uint32_t *pAddrSi
 bool socket_api_init(void)
 {
     int     retResault;
-    WSADATA wsaData;        //! use to save Windows Socket information.
+    WSADATA wsaData = {0};        //! use to save Windows Socket information.
 
     // Initialize Winsock
-    ZeroMemory(&wsaData, sizeof(wsaData));
     retResault = WSAStartup((2u << 8) | (2u << 0),      //!< version 2.0
                             &wsaData);
     if (retResault != 0) {
@@ -299,7 +327,7 @@ int socket_api_connect(socket_t *pSocket, const char *host, const char *port)
             WSA_FLAG_OVERLAPPED);
         if (so == INVALID_SOCKET) {
             socketErrorCode = WSAGetLastError();
-            DBG_LOG("WSASocket failed. Error: %u\n", socketErrorCode);
+            DBG_LOG("WSASocket() err: %u\n", socketErrorCode);
             break;
         }
 
@@ -315,7 +343,7 @@ int socket_api_connect(socket_t *pSocket, const char *host, const char *port)
             NULL);
         if (returnValue != 0) {
             socketErrorCode = WSAGetLastError();
-            printf("\r\nWSAConnect failed. Error: %u\n", socketErrorCode);
+            DBG_LOG("WSAConnect() err: %u", socketErrorCode);
 
             closesocket(so);
             so = INVALID_SOCKET;
@@ -331,14 +359,17 @@ int socket_api_connect(socket_t *pSocket, const char *host, const char *port)
     }
     pSocket->so = so;
 
+    LINGER li = {.l_onoff = 1, .l_linger = 0};
+    if (SOCKET_ERROR == setsockopt(so, SOL_SOCKET, SO_LINGER, (char *)&li, sizeof(li))) {
+        socketErrorCode = WSAGetLastError();
+        DBG_LOG("setsockopt() err: %u", socketErrorCode);
+    }
+
+    WSAEventSelect(so, pSocket->ReadEvent, FD_CLOSE);
+    WSAEventSelect(so, pSocket->WriteEvent, FD_CLOSE);
+
     DBG_LOG("TCP connected.");
 
-    return SOCKET_ERR_NONE;
-}
-
-int socket_api_shutdown(socket_t *pSocket)
-{
-    shutdown(pSocket->so, SD_BOTH);
     return SOCKET_ERR_NONE;
 }
 
@@ -349,7 +380,7 @@ int socket_api_shutdown(socket_t *pSocket)
  */
 int socket_api_send(socket_t *pSocket, const uint8_t *buf, uint32_t *len)
 {
-    return tcp_write(pSocket, buf, len);
+    return tcp_write(pSocket, buf, len, INFINITE);
 }
 
 int socket_api_recv(socket_t *pSocket, uint8_t *buf, uint32_t *len, uint32_t timeout)
@@ -359,6 +390,7 @@ int socket_api_recv(socket_t *pSocket, uint8_t *buf, uint32_t *len, uint32_t tim
 
 int socket_api_delete(socket_t *pSocket)
 {
+    CancelIoEx(pSocket->so, NULL);
     closesocket(pSocket->so);
     pSocket->so = INVALID_SOCKET;
 
