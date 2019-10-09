@@ -23,6 +23,8 @@
 #include "../../clock/clock.h"
 
 /*============================ MACROS ========================================*/
+#define OS_TIMER_TICK_MS       (100u)
+
 /*============================ MACROFIED FUNCTIONS ===========================*/
 /*============================ TYPES =========================================*/
 /*============================ PROTOTYPES ====================================*/
@@ -62,12 +64,12 @@ static bool os_tick_start(void)
     }
 
     // Set a timer to call the timer routine every 10 milliseconds.
-    if (!CreateTimerQueueTimer(&hTimer, hTimerQueue, timer_routine, NULL, 10, 10, 0)) {
+    if (!CreateTimerQueueTimer(&hTimer, hTimerQueue, timer_routine, NULL, OS_TIMER_TICK_MS, OS_TIMER_TICK_MS, WT_EXECUTEINTIMERTHREAD | WT_EXECUTELONGFUNCTION)) {
         return false;
     }
 
     // Set a timer to call the timer routine every 1 second.
-    if (!CreateTimerQueueTimer(&hTimer, hTimerQueue, clock_routine, NULL, 1000, 1000, 0)) {
+    if (!CreateTimerQueueTimer(&hTimer, hTimerQueue, clock_routine, NULL, 1000, 1000, WT_EXECUTEINTIMERTHREAD | WT_EXECUTELONGFUNCTION)) {
         return false;
     }
 
@@ -423,8 +425,8 @@ OS_ERR osTimerCreat(OS_HANDLE          *pTimerHandle,
         return OS_ERR_OUT_OF_MEMORY;
     }
 
-    initValue /= 10u;
-    reloadValue /= 10u;
+    initValue /= OS_TIMER_TICK_MS;
+    reloadValue /= OS_TIMER_TICK_MS;
 
     timer->OSTimerOpt = 0;
     if (reloadValue == 0u) {
@@ -458,7 +460,7 @@ OS_ERR osTimerStart(OS_HANDLE hTimer, UINT32 timeMS)
 {
     OS_TIMER *timer = (OS_TIMER *)hTimer;
     
-    timeMS /= 10u;
+    timeMS /= OS_TIMER_TICK_MS;
 
     OS_CRITICAL_SECTION_BEGIN();
     timer_start(&timer->OSTimerData, timeMS);
