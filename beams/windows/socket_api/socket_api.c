@@ -68,6 +68,8 @@ static int tcp_write(socket_t *pSocket, const uint8_t *pBuffer, uint32_t *buffer
             if (WSAGetOverlappedResult(pSocket->so, &oSend, &bytesTrans, false, &dwFlags)) {
                 *bufferSize = bytesTrans;
                 ioComplete = true;
+            } else {
+                ret = SOCKET_ERR_FAIL;
             }
         } else if (WSA_WAIT_TIMEOUT == wRes) {
             ret = SOCKET_ERR_TIMEOUT;
@@ -82,8 +84,6 @@ static int tcp_write(socket_t *pSocket, const uint8_t *pBuffer, uint32_t *buffer
             if (WSAGetOverlappedResult(pSocket->so, &oSend, &bytesTrans, true, &dwFlags)) {
                 *bufferSize = bytesTrans;
                 ret = SOCKET_ERR_NONE;
-            } else {
-                ret = SOCKET_ERR_FAIL;
             }
         }
     }
@@ -123,12 +123,14 @@ static int tcp_read(socket_t *pSocket, uint8_t *pBuffer, uint32_t *bufferSize, u
     }
 
     do {
-        wRes = WSAWaitForMultipleEvents(1, &oRecv.hEvent, false, timeout, false);//WSA_INFINITE 
+        wRes = WSAWaitForMultipleEvents(1, &oRecv.hEvent, false, timeout, false);
         if (wRes == WSA_WAIT_EVENT_0) {
             WSAResetEvent(oRecv.hEvent);
             if (WSAGetOverlappedResult(pSocket->so, &oRecv, &bytesTrans, false, &dwFlags)) {
                 *bufferSize = bytesTrans;
                 ioComplete = true;
+            } else {
+                ret = SOCKET_ERR_FAIL;
             }
         } else if (WSA_WAIT_TIMEOUT == wRes) {
             ret = SOCKET_ERR_TIMEOUT;
@@ -143,8 +145,6 @@ static int tcp_read(socket_t *pSocket, uint8_t *pBuffer, uint32_t *bufferSize, u
             if (WSAGetOverlappedResult(pSocket->so, &oRecv, &bytesTrans, true, &dwFlags)) {
                 *bufferSize = bytesTrans;
                 ret = SOCKET_ERR_NONE;
-            } else {
-                ret = SOCKET_ERR_FAIL;
             }
         }
     }
