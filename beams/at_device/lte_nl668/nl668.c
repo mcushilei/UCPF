@@ -355,7 +355,7 @@ static int32_t nl668_udp_data_handler(void *arg, const char *buf, uint32_t len)
     //DBG_LOG("UDP rcv entry!");
 
     //! parser data frame ,\r\n+MIPRUDP,linkid,len,data
-    if (sscanf((char *)buf, "\r\n+MIPRUDP:%[^,],%u,%u,%u", &sourceIP, &sourcePort, &linkid, &data_len) < 4) {
+    if (sscanf((char *)buf, "\r\n+MIPRUDP:%[^,],%u,%u,%u", sourceIP, &sourcePort, &linkid, &data_len) < 4) {
         DBG_LOG("got data prefix invailed!");
         goto END;
     }
@@ -489,6 +489,7 @@ static int32_t nl668_init(void)
 		}
 	}
 	if(timecnt == 0u) {
+        RTT_LOG("ERROR: net error!");
         goto __err_exit;
 	}
 
@@ -500,6 +501,7 @@ static int32_t nl668_init(void)
 		}
 	}
 	if(timecnt == 0u) {
+        RTT_LOG("ERROR: connect net timeout!");
         goto __err_exit;
 	}
     
@@ -511,6 +513,7 @@ static int32_t nl668_init(void)
 		}
 	}
 	if(timecnt == 0u) {
+        RTT_LOG("ERROR: PPP timeout!");
         goto __err_exit;
 	}
     
