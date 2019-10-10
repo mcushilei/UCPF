@@ -48,6 +48,11 @@ bool framework_init(void)
     DBG_LOG("heap_remaining = %u", maxMemSize);
     DBG_LOG("heap start at: %p", heapMemory1);
 
+    if (!rtc_api_init()) {
+        DBG_LOG("rtc_api_init() fail!");
+        return false;
+    }
+
     if (!socket_api_init()) {
         DBG_LOG("socket_api_init() fail!");
     }
