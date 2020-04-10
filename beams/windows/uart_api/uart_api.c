@@ -18,7 +18,7 @@
 
 /*============================ INCLUDES ======================================*/
 #include ".\app_cfg.h"
-#include ".\com.h"
+#include ".\uart_api.h"
 
 /*============================ MACROS ========================================*/
 #define this                    (*ptThis)
@@ -248,7 +248,7 @@ bool com_close(com_t *ptThis)
  *  \param  wLen        number of bytes to be written
  *  \retval number of bytes has been written.
  */
-uint32_t com_write(com_t *ptThis, uint8_t *pchData, uint32_t wLen)
+uint32_t com_write(com_t *ptThis, uint8_t *pchData, uint32_t wLen, uint32_t timeoutMS)
 {
     DWORD       numBytesWrite = 0;
     OVERLAPPED  oWriter = {0};
@@ -282,12 +282,28 @@ uint32_t com_write(com_t *ptThis, uint8_t *pchData, uint32_t wLen)
     }
 
     wRes = WaitForSingleObject(oWriter.hEvent, INFINITE);
-    if (WAIT_OBJECT_0 != wRes) {
-        //! Fatal Error.
-    } else {
-        // OVERLAPPED structure's event has been signaled. 
-        if (!GetOverlappedResult(this.hCom, &oWriter, &numBytesWrite, FALSE)) {
-        }
+    switch (wRes) {
+        case WAIT_ABANDONED:
+            goto __ERROR_EXIT;
+
+        case WAIT_OBJECT_0:
+            if (!GetOverlappedResult(this.hCom, &oWriter, &numBytesWrite, FALSE)) {
+            }
+            break;
+
+        case WAIT_TIMEOUT:
+            CancelIoEx(this.hCom, &oWriter);
+            if (WAIT_OBJECT_0 == WaitForSingleObject(oWriter.hEvent, 0)) {
+                //! write ok
+            } else {
+                break;
+            }
+        case WAIT_FAILED:
+            errorCode = GetLastError();
+            goto __ERROR_EXIT;
+
+        default:
+            break;
     }
 
 __ERROR_EXIT:
@@ -303,7 +319,7 @@ __ERROR_EXIT:
  *  \param  wLen        length of buffer
  *  \retval number of bytes in buffer.
  */
-uint32_t com_read(com_t *ptThis, uint8_t *pchData, uint32_t wLen)
+uint32_t com_read(com_t *ptThis, uint8_t *pchData, uint32_t wLen, uint32_t timeoutMS)
 {
     DWORD       numBytesRead = 0;
     OVERLAPPED  oReader = {0};
@@ -336,18 +352,44 @@ uint32_t com_read(com_t *ptThis, uint8_t *pchData, uint32_t wLen)
         }
     }
 
-    wRes = WaitForSingleObject(oReader.hEvent, INFINITE);
-    if (WAIT_OBJECT_0 != wRes) {
-        //! Fatal Error.
-    } else {
-        if (!GetOverlappedResult(this.hCom, &oReader, &numBytesRead, FALSE)) {
-        }
+    wRes = WaitForSingleObject(oReader.hEvent, timeoutMS);
+    switch (wRes) {
+        case WAIT_ABANDONED:
+            goto __ERROR_EXIT;
+
+        case WAIT_OBJECT_0:
+            if (!GetOverlappedResult(this.hCom, &oReader, &numBytesRead, FALSE)) {
+            }
+            break;
+
+        case WAIT_TIMEOUT:
+            CancelIoEx(this.hCom, &oReader);
+            if (WAIT_OBJECT_0 == WaitForSingleObject(oReader.hEvent, 0)) {
+                //! write ok
+            } else {
+                break;
+            }
+        case WAIT_FAILED:
+            errorCode = GetLastError();
+            goto __ERROR_EXIT;
+
+        default:
+            break;
     }
 
 __ERROR_EXIT:
     CloseHandle(oReader.hEvent);
 
     return numBytesRead;
+}
+
+bool com_flush_buffer(com_t *ptThis)
+{
+    if (0 == PurgeComm(this.hCom, PURGE_TXABORT | PURGE_TXCLEAR | PURGE_RXABORT | PURGE_RXCLEAR)) {
+        return false;
+    } else {
+        return true;
+    }
 }
 
 static DWORD WINAPI com_hardware_event_task(void *pArg)

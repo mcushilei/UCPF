@@ -34,6 +34,8 @@
 char heapMemory1[ configTOTAL_HEAP_SIZE ];
 char heapMemory2[ 21 ];
 
+com_t myComPort;
+
 
 bool framework_init(void)
 {
@@ -56,6 +58,16 @@ bool framework_init(void)
     if (!socket_api_init()) {
         DBG_LOG("socket_api_init() fail!");
     }
+
+    enum_all_comm();
+    com_cfg_t myComPortCfg = { .wBaudrate = 9600,.hwMode = UART_NO_PARITY | UART_1_STOPBIT | UART_8_BIT_LENGTH };
+    if (!com_open(&myComPort, "\\\\.\\COM11", &myComPortCfg, NULL)) {
+        printf("\r\n cannot open com!");
+        return false;
+    }
+
+
+
 
     return app_main();
 }

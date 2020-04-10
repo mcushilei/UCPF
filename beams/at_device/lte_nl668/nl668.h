@@ -7,7 +7,7 @@
 
 
 
-extern at_adaptor_api_t   nl668_interface;
+extern const at_adaptor_api_t   nl668_interface;
 
 
 #endif

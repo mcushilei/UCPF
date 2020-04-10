@@ -11,8 +11,7 @@
 /*============================ PUBLIC VARIABLES ==============================*/
 /*============================ PUBLIC PROTOTYPES =============================*/
 extern void    *at_malloc(size_t size);
-extern void     at_free(void* ptr);
-extern uint32_t at_get_time(void);
+extern void     at_free(void *ptr);
 
 extern bool     at_usart_init(void);
 extern void     at_usart_deinit(void);

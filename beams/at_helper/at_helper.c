@@ -30,7 +30,7 @@ static void at_write_task_msg(uint32_t type)
     OS_QUEUE_WRITE(at.RecvQueue, &msg, 0);
 }
 
-static void at_listener_list_add(at_listener_t *p)
+static void at_add_listener(at_listener_t *p)
 {
     at_listener_t **cur = &at.ListenerList;
 
@@ -40,7 +40,7 @@ static void at_listener_list_add(at_listener_t *p)
     *cur = p;
 }
 
-static void at_listener_list_remove(at_listener_t *p)
+static void at_remove_listener(at_listener_t *p)
 {
     at_listener_t **cur = &at.ListenerList;
 
@@ -52,7 +52,7 @@ static void at_listener_list_remove(at_listener_t *p)
     }
 }
 
-static void at_listner_list_destroy(void)
+static void at_destroy_listener(void)
 {
     at_listener_t *cur = at.ListenerList;
     at_listener_t *tmp;
@@ -92,14 +92,14 @@ int32_t at_cmd_multi_suffix(const char *cmd, uint32_t cmd_len, at_cmd_info_t *cm
     OS_MUTEX_WAIT(at.trx_mux, OS_INFINITE);
     {
         OS_MUTEX_WAIT(at.cmd_mux, OS_INFINITE);
-        at_listener_list_add(&listener);
+        at_add_listener(&listener);
         at_transmit(cmd, cmd_len, true);
         OS_MUTEX_RELEASE(at.cmd_mux);
 
         ret = OS_SEMAPHORE_WAIT(at.resp_sem, timeout);
 
         OS_MUTEX_WAIT(at.cmd_mux, OS_INFINITE);
-        at_listener_list_remove(&listener);
+        at_remove_listener(&listener);     //<! in case we reached a timeout.
         OS_MUTEX_RELEASE(at.cmd_mux);
     }
     OS_MUTEX_RELEASE(at.trx_mux);
@@ -130,14 +130,14 @@ int32_t at_write(const char *cmd, const char *suffix, const char *buf, uint32_t 
     do {
         OS_MUTEX_WAIT(at.cmd_mux, OS_INFINITE);
         suffix_array[0] = ">";
-        at_listener_list_add(&listener);
+        at_add_listener(&listener);
         at_transmit(cmd, strlen(cmd), true);
         OS_MUTEX_RELEASE(at.cmd_mux);
 
         ret = OS_SEMAPHORE_WAIT(at.resp_sem, at.timeout);
         
         OS_MUTEX_WAIT(at.cmd_mux, OS_INFINITE);
-        at_listener_list_remove(&listener);
+        at_remove_listener(&listener);
         OS_MUTEX_RELEASE(at.cmd_mux);
         
         if (ret != OS_ERR_NONE) {
@@ -146,14 +146,14 @@ int32_t at_write(const char *cmd, const char *suffix, const char *buf, uint32_t 
 
         OS_MUTEX_WAIT(at.cmd_mux, OS_INFINITE);
         suffix_array[0] = suffix;
-        at_listener_list_add(&listener);
+        at_add_listener(&listener);
         at_transmit(buf, len, false);
         OS_MUTEX_RELEASE(at.cmd_mux);
 
         ret = OS_SEMAPHORE_WAIT(at.resp_sem, at.timeout);
 
         OS_MUTEX_WAIT(at.cmd_mux, OS_INFINITE);
-        at_listener_list_remove(&listener);
+        at_remove_listener(&listener);
         OS_MUTEX_RELEASE(at.cmd_mux);
     } while (0);
     OS_MUTEX_RELEASE(at.trx_mux);
@@ -223,7 +223,7 @@ static int handle_listener_callback(at_listener_t *listener, char *resp_buf, uin
     }
 
     if (listener->listener_callback(resp_buf, resp_len) == AT_OK) {
-        at_listener_list_remove(listener);
+        at_remove_listener(listener);
         return AT_OK;
     }
 
@@ -239,7 +239,7 @@ static void store_resp_buf(char *resp_buf, uint32_t *resp_len, const char *src, 
     *resp_len = copy_len;
 }
 
-static void handle_resp(char *resp_buf, uint32_t resp_len)
+static void resp_cmd_matching(char *resp_buf, uint32_t resp_len)
 {
     at_listener_t *listener = at.ListenerList;
 
@@ -255,7 +255,7 @@ static void handle_resp(char *resp_buf, uint32_t resp_len)
     listener->cmd_info.match_idx = -1;
     
     if (listener->cmd_info.suffix_array == NULL) {
-        at_listener_list_remove(listener);
+        at_remove_listener(listener);
         OS_SEMAPHORE_RELEASE(at.resp_sem);
         return;
     }
@@ -275,7 +275,7 @@ static void handle_resp(char *resp_buf, uint32_t resp_len)
                 store_resp_buf(listener->cmd_info.resp_buf, listener->cmd_info.resp_len, resp_buf, resp_len);
             }
             listener->cmd_info.match_idx = i;
-            at_listener_list_remove(listener);
+            at_remove_listener(listener);
             OS_SEMAPHORE_RELEASE(at.resp_sem);
             break;
         }
@@ -353,7 +353,7 @@ static OS_TASK_ENTRY(at_task)
         }
 
         OS_MUTEX_WAIT(at.cmd_mux, OS_INFINITE);
-        handle_resp(tmp, recv_len);
+        resp_cmd_matching(tmp, recv_len);
         OS_MUTEX_RELEASE(at.cmd_mux);
     }
     
@@ -398,17 +398,11 @@ static int32_t at_struct_init(at_t *at)
         AT_LOG("init resp_sem failed!");
         goto at_resp_sem_failed;
     }
-    
-    at->recv_buf = at_malloc(at->Config.user_buf_len);
-    if (NULL == at->recv_buf) {
-        AT_LOG("malloc recv_buf failed!");
-        goto malloc_recv_buf;
-    }
 
     at->data_buf = at_malloc(at->Config.user_buf_len);
     if (NULL == at->data_buf) {
         AT_LOG("malloc data_buf failed!");
-        goto malloc_userdata_buf;
+        goto malloc_recv_buf;
     }
     
     at->oob_num = 0;
@@ -421,8 +415,6 @@ static int32_t at_struct_init(at_t *at)
     return AT_OK;
 
     at_free(at->data_buf);
-malloc_userdata_buf:
-    at_free(at->recv_buf);
 malloc_recv_buf:
     (void)OS_SEMAPHORE_DELETE(at->resp_sem);
 at_resp_sem_failed:
@@ -442,7 +434,7 @@ static int32_t at_struct_deinit(at_t *at)
     }
 
     OS_MUTEX_WAIT(at->cmd_mux, OS_INFINITE);
-    at_listner_list_destroy();
+    at_destroy_listener();
     OS_MUTEX_RELEASE(at->cmd_mux);
 
     if (OS_MUTEX_DELETE(at->cmd_mux) != OS_ERR_NONE) {
@@ -459,11 +451,6 @@ static int32_t at_struct_deinit(at_t *at)
 
     if (OS_QUEUE_DELETE(at->RecvQueue) != OS_ERR_NONE) {
         AT_LOG("delete at.RecvQueue failed!");
-    }
-
-    if (NULL != at->recv_buf) {
-        at_free(at->recv_buf);
-        at->recv_buf = NULL;
     }
 
     if (NULL != at->data_buf) {

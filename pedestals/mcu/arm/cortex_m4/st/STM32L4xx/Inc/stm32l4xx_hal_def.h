@@ -44,7 +44,7 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "../devices/stm32l4xx.h"
-#include "./Legacy/stm32_hal_legacy.h"  /* Aliases file for old names compatibility */
+//#include "./Legacy/stm32_hal_legacy.h"  /* Aliases file for old names compatibility */
 #include <stdio.h>
 
 /* Exported types ------------------------------------------------------------*/

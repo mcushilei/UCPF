@@ -306,7 +306,7 @@ int socket_api_connect(socket_t *pSocket, const char *host, const char *port)
     addrInfo.ai_family   = AF_INET;
     addrInfo.ai_socktype = SOCK_STREAM;
     addrInfo.ai_protocol = IPPROTO_TCP;
-    returnValue = getaddrinfo(host, port, &addrInfo, &pAddrInfoList);
+    returnValue = GetAddrInfo(host, port, &addrInfo, &pAddrInfoList);
     if (returnValue != 0) {
         socketErrorCode = WSAGetLastError();
         DBG_LOG("getaddrinfo failed. Error: %u", socketErrorCode);
@@ -331,8 +331,8 @@ int socket_api_connect(socket_t *pSocket, const char *host, const char *port)
             break;
         }
 
-
-        //! connect to server by using a random port.
+        //! using a random local port.
+        //! connect to server.
         returnValue = WSAConnect(
             so,
             pAddrInfo->ai_addr,

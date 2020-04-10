@@ -385,14 +385,11 @@ void OS_WaitNodeRemove(OS_TCB *ptcb)
 /*
  *  \brief      ADD TASK TO WAIT LIST
  * 
- *  \remark     Add a task to the wait list.
- * 
  *  \param      ptcb     is a pointer to the task to remove.
  * 
  *  \return     none
  * 
  *  \note       1) This function assumes that interrupts are DISABLED.
- *              2) This function is INTERNAL to OS and your application should not call it.
  */
 static void OS_WaitListInsert(OS_TCB *ptcb)
 {
@@ -405,19 +402,11 @@ static void OS_WaitListInsert(OS_TCB *ptcb)
 
     ptcb->OSTCBDly += osSysClockScanHand;
     
-    //! to see if we have run over.
-    if (osSysClockScanHandOld > osSysClockScanHand) { //! yes.
-        if (ptcb->OSTCBDly > osSysClockScanHand) {
-            pList = &osWaitRunoverList;
-        } else {
-            pList = &osWaitList;
-        }
+    //! to see to which list to add.
+    if (ptcb->OSTCBDly > osSysClockScanHand) {
+        pList = &osWaitList;
     } else {
-        if (ptcb->OSTCBDly > osSysClockScanHand) {
-            pList = &osWaitList;
-        } else {
-            pList = &osWaitRunoverList;
-        }
+        pList = &osWaitRunoverList;
     }
 
     //! is this list empty?
@@ -427,7 +416,8 @@ static void OS_WaitListInsert(OS_TCB *ptcb)
         OS_TCB          *tcb;
         OS_LIST_NODE    *iterate;
 
-        for (iterate = pList->Next; iterate != pList; iterate = iterate->Next) {    //! the wait-list has been sorted.
+        //! insert sort.
+        for (iterate = pList->Next; iterate != pList; iterate = iterate->Next) {
             tcb = CONTAINER_OF(iterate, OS_TCB, OSTCBList);
             if (ptcb->OSTCBDly < tcb->OSTCBDly) {
                 break;
@@ -437,6 +427,15 @@ static void OS_WaitListInsert(OS_TCB *ptcb)
     }
 }
 
+/*
+ *  \brief      REMOVE TASK FROM WAIT LIST
+ * 
+ *  \param      ptcb     is a pointer to the task to remove.
+ * 
+ *  \return     none
+ * 
+ *  \note       1) This function assumes that interrupts are DISABLED.
+ */
 static void OS_WaitListRemove(OS_TCB *ptcb)
 {
     list_remove(&ptcb->OSTCBList);      //!< remove from wait list.
@@ -549,26 +548,27 @@ void osSysTick(void)
     OSSysTickHook();
 #endif
     
+    OSEnterCriticalSection();
     //! increase osSysClockScanHand
     ++osSysClockScanHand;
-
-    OSEnterCriticalSection();
-    if (osSysClockScanHandOld > osSysClockScanHand) { //! if the hand has made a revolution.
+    //! so osSysClockScanHandOld is always AFTER osSysClockScanHand by 1 tick.
+    if (osSysClockScanHandOld > osSysClockScanHand) {
+        //! the hand has made a revolution.
         //! all ptcb in osWaitList has timeout.
         while (!LIST_IS_EMPTY(osWaitList)) {
             list = osWaitList.Next;
             ptcb = CONTAINER_OF(list, OS_TCB, OSTCBList);
             pnode = ptcb->OSTCBWaitNode;
 
-            pnode->OSWaitNodeRes = OS_STAT_PEND_TO;         //!< Indicate PEND timeout.
+            pnode->OSWaitNodeRes = OS_STAT_PEND_TO; //!< Indicate PEND timeout.
 
             OS_WaitNodeRemove(ptcb);
             OS_WaitListRemove(ptcb);
             OS_SchedulerReadyTask(ptcb);
         }
 
-        //! move osWaitRunoverList to osWaitList if there is any node on osWaitRunoverList.
-        if (osWaitRunoverList.Next != &osWaitRunoverList) {    //! see if osWaitRunoverList is empty.
+        if (!LIST_IS_EMPTY(osWaitRunoverList)) {
+            //! move all emements form osWaitRunoverList to osWaitList.
             OS_LIST_NODE *pHead = osWaitRunoverList.Next;
             OS_LIST_NODE *pTail = osWaitRunoverList.Prev;
             osWaitRunoverList.Next = &osWaitRunoverList;
@@ -597,9 +597,9 @@ void osSysTick(void)
             OS_SchedulerReadyTask(ptcb);
         }
     }
-    OSExitCriticalSection();
 
     osSysClockScanHandOld = osSysClockScanHand;
+    OSExitCriticalSection();
 }
 
 /*
@@ -1100,27 +1100,18 @@ UINT8 OS_BitmapGetLeadingZero(OS_PRIO_BITMAP *pmap)
     return bit;
 }
 
-/*
- *  \brief      GET VERSION
- * 
- *  \param      none
- * 
- *  \return     The version number of OS multiplied by 10000.
- */
 UINT16 osVersion(void)
 {
     return OS_VERSION;
 }
 
-/*
- *  \brief      GET VERSION
- * 
- *  \param      none
- * 
- *  \return     The version number of OS multiplied by 10000.
- */
 UINT32 osGetSysTickCount(void)
 {
-    return osSysClockScanHand;
+    UINT32 value;
+    
+    OSEnterCriticalSection();
+    value = osSysClockScanHand;
+    OSExitCriticalSection();
+    return value;
 }
 

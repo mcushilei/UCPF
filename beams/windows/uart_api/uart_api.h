@@ -69,8 +69,9 @@ typedef struct {
 extern uint32_t enum_all_comm(void);
 extern bool com_open(com_t *ptThis, const uint8_t *pchCom, const com_cfg_t *ptCfg, void *pComEventHandle);
 extern bool com_close(com_t *ptThis);
-extern uint32_t com_write(com_t *ptThis, uint8_t *pchData, uint32_t wLen);
-extern uint32_t com_read(com_t *ptThis, uint8_t *pchData, uint32_t wLen);
+extern uint32_t com_write(com_t *ptThis, uint8_t *pchData, uint32_t wLen, uint32_t timeoutMS);
+extern uint32_t com_read(com_t *ptThis, uint8_t *pchData, uint32_t wLen, uint32_t timeoutMS);
+extern bool com_flush_buffer(com_t *ptThis);
 
 #endif
 /* EOF */

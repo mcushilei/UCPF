@@ -293,6 +293,8 @@ OS_EXT  OS_TCB          osTCBFreeTbl[OS_MAX_TASKS + OS_N_SYS_TASKS];    //!< Tab
 
 OS_EXT  OS_LIST_NODE    osWaitList;                             //!< list of waiting task.
 OS_EXT  OS_LIST_NODE    osWaitRunoverList;
+
+//! TODO: adjust the value when it wakes up from sleep.
 OS_EXT  volatile UINT32 osSysClockScanHand;
 OS_EXT  volatile UINT32 osSysClockScanHandOld;
 

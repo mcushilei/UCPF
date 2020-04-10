@@ -57,7 +57,7 @@ extern bool at_api_set_apn(char *name, char *usr, char *psw);
 extern bool at_api_init(void);
 extern bool at_api_deinit(void);
 
-extern bool at_api_register_adaptor(at_adaptor_api_t *api);
+extern bool at_api_register_adaptor(const at_adaptor_api_t *api);
 extern bool at_api_deregister_adaptor(void);
 extern bool at_api_init_adaptor(void);
 extern bool at_api_deinit_adaptor(void);

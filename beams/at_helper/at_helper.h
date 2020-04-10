@@ -15,13 +15,12 @@
 #define AT_OOB_SUFFIX_LEN     (40u)
 
 typedef int32_t oob_callback_t          (void *arg, const char *buf, uint32_t len);
-typedef int32_t oob_cmp_callback_t  (const char *buf, const char *suffix, uint32_t len);
+typedef int32_t oob_cmp_callback_t      (const char *buf, const char *suffix, uint32_t len);
 typedef int32_t listener_callback_t     (const char *data, uint32_t len);
 
 enum {
     AT_USART_RX,
     AT_TASK_QUIT,
-    AT_SENT_DONE
 };
 
 typedef struct {
@@ -41,9 +40,9 @@ typedef struct {
 typedef struct at_listener_t at_listener_t;
 struct at_listener_t {
 	at_listener_t          *next;
-    listener_callback_t    *listener_callback;
+    listener_callback_t    *listener_callback;      //!< only for asynchronous usage
+    uint32_t                expire_time;            //!< only for asynchronous usage
     at_cmd_info_t           cmd_info;
-    uint32_t                expire_time;
 };
 
 /* Out Of Band data process*/
@@ -63,20 +62,19 @@ typedef struct at_config_t {
 	uint32_t        usart_port;
 	uint32_t        buardrate;
 	uint32_t        linkid_num;
-	uint32_t        user_buf_len;   /* malloc 3 block memory for intener use, len * 3 */
+	uint32_t        user_buf_len;
 	uint32_t        timeout;        //!< command respond timeout, in ms
 } at_config_t;
 
 typedef struct {
 	OS_HANDLE       Task;
-    OS_HANDLE       RecvQueue;          /* recv task msg queue.*/
+    OS_HANDLE       RecvQueue;          //!< msg queue
 	OS_HANDLE       resp_sem;
 	OS_HANDLE       cmd_mux;
     OS_HANDLE       trx_mux;
     
     at_config_t     Config;
 	at_listener_t  *ListenerList;
-	char           *recv_buf;           /*buffer for uart driver.*/
 	char           *data_buf;           /*buffer for inner use.*/
 	uint32_t        timeout;            //!< command respond timeout, in ms
     bool            TaskIsRunning;

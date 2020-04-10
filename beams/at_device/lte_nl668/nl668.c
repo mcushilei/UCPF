@@ -28,7 +28,7 @@ static int32_t nl668_sendto (int32_t id , const char *buf, uint32_t len, const c
 static int32_t nl668_send   (int32_t id , const char *buf, uint32_t len);
 static int32_t nl668_close  (int32_t id);
 
-at_adaptor_api_t nl668_interface =
+const at_adaptor_api_t nl668_interface =
 {
     .init           = nl668_init,
     .deinit         = nl668_deinit,
@@ -304,19 +304,17 @@ static int32_t nl668_sendto(int32_t id, const char *buf, uint32_t len, const cha
 
 static int32_t nl668_tcp_data_handler(void *arg, const char *buf, uint32_t len)
 {
-    int32_t linkid = 0, data_len = 0;
+    uint32_t linkid = 0, data_len = 0;
     char *p1;
     p1 = (char *)buf;
     
-
     //DBG_LOG("TCP rcv entry!");
 
-    //! parser data frame ,\r\n+MIPRTCP,linkid,len,data
     if (sscanf((char *)buf, "\r\n+MIPRTCP:%d,%d,", &linkid, &data_len) < 2) {
         DBG_LOG("got data prefix invailed!");
         goto END;
     }
-    if (linkid == 0u) {
+    if ((linkid == 0u) || (linkid > 6u)) {
         DBG_LOG("invalid socket ID!");
         goto END;
     } else {
@@ -354,10 +352,15 @@ static int32_t nl668_udp_data_handler(void *arg, const char *buf, uint32_t len)
 
     //DBG_LOG("UDP rcv entry!");
 
-    //! parser data frame ,\r\n+MIPRUDP,linkid,len,data
     if (sscanf((char *)buf, "\r\n+MIPRUDP:%[^,],%u,%u,%u", sourceIP, &sourcePort, &linkid, &data_len) < 4) {
         DBG_LOG("got data prefix invailed!");
         goto END;
+    }
+    if ((linkid == 0u) || (linkid > 6u)) {
+        DBG_LOG("invalid socket ID!");
+        goto END;
+    } else {
+        linkid--;
     }
     
     p1 = strstr(p1, ",");

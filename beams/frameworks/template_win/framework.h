@@ -22,7 +22,9 @@
 #include "./app_cfg.h"
 #include "../../windows/socket_api/socket_api.h"
 #include "../../windows/rtc_api/rtc_api.h"
+#include "../../windows/uart_api/uart_api.h"
 #include "../../parser_curly_bracket/parser_curly_bracket.h"
+#include "../../rtu_modbus/rtu_modbus.h"
 
 /*============================ MACROS ========================================*/
 /*============================ MACROFIED FUNCTIONS ===========================*/

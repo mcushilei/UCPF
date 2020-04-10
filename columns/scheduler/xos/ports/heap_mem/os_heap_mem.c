@@ -15,7 +15,13 @@
  *  along with this program; if not, see http://www.gnu.org/licenses/.        *
 *******************************************************************************/
 
-
+/* \brief   this heap manager is ment to be used internally by XOS.
+ *          this feature is enabled by set OS_QUEUE_BUFFER_ON_HEAP_EN in the
+ *          config file.
+ *          the app level heap management is left to user. an implement has been
+ *          provided in xos-pizza version.
+ *          heap memory should be baned in safety critical products.
+ */
 
 
 /*============================ INCLUDES ======================================*/

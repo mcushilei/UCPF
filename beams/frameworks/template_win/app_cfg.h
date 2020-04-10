@@ -18,8 +18,8 @@
 //! \note do not move this pre-processor statement to other places
 #include "..\app_cfg.h"
 
-#ifndef __FRAMEWORKS_APP_CFG_H__
-#define __FRAMEWORKS_APP_CFG_H__
+#ifndef __FRAMEWORKS_TEMPLATE_WIN_APP_CFG_H__
+#define __FRAMEWORKS_TEMPLATE_WIN_APP_CFG_H__
 
 /*============================ INCLUDES ======================================*/
 /*============================ MACROS ========================================*/
@@ -28,5 +28,5 @@
 /*============================ GLOBAL VARIABLES ==============================*/
 /*============================ PROTOTYPES ====================================*/
 
-#endif  //! #ifndef __FRAMEWORKS_APP_CFG_H__
+#endif  //! #ifndef __FRAMEWORKS_TEMPLATE_WIN_APP_CFG_H__
 /* EOF */

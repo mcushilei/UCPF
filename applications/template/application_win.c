@@ -30,36 +30,12 @@ DEBUG_DEFINE_THIS_FILE("template");
 /*============================ PROTOTYPES ====================================*/
 /*============================ IMPLEMENTATION ================================*/
 
-void utc_to_beijing(date_time_t *pDateTime)
+
+void clock_alarm_routine(rtc_alarm_t *alarm, void *arg)
 {
-    int32_t  d;
-    uint32_t s;
-    
-    s  = time_to_seconds(&pDateTime->Time);
-    s += 8u * SECONDS_OF_HOUR;
-    
-    d = seconds_to_time(&pDateTime->Time, s);
-    date_plus_days(&pDateTime->Date, d);
+    char stringBuf[32];
+    printf("\r\nalarm at %s", rtc_api_get_time_string(stringBuf));
 }
-
-void clock_alarm_routine(clock_alarm_t *alarm, bool isTimeout)
-{
-    if (isTimeout) {
-        date_time_t time = rtc_api_get_time();
-        printf("\r\n%u-%02u-%02u %02u:%02u:%02u", time.Year, time.Month, time.Day, time.Hour, time.Minute, time.Second);
-
-        if (time.Hour == 12u && time.Minute == 0u && time.Second == 6u) {
-            time.Hour = 23;
-            time.Minute = 59;
-            clock_set_time(&time);
-        }
-    }
-    if (alarm->Time >= SECONDS_OF_DAY) {
-        free(alarm);
-    }
-}
-
-
 
 /*! \note user's application
  *  \param none
@@ -70,25 +46,35 @@ int app_main(void)
     printf("\r\nHello word.");
 
 
-    static date_time_t startTime = { .Year = 2000, .Month = 1, .Day = 1,  .Hour = 0, .Minute = 0, .Second = 0 };
-    static date_time_t endTime   = { .Year = 2019, .Month = 9, .Day = 12, .Hour = 10, .Minute = 10, .Second = 0 };
-
-    int32_t days = seconds_to_time(&startTime.Time, 622031716);
-    date_plus_days(&startTime.Date, days);
-    printf("\r\n%u-%02u-%02u %02u:%02u:%02u", startTime.Year, startTime.Month, startTime.Day, startTime.Hour, startTime.Minute, startTime.Second);
 
 
-    printf("\r\n");
-    curly_bracket_paser_t objPaser;
-    static char *test = "adjf098rfp}jaf{{{fj098du}}fup9ae{{{{ldhfa}djos{id}andf}dfoa}}{}hkds}hkd";
-    uint32_t bytesTrans = strlen(test);
+    date_time_t startTime = { .Year = 2000,.Month = 1,.Day = 1,.Hour = 0,.Minute = 0,.Second = 0 };
+    date_time_t endTime = clock_get_time();
 
-    curly_bracket_paser_init(&objPaser, 2, NULL);
-    for (uint32_t j = 0; j < 100; j++) {
-        for (uint32_t i = 0; i < bytesTrans; i++) {
-            curly_bracket_paser(&objPaser, test[i], false);
-        }
+    uint32_t dayOfWeek = 0;
+    int32_t days = count_days_between(&startTime.Date, &endTime.Date);
+    dayOfWeek = (days + 6 - 1) % 7u;
+    printf("\r\n dayOfWeek = %u", dayOfWeek);
+
+
+    char buf[40] = {0};
+    if (sscanf("[+2,3,4,5+--", "[%[^\]]", buf) < 1) {
+        DBG_LOG("got data prefix invailed!");
+    } else {
+        printf("\r\n%s", buf);
     }
+
+    //printf("\r\n");
+    //curly_bracket_paser_t objPaser;
+    //static char *test = "adjf098rfp}jaf{{{fj098du}}fup9ae{{{{ldhfa}djos{id}andf}dfoa}}{}hkds}hkd";
+    //uint32_t bytesTrans = strlen(test);
+
+    //curly_bracket_paser_init(&objPaser, 2, NULL);
+    //for (uint32_t j = 0; j < 100; j++) {
+    //    for (uint32_t i = 0; i < bytesTrans; i++) {
+    //        curly_bracket_paser(&objPaser, test[i], false);
+    //    }
+    //}
 
 
 
@@ -104,13 +90,33 @@ int app_main(void)
     //    clock_add_timer(alarm, &endTime, clock_alarm_routine);
     //}
 
+    char stringBuf[32];
+    rtc_alarm_t *myAlarm;
+    myAlarm = rtc_alarm_creat(0xFFu, ~0u, &clock_alarm_routine, NULL);
+    if (NULL == myAlarm) {
+        printf("\r\n rtc_alarm_creat() fail!");
+        return -1;
+    }
+    time24_t alarmTime = { .Hour = 6,.Minute = 30,.Second = 0 };
+    if (!rtc_alarm_start(myAlarm, &alarmTime)) {
+        printf("\r\n rtc_alarm_start() fail!");
+        return -1;
+    }
 
-    //while (1) {
-    //    OS_TASK_SLEEP(10000);
-    //    printf("\r\n%u", rtc_api_get_ticktock());
-    //    date_time_t time = rtc_api_get_time();
-    //    printf("\r\n%u-%02u-%02u %02u:%02u:%02u", time.Year, time.Month, time.Day, time.Hour, time.Minute, time.Second);
-    //}
+    uint8_t dataBuf[256];
+    uint32_t len;
+    while (1) {
+        ModBus_Master_Send(0, 1, 3, 0x0000, 13, dataBuf, 0, 500);
+        len = ModBus_Master_Recv(0, 1, 3, dataBuf, sizeof(dataBuf), 5000);
+        if (len > 0) {
+            for (uint32_t i = 0; i < len; i++) {
+                printf("%02X ", dataBuf[i]);
+            }
+            printf("\r\n");
+        }
+        OS_TASK_SLEEP(5000);
+        printf("\r\n%s", rtc_api_get_time_string(stringBuf));
+    }
 
     return 0;
 }

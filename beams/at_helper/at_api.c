@@ -23,7 +23,7 @@ typedef struct {
     int         port;
 } at_data_buf_t;
 
-static at_adaptor_api_t *at_adaptor_api = NULL;
+static const at_adaptor_api_t *at_adaptor_api = NULL;
 static OS_HANDLE         at_adaptor_api_mutex = NULL;
 static uint32_t          at_device_status = AT_DEVICE_UNINIT;
 static socket_t          link_array[AT_API_MAX_LINK_USED] = {0};
@@ -94,7 +94,7 @@ bool at_api_deinit(void)
  *  \note   1) This is in Singleton pattern(This function will only action when it is called the first time).
  *          2) This should be called before calling at_api_init().
  */
-bool at_api_register_adaptor(at_adaptor_api_t *api)
+bool at_api_register_adaptor(const at_adaptor_api_t *api)
 {
     bool ret = false;
     
@@ -364,6 +364,10 @@ void at_api_handle_data(uint32_t id, char *buf, uint32_t len)
     at_data_buf_t qbuf = {0};
     
     if (0 == len || (NULL == buf)) {
+        return;
+    }
+    
+    if (AT_API_MAX_LINK_USED <= id) {
         return;
     }
     

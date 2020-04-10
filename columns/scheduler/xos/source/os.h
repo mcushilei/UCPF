@@ -36,7 +36,7 @@
 #endif
 
 
-#define OS_INFINITE                 (0xFFFFFFFF)
+#define OS_INFINITE                 (-1)
 #define OS_TASK_LOWEST_PRIO         (OS_MAX_PRIO_LEVELS - 1u)
 
 
@@ -305,8 +305,24 @@ extern void     osLockSched             (void);
 extern void     osUnlockSched           (void);
 #endif
 
+/*
+ *  \brief      GET VERSION
+ * 
+ *  \param      none
+ * 
+ *  \return     The version number of OS multiplied by 10000.
+ */
 extern UINT16   osVersion               (void);
 
+/*
+ *  \brief      get the count of system clock.
+ * 
+ *  \param      none
+ * 
+ *  \return     The count of current system clock.
+ *
+ *  \note       count the system clock tick from zero since the system boots.
+ */
 extern UINT32   osGetSysTickCount       (void);
 
 #define OS_MS_PER_TICK                  (1000u / OS_TICKS_PER_SEC)
