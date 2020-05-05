@@ -16,17 +16,10 @@
 *******************************************************************************/
 
 
-//! \note do not move this pre-processor statement to other places
-#define __BASE64_CODEC_C__
-
-
 
 
 /*============================ INCLUDES ======================================*/
 #include ".\app_cfg.h"
-#include ".\public.h"
-#include "..\device.h"
-#include ".\reg_template.h"
 
 /*============================ MACROS ========================================*/
 /*============================ MACROFIED FUNCTIONS ===========================*/
