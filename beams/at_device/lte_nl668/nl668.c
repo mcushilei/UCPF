@@ -22,16 +22,21 @@ static const char * const AT_RCV_UDP_PREFIX = "\r\n+MIPRUDP:";
 
 static int32_t nl668_init   (void);
 static int32_t nl668_deinit (void);
-static int32_t nl668_bind   (int32_t id, const char *host, const char *port, int32_t proto);
-static int32_t nl668_connect(int32_t id, const char *host, const char *port, int32_t proto);
-static int32_t nl668_sendto (int32_t id , const char *buf, uint32_t len, const char *ipaddr, int port);
-static int32_t nl668_send   (int32_t id , const char *buf, uint32_t len);
+static int     nl668_get_imsi(char *buf, uint32_t len);
+static int     nl668_get_imei(char *buf, uint32_t len);
+static int32_t nl668_bind   (int32_t *id, const char *host, uint32_t port);
+static int32_t nl668_connect(int32_t *id, const char *host, uint32_t port);
+static int32_t nl668_sendto (int32_t id, const char *buf, uint32_t len, const char *ip, int port);
+static int32_t nl668_send   (int32_t id, const char *buf, uint32_t len);
 static int32_t nl668_close  (int32_t id);
 
 const at_adaptor_api_t nl668_interface =
 {
     .init           = nl668_init,
     .deinit         = nl668_deinit,
+    
+    .get_imsi       = nl668_get_imsi,
+    .get_imei       = nl668_get_imei,
 
     .bind           = nl668_bind,
     .connect        = nl668_connect,
@@ -45,6 +50,8 @@ const at_adaptor_api_t nl668_interface =
 };
 
 static const char *apn = "cmnet";
+static char imsi[16];
+static char imei[16];
 
 
 static int32_t nl668_at_echo_off(void)
@@ -65,19 +72,32 @@ static int32_t nl668_at_check_sim(void)
     return at_cmd(cmd, strlen(cmd), "+CPIN:", NULL,NULL);
 }
 
-static char *nl668_at_get_simi(void)
+static char *nl668_at_get_imsi(void)
 {
     char *cmd = "AT+CIMI?\r";
-    static char imsi[16];
     char tmpbuf[32] = {0};
     uint32_t buf_len = UBOUND(tmpbuf);
     
     if(at_cmd(cmd, strlen(cmd), "+CIMI:", tmpbuf, &buf_len) < 0)
         return NULL;
     
-    strncpy(imsi, &tmpbuf[strlen("\r\n+CIMI:")], UBOUND(imsi));
+    strncpy(imsi, &tmpbuf[strlen("\r\n+CIMI: ")], UBOUND(imsi));
     imsi[15] = '\0';
     return imsi;
+}
+
+static char *nl668_at_get_imei(void)
+{
+    char *cmd = "AT+CGSN=1\r";
+    char tmpbuf[32] = {0};
+    uint32_t buf_len = UBOUND(tmpbuf);
+    
+    if(at_cmd(cmd, strlen(cmd), "+CGSN:", tmpbuf, &buf_len) < 0)
+        return NULL;
+    
+    strncpy(imei, &tmpbuf[strlen("\r\n+CGSN: ")], UBOUND(imei));
+    imei[15] = '\0';
+    return imei;
 }
 
 static int32_t nl668_at_check_csq(void)
@@ -243,32 +263,18 @@ static int32_t nl668_at_send(int32_t id, const char *buf, uint32_t len)
 
 
 
-static int32_t nl668_bind(int32_t id, const char *host, const char *port, int32_t proto)
+static int32_t nl668_bind(int32_t *id, const char *host, uint32_t port)
 {
-    int32_t portnum;
-
-    if (proto == SOCKET_PROTO_UDP) {
-        proto = NL668_UDP_PROTO;
-    } else if (proto == SOCKET_PROTO_TCP) {
-        proto = NL668_TCP_PROTO;
-    } else {
-        return AT_FAILED;
-    }
-
-    sscanf(port , "%d", &portnum);
-    return nl668_at_create_sock_and_bind(id + 1, proto, 2000, (char *)host, portnum);
+    return nl668_at_create_sock_and_bind((*id) + 1, NL668_UDP_PROTO, 2000, (char *)host, port);
 }
 
 /*
  *  \return     AT_FAILED: failed
  *              others: the socket ID.
  */
-static int32_t nl668_connect(int32_t id, const char *host, const char *port, int32_t proto)
+static int32_t nl668_connect(int32_t *id, const char *host, uint32_t port)
 {
-    int32_t portnum;
-    
-    sscanf(port , "%d", &portnum);
-    return nl668_at_create_sock_and_connect(id + 1, NL668_TCP_PROTO, (char *)host, portnum);
+    return nl668_at_create_sock_and_connect((*id) + 1, NL668_TCP_PROTO, (char *)host, port);
 }
 
 
@@ -448,10 +454,24 @@ static int32_t nl668_init(void)
         goto __err_exit;
 	}
     
-    char *imsi = NULL;
+    char *pstring = NULL;
 	for (timecnt = 5; timecnt != 0u; timecnt--) {
-        imsi = nl668_at_get_simi();
-		if(imsi != NULL) {
+        pstring = nl668_at_get_imei();
+		if(pstring != NULL) {
+			break;
+		}
+	}
+	if(timecnt == 0u) {
+        RTT_LOG("ERROR: cannot read IMEI!");
+        goto __err_exit;
+    } else {
+        RTT_LOG("imei:%s", pstring);
+    }
+    
+    pstring = NULL;
+	for (timecnt = 5; timecnt != 0u; timecnt--) {
+        pstring = nl668_at_get_imsi();
+		if(pstring != NULL) {
 			break;
 		}
 	}
@@ -459,7 +479,7 @@ static int32_t nl668_init(void)
         RTT_LOG("ERROR: cannot read SIM card!");
         goto __err_exit;
 	} else {
-        RTT_LOG("imsi:%s", imsi);
+        RTT_LOG("imsi:%s", pstring);
         
         int8_t mnc = 0;
         mnc = (imsi[3] - '0') * 10 + (imsi[4] - '0');
@@ -562,3 +582,16 @@ static int32_t nl668_deinit(void)
     return AT_OK;
 }
 
+static int nl668_get_imsi(char *buf, uint32_t len)
+{
+    memcpy(buf, imsi, 15);
+    buf[15] = '\0';
+    return 15;
+}
+
+static int nl668_get_imei(char *buf, uint32_t len)
+{
+    memcpy(buf, imei, 15);
+    buf[15] = '\0';
+    return 15;
+}
