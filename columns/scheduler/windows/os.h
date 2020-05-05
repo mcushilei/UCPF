@@ -169,10 +169,12 @@ extern OS_ERR osTimerCreat( OS_HANDLE          *pTimerHandle,
                             void               *RoutineArg,
                             UINT16              opt);
 extern OS_ERR osTimerDelete (OS_HANDLE hTimer);
-extern OS_ERR osTimerStart  (OS_HANDLE hTimer, uint32_t timeMS);
+extern OS_ERR osTimerStart  (OS_HANDLE hTimer, UINT32 timeMS);
 extern OS_ERR osTimerStop   (OS_HANDLE hTimer);
 
-
+extern void  *osHeapMalloc  (size_t size);
+extern void  *osHeapRealloc (void *mem, size_t size);
+extern void   osHeapFree    (void *mem);
 
 #endif
 /* EOF */

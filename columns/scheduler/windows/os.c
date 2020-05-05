@@ -481,4 +481,20 @@ OS_ERR osTimerStop(OS_HANDLE hTimer)
 }
 
 
+
+void *osHeapMalloc(size_t size)
+{
+    return malloc(size);
+}
+
+void *osHeapRealloc(void *mem, size_t size)
+{
+    return realloc(mem, size);
+}
+
+void osHeapFree(void *mem)
+{
+    free(mem);
+}
+
 /* EOF */
