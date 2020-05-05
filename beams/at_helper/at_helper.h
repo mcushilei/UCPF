@@ -98,5 +98,7 @@ extern int32_t      at_cmd_with_2_suffix(const char *cmd, uint32_t cmd_len, cons
                                                                             uint32_t   *resp_len,
                                                                             uint32_t    timeout);
                                 
+extern void decode_hex_str(const char *str, int strlen, char *bufout);
+extern void encode_hex_str(const char *data, int datalen, char *str);
 
 #endif

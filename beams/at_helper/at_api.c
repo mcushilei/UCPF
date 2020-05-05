@@ -6,27 +6,29 @@
 
 #define SOCKET_STATUS_UNUSE		    0
 #define SOCKET_STATUS_INUSE 		1
-#define SOCKET_STATUS_CLOSE 		2
+#define SOCKET_STATUS_SHUTDOWN 		2
+
+enum {
+    SOCKET_TYPE_NONE = 0,
+    SOCKET_TYPE_TCP,
+    SOCKET_TYPE_UDP,
+};
 
 #define AT_DEVICE_UNINIT    0
 #define AT_DEVICE_OK 		1
 
-#define AT_API_MAX_LINK_USED    4
-#define AT_API_MAX_IP_LEN       40
+#define AT_API_SOCKET_NUM       (2u)
+#define AT_API_MAX_IP_LEN       (40u)
 
 
 
-typedef struct {
-    uint32_t    len;                //!< length of buffer's memory.
-    char        *addr;              //!< buffer's memory.
-    char        ipaddr[AT_API_MAX_IP_LEN];
-    int         port;
-} at_data_buf_t;
+#define AT_API_MAX_FRAME_SIZE   AT_API_RECV_FIFO_SIZE
+
 
 static const at_adaptor_api_t *at_adaptor_api = NULL;
 static OS_HANDLE         at_adaptor_api_mutex = NULL;
 static uint32_t          at_device_status = AT_DEVICE_UNINIT;
-static socket_t          link_array[AT_API_MAX_LINK_USED] = {0};
+static socket_t          link_array[AT_API_SOCKET_NUM] = {0};
 
 at_apn_info   apn_info;
 
@@ -62,11 +64,9 @@ bool at_api_init(void)
     
     at_adaptor_api   = NULL;
     at_device_status = AT_DEVICE_UNINIT;
-    
-    for (uint32_t i = 0; i < AT_API_MAX_LINK_USED; i++) {
-        link_array[i].status = SOCKET_STATUS_UNUSE;
-        link_array[i].qid    = NULL;
-        link_array[i].index  = i;
+    memset(link_array, 0, sizeof(link_array));
+    for (uint32_t i = 0; i < AT_API_SOCKET_NUM; i++) {
+        link_array[i].so  = i;
     }
     
     OS_ERR err = OS_MUTEX_CREATE(at_adaptor_api_mutex);
@@ -98,7 +98,7 @@ bool at_api_register_adaptor(const at_adaptor_api_t *api)
 {
     bool ret = false;
     
-    if (api->link_num < AT_API_MAX_LINK_USED) {
+    if (api->link_num < AT_API_SOCKET_NUM) {
         DBG_LOG("too few links!");
         return false;
     }
@@ -159,17 +159,43 @@ bool at_api_deinit_adaptor(void)
     return true;
 }
 
+int at_api_get_imsi(char *buf, uint32_t len)
+{
+    int rc = 0;
+    
+    OS_MUTEX_WAIT(at_adaptor_api_mutex, OS_INFINITE);
+    if (at_adaptor_api && at_adaptor_api->get_imsi) {
+        rc = at_adaptor_api->get_imsi(buf, len);
+    }
+    OS_MUTEX_RELEASE(at_adaptor_api_mutex);
+    
+    return rc;
+}
+
+int at_api_get_imei(char *buf, uint32_t len)
+{
+    int rc = 0;
+    
+    OS_MUTEX_WAIT(at_adaptor_api_mutex, OS_INFINITE);
+    if (at_adaptor_api && at_adaptor_api->get_imei) {
+        rc = at_adaptor_api->get_imei(buf, len);
+    }
+    OS_MUTEX_RELEASE(at_adaptor_api_mutex);
+    
+    return rc;
+}
+
 socket_t *socket_api_create(void)
 {
     uint32_t i = 0;
 
     OS_MUTEX_WAIT(at_adaptor_api_mutex, OS_INFINITE);
-    for (i = 0; i < AT_API_MAX_LINK_USED; i++) {
+    for (i = 0; i < AT_API_SOCKET_NUM; i++) {
         if (SOCKET_STATUS_UNUSE == link_array[i].status) {
             break;
         }
     }
-    if (i >= AT_API_MAX_LINK_USED) {
+    if (i >= AT_API_SOCKET_NUM) {
         OS_MUTEX_RELEASE(at_adaptor_api_mutex);
         return NULL;
     }
@@ -177,13 +203,63 @@ socket_t *socket_api_create(void)
     link_array[i].status = SOCKET_STATUS_INUSE;
     OS_MUTEX_RELEASE(at_adaptor_api_mutex);
     
-    if (OS_QUEUE_CREATE(link_array[i].qid, 16, sizeof(at_data_buf_t)) != OS_ERR_NONE) {
-        DBG_LOG("init qid failed!");
-        link_array[i].status = SOCKET_STATUS_UNUSE;
-        return NULL;
+    if (OS_FLAG_CREATE(link_array[i].RecvFlag, false, false) != OS_ERR_NONE) {
+        DBG_LOG("init flag failed!");
+        goto __CREAT_FLAG_FAIL;
+    }
+    
+    if (OS_MUTEX_CREATE(link_array[i].RecvMutex) != OS_ERR_NONE) {
+        DBG_LOG("init mutex failed!");
+        goto __CREAT_MUTEX_FAIL;
+    }
+
+    if (!fifo_init(&link_array[i].RecvFIFO, link_array[i].RecvBuffer, AT_API_RECV_FIFO_SIZE)) {
+        DBG_LOG("init FIFO failed!");
+        goto __INIT_FIFO_FAIL;
     }
     
     return &link_array[i];
+    
+__INIT_FIFO_FAIL:
+    OS_MUTEX_DELETE(link_array[i].RecvMutex);
+    
+__CREAT_MUTEX_FAIL:
+    OS_FLAG_DELETE(link_array[i].RecvFlag);
+    
+__CREAT_FLAG_FAIL:
+    link_array[i].status = SOCKET_STATUS_UNUSE;
+    
+    return NULL;
+}
+
+/* the closing may not be complete if the socket is in use. the socket will be
+   freed automaticly when it is out of use. */
+int socket_api_delete(socket_t *pSocket)
+{
+    socket_api_shutdown(pSocket);
+    
+    pSocket->status = SOCKET_STATUS_UNUSE;
+    OS_FLAG_DELETE(pSocket->RecvFlag);
+    OS_MUTEX_DELETE(pSocket->RecvMutex);
+    
+    memset(pSocket, 0, sizeof(socket_t));
+    
+    return SOCKET_ERR_NONE;
+}
+
+int socket_api_shutdown(socket_t *pSocket)
+{
+    OS_MUTEX_WAIT(at_adaptor_api_mutex, OS_INFINITE);
+    if (at_adaptor_api && at_adaptor_api->close && (at_device_status == AT_DEVICE_OK)) {
+        if (AT_OK != at_adaptor_api->close(pSocket->so)) {
+            //! nothing to do.
+        }
+    }
+    pSocket->type = SOCKET_TYPE_NONE;
+    pSocket->status = SOCKET_STATUS_SHUTDOWN;
+    OS_MUTEX_RELEASE(at_adaptor_api_mutex);
+    
+    return SOCKET_ERR_NONE;
 }
 
 /*
@@ -192,47 +268,53 @@ socket_t *socket_api_create(void)
  *  \return >=0      The socket ID to be used.
  *  \note   This function is only used to create a UDP socket.
  */
-int socket_api_bind(socket_t *pSocket, const char *host, const char *port)
+int socket_api_bind(socket_t *pSocket, const char *host, uint32_t port)
 {
     int32_t ret = AT_FAILED;
+    int rc = SOCKET_ERR_NONE;
     
     OS_MUTEX_WAIT(at_adaptor_api_mutex, OS_INFINITE);
     if (at_adaptor_api && at_adaptor_api->bind && (at_device_status == AT_DEVICE_OK)) {
-        ret = at_adaptor_api->bind(pSocket->index, host, port, SOCKET_PROTO_UDP);
+        ret = at_adaptor_api->bind(&pSocket->so, host, port);
+    }
+    if (AT_OK != ret) {
+        DBG_LOG("bind failed!");
+        rc = SOCKET_ERR_FAIL;
+    } else {
+        pSocket->type = SOCKET_TYPE_UDP;
     }
     OS_MUTEX_RELEASE(at_adaptor_api_mutex);
     
-    if (AT_OK != ret) {
-        DBG_LOG("bind failed!");
-        return SOCKET_ERR_FAIL;
-    }
-    
-    return SOCKET_ERR_NONE;
+    return rc;
 }
 
 /*
  *  \brief  create a socket AND connect to specified destination port.
  *  \return >=0      The socket ID to be used.
  */
-int socket_api_connect(socket_t *pSocket, const char *host, const char *port)
+int socket_api_connect(socket_t *pSocket, const char *host, uint32_t port)
 {
     int32_t ret = AT_FAILED;
+    int rc = SOCKET_ERR_NONE;
 
     OS_MUTEX_WAIT(at_adaptor_api_mutex, OS_INFINITE);
     if (at_adaptor_api && at_adaptor_api->connect && (at_device_status == AT_DEVICE_OK)) {
-        ret = at_adaptor_api->connect(pSocket->index, host, port, SOCKET_PROTO_TCP);
+        ret = at_adaptor_api->connect(&pSocket->so, host, port);
         if (AT_OK != ret) {
-            at_adaptor_api->close(pSocket->index);
         }
+    }
+    if (AT_OK != ret) {
+        at_adaptor_api->close(pSocket->so);
+        DBG_LOG("connect failed!");
+        rc = SOCKET_ERR_FAIL;
+    } else {
+        pSocket->type = SOCKET_TYPE_TCP;
+        pSocket->status = SOCKET_STATUS_INUSE;
+        fifo_flush(&pSocket->RecvFIFO);
     }
     OS_MUTEX_RELEASE(at_adaptor_api_mutex);
     
-    if (AT_OK != ret) {
-        DBG_LOG("connect failed!");
-        return SOCKET_ERR_FAIL;
-    }
-    
-    return SOCKET_ERR_NONE;
+    return rc;
 }
 
 /*
@@ -246,7 +328,7 @@ int socket_api_send(socket_t *pSocket, const char *buf, uint32_t *len)
     
     OS_MUTEX_WAIT(at_adaptor_api_mutex, OS_INFINITE);
     if (at_adaptor_api && at_adaptor_api->send && (at_device_status == AT_DEVICE_OK)) {
-        ret = at_adaptor_api->send(pSocket->index, buf, *len);
+        ret = at_adaptor_api->send(pSocket->so, buf, *len);
     }
     OS_MUTEX_RELEASE(at_adaptor_api_mutex);
     
@@ -268,7 +350,7 @@ int socket_api_sendto(socket_t *pSocket, const char *buf, uint32_t *len, const c
     
     OS_MUTEX_WAIT(at_adaptor_api_mutex, OS_INFINITE);
     if (at_adaptor_api && at_adaptor_api->sendto && (at_device_status == AT_DEVICE_OK)) {
-        ret = at_adaptor_api->sendto(pSocket->index, buf, *len, ipaddr, port);
+        ret = at_adaptor_api->sendto(pSocket->so, buf, *len, ipaddr, port);
     }
     OS_MUTEX_RELEASE(at_adaptor_api_mutex);
     
@@ -279,115 +361,146 @@ int socket_api_sendto(socket_t *pSocket, const char *buf, uint32_t *len, const c
     return SOCKET_ERR_NONE;
 }
 
-static int __socket_api_recv(socket_t *pSocket, char *buf, uint32_t *len, char *ipaddr, int *port, uint32_t timeout)
+int socket_api_recv(socket_t *pSocket, char *buf, uint32_t *len, uint32_t timeout)
 {
-    uint32_t rxlen = 0;
     uint32_t buflen = *len;
+    int rc = SOCKET_ERR_NONE;
+    uint32_t rl = 0;
     OS_ERR ret;
+
+    if (NULL == pSocket) {
+        return SOCKET_ERR_INVALID_SOCKET;
+    }
+    
+    if (NULL == buf) {
+        return SOCKET_ERR_NULL_BUFFER;
+    }
+
+    if (buflen == 0u) {
+        return SOCKET_ERR_NONE;
+    }
+    
+    if (buflen > AT_API_RECV_FIFO_SIZE) {
+        return SOCKET_ERR_BUFFER_SIZE;
+    }
+    
+    *len = 0;
+    timeout = timeout > 20000 ? 20000 : timeout;        //!< max 20s to wait.
+    
+    while (1) {
+        OS_MUTEX_WAIT(pSocket->RecvMutex, OS_INFINITE);
+        rl = fifo_burst_out(&pSocket->RecvFIFO, buf, buflen);
+        OS_MUTEX_RELEASE(pSocket->RecvMutex);
+        if (rl != 0u) {
+            *len = rl;
+            break;
+        }
+        ret = OS_FLAG_WAIT(pSocket->RecvFlag, timeout);
+        if (OS_ERR_TIMEOUT == ret) {
+            rc = SOCKET_ERR_TIMEOUT;
+            break;
+        } else if (OS_ERR_NONE != ret) {
+            DBG_LOG("recv flag error: %u", ret);
+            rc = SOCKET_ERR_FAIL;
+            break;
+        }
+    }
+    
+    return rc;    
+}
+
+/*  \note   if the len is too small, the data received will be lost and SOCKET_ERR_BUFFER_SIZE will be return.
+ */
+int socket_api_recvfrom(socket_t *pSocket, char *buf, uint32_t *len, char *ipaddr, int *port, uint32_t timeout)
+{
+    uint32_t buflen = *len;
+    int rc = SOCKET_ERR_NONE;
+    OS_ERR ret;
+    
+    if (NULL == pSocket) {
+        return SOCKET_ERR_INVALID_SOCKET;
+    }
+    
+    if (NULL == buf) {
+        return SOCKET_ERR_NULL_BUFFER;
+    }
+
+    if (buflen == 0u) {
+        return SOCKET_ERR_NONE;
+    }
 
     (void)ipaddr; //gprs not need remote ip,
     (void)port;   //gprs not need remote port,
+    
     *len = 0;
-    
-    at_data_buf_t  qbuf = {0};
     timeout = timeout > 20000 ? 20000 : timeout;        //!< max 20s to wait.
-    ret = OS_QUEUE_READ(pSocket->qid, &qbuf, timeout);
+
+    ret = OS_FLAG_WAIT(pSocket->RecvFlag, timeout);
     if (OS_ERR_TIMEOUT == ret) {
-        return SOCKET_ERR_TIMEOUT;
+        rc = SOCKET_ERR_TIMEOUT;
+        goto __ERROR_EXIT;
     } else if (OS_ERR_NONE != ret) {
-        DBG_LOG("recv queue error: %u", ret);
-        return SOCKET_ERR_FAIL;
+        DBG_LOG("recv flag error: %u", ret);
+        rc = SOCKET_ERR_FAIL;
+        goto __ERROR_EXIT;
     }
 
-    if (qbuf.len && (qbuf.addr != NULL)) {
-        rxlen = (buflen < qbuf.len) ? buflen : qbuf.len;
-        memcpy(buf, qbuf.addr, rxlen);
-        *len = rxlen;
-    }
-    osHeapFree(qbuf.addr);
-    
-    return SOCKET_ERR_NONE;    
-}
-
-int socket_api_recv(socket_t *pSocket, char *buf, uint32_t *len, uint32_t timeout)
-{
-    return __socket_api_recv(pSocket, buf, len, NULL, NULL, timeout);
-}
-
-int socket_api_recvfrom(socket_t *pSocket, char *buf, uint32_t *len, char *ipaddr, int *port, uint32_t timeout)
-{
-    return __socket_api_recv(pSocket, buf, len, ipaddr, port, timeout);
-}
-
-/* the closing may not be complete if the socket is in use. the socket will be
-   freed automaticly when it is out of use. */
-int socket_api_delete(socket_t *pSocket)
-{
-    OS_MUTEX_WAIT(at_adaptor_api_mutex, OS_INFINITE);
-    if (at_adaptor_api && at_adaptor_api->close && (at_device_status == AT_DEVICE_OK)) {
-        if (AT_OK != at_adaptor_api->close(pSocket->index)) {
-            //! nothing to do.
+    OS_MUTEX_WAIT(pSocket->RecvMutex, OS_INFINITE);
+    do {
+        if (pSocket->RecvLength > buflen) {
+            rc = SOCKET_ERR_BUFFER_SIZE;
+            break;
+        } else {
+            memcpy(buf, pSocket->RecvBuffer, pSocket->RecvLength);
+            *len = pSocket->RecvLength;
         }
-    }
+    } while (0);
+    OS_MUTEX_RELEASE(pSocket->RecvMutex);
     
-    if (pSocket->status == SOCKET_STATUS_INUSE) {
-        pSocket->status = SOCKET_STATUS_CLOSE;
-    }
-    OS_MUTEX_RELEASE(at_adaptor_api_mutex);
-    
-    osQueueStopEnqueue(pSocket->qid);
-        
-    //! free all buffers left in the queue.
-    at_data_buf_t	qbuf = {0};
-    while (OS_QUEUE_READ(pSocket->qid, &qbuf, 0) == OS_ERR_NONE) {
-        if (qbuf.addr != NULL) {
-            osHeapFree(qbuf.addr);
-        }
-    }
-    
-    if (OS_ERR_NONE == OS_QUEUE_DELETE(pSocket->qid)) {
-        pSocket->status   = SOCKET_STATUS_UNUSE;
-        pSocket->qid      = NULL;
-        DBG_LOG("queue delete.");
-    } else {
-        DBG_LOG("queue delete fail!");
-    }
-    
-    return SOCKET_ERR_NONE;
+__ERROR_EXIT:
+    return rc;
 }
 
 
 
 
-void at_api_handle_data(uint32_t id, char *buf, uint32_t len)
+void at_api_handle_data(uint32_t so, char *buf, uint32_t len)
 {
-    at_data_buf_t qbuf = {0};
+    uint32_t id;
     
     if (0 == len || (NULL == buf)) {
         return;
     }
-    
-    if (AT_API_MAX_LINK_USED <= id) {
-        return;
-    }
-    
-    DBG_LOG("from id %u", id);
-    
-    qbuf.addr = osHeapMalloc(len);
-    if (NULL == qbuf.addr) {
-        DBG_LOG("out of memory!");
-        return;
-    }
 
-    qbuf.len = len;
-    memcpy(qbuf.addr, buf, len);
     
-    if (link_array[id].status == SOCKET_STATUS_INUSE) {
-        if (OS_ERR_NONE != OS_QUEUE_WRITE(link_array[id].qid, &qbuf, 0)) {
-            DBG_LOG("write queue fail!");
-            osHeapFree(qbuf.addr);
-        }
-    } else {
-        DBG_LOG("socket is not open!");
+    if (len > AT_API_MAX_FRAME_SIZE) {
+        return;
     }
+    
+    for (id = 0; id < AT_API_SOCKET_NUM; id++) {
+        if (link_array[id].so == so) {
+            break;
+        }
+    }
+    if (id >= AT_API_SOCKET_NUM) {
+        return;
+    }
+    
+    if (SOCKET_STATUS_INUSE != link_array[id].status) {
+        return;
+    }
+    
+    OS_MUTEX_WAIT(link_array[id].RecvMutex, OS_INFINITE);
+    if (link_array[id].status == SOCKET_STATUS_INUSE) {
+        if (link_array[id].type == SOCKET_TYPE_TCP) {
+            if (0 == fifo_burst_in(&link_array[id].RecvFIFO, buf, len)) {
+                DBG_LOG("write fifo fail!");
+            }
+        } else if (link_array[id].type == SOCKET_TYPE_UDP) {
+            memcpy(link_array[id].RecvBuffer, buf, len);
+            link_array[id].RecvLength = len;
+        }
+        OS_FLAG_SET(link_array[id].RecvFlag);
+    }
+    OS_MUTEX_RELEASE(link_array[id].RecvMutex);
 }
