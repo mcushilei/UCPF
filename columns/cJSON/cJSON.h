@@ -134,8 +134,9 @@ typedef struct cJSON
         struct {
             /* The item's number, if type==cJSON_Number */
             double  valuedouble;
-            /* writing to valueint is DEPRECATED, use cJSON_SetNumberValue instead */
-            int     valueint;
+            /* writing to valueint or valueuint is DEPRECATED, use cJSON_SetNumberValue instead */
+            int          valueint;
+            unsigned int valueuint;
         };
     };
 

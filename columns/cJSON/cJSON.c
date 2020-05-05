@@ -328,6 +328,19 @@ loop_end:
     {
         item->valueint = (int)number;
     }
+    
+    if (number >= UINT_MAX)
+    {
+        item->valueuint = UINT_MAX;
+    }
+    else if (number <= (double)0)
+    {
+        item->valueuint = 0;
+    }
+    else
+    {
+        item->valueuint = (unsigned int)number;
+    }
 
     item->type = cJSON_Number;
 
@@ -2297,6 +2310,7 @@ CJSON_PUBLIC(cJSON *) cJSON_CreateNumber(double num)
     if(item)
     {
         item->type = cJSON_Number;
+        
         item->valuedouble = num;
 
         /* use saturation in case of overflow */
@@ -2311,6 +2325,19 @@ CJSON_PUBLIC(cJSON *) cJSON_CreateNumber(double num)
         else
         {
             item->valueint = (int)num;
+        }
+        
+        if (num >= UINT_MAX)
+        {
+            item->valueuint = UINT_MAX;
+        }
+        else if (num <= (double)0)
+        {
+            item->valueuint = 0;
+        }
+        else
+        {
+            item->valueuint = (unsigned int)num;
         }
     }
 

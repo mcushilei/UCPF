@@ -19,9 +19,9 @@
 #define __ENVIRONMENT_CFG_H__
 
 /*============================ INCLUDES ======================================*/
-#include "./json_checker/JSON_checker_port.h"
-
-#include "./cJSON/cJSON_port.h"
+#include "./trace_log.h"
+#include "./ports/json_checker/JSON_checker_port.h"
+#include "./ports/cJSON/cJSON_port.h"
 
 /*============================ MACROS ========================================*/
 #define BLOCK_MEM_BLOCK_SIZE    (512u)
@@ -38,20 +38,6 @@
 #define POOL_CRITICAL_SECTION_BEGIN     OS_CRITICAL_SECTION_BEGIN
 #define POOL_CRITICAL_SECTION_END       OS_CRITICAL_SECTION_END
 
-
-#define PRINT_LOG
-
-#ifdef PRINT_LOG
-#define RTT_LOG(fmt, ...)  printf("\r\n[I]"fmt, ##__VA_ARGS__)
-#else
-#define RTT_LOG(fmt, ...)
-#endif
-
-#ifdef __DEBUG__
-#define DBG_LOG(fmt, ...)  printf("\r\n[D][%s:%d]"fmt, __func__, __LINE__, ##__VA_ARGS__)
-#else
-#define DBG_LOG(fmt, ...)
-#endif
 
 
 /*============================ TYPES =========================================*/
