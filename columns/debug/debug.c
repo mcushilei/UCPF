@@ -63,8 +63,8 @@ static void debug_print_number_hex(const _UINT number, const _UINT lengthToPrint
 static void debug_print_mask(const _UINT mask, const _UINT number);
 
 /*============================ LOCAL VARIABLES ===============================*/
-static DEBUG_ROM_VAR_TYPE const _CHAR DebugStrFail[]      = "{Err}";
-static DEBUG_ROM_VAR_TYPE const _CHAR DebugStrMessage[]   = "{Msg}";
+static DEBUG_ROM_VAR_TYPE const _CHAR DebugStrFail[]      = "[Err]";
+static DEBUG_ROM_VAR_TYPE const _CHAR DebugStrMessage[]   = "[Msg]";
 static DEBUG_ROM_VAR_TYPE const _CHAR DebugStrNull[]      = "NULL";
 static DEBUG_ROM_VAR_TYPE const _CHAR DebugStrExpected[]  = "Expected ";
 static DEBUG_ROM_VAR_TYPE const _CHAR DebugStrWas[]       = " Was ";

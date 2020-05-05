@@ -23,7 +23,7 @@
 #include ".\app_cfg.h"
 #include ".\calendar\calendar.h"
 #include ".\clock\clock.h"
-//#include ".\codec\codec.h"
+#include ".\codec\codec.h"
 #include ".\debug\debug.h"
 #include ".\event_fsm\event_fsm.h"
 #include ".\fifo\fifo.h"
