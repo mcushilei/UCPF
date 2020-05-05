@@ -1,5 +1,5 @@
 /*******************************************************************************
- *  Copyright(C)2015 by Dreistein<mcu_shilei@hotmail.com>                     *
+ *  Copyright(C)2015 -2020 by Dreistein<mcu_shilei@hotmail.com>               *
  *                                                                            *
  *  This program is free software; you can redistribute it and/or modify it   *
  *  under the terms of the GNU Lesser General Public License as published     *
@@ -26,11 +26,6 @@
 /*============================ MACROS ========================================*/
 /*============================ MACROFIED FUNCTIONS ===========================*/
 /*============================ TYPES =========================================*/
-#ifndef FIFO_UINT_TYPE
-#error  "FIFO_UINT_TYPE must be defined!"
-#endif
-typedef FIFO_UINT_TYPE __fifo_uint_t;
-
 /*============================ GLOBAL VARIABLES ==============================*/
 /*============================ PROTOTYPES ====================================*/
 

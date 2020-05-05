@@ -1,5 +1,5 @@
 /*******************************************************************************
- *  Copyright(C)2015-2018 by Dreistein<mcu_shilei@hotmail.com>                *
+ *  Copyright(C)2015-2020 by Dreistein<mcu_shilei@hotmail.com>                *
  *                                                                            *
  *  This program is free software; you can redistribute it and/or modify it   *
  *  under the terms of the GNU Lesser General Public License as published     *
@@ -30,182 +30,73 @@
 /*============================ GLOBAL VARIABLES ==============================*/
 /*============================ IMPLEMENTATION ================================*/
 
-bool fifo_init(void *obj, void *buffer, size_t size, size_t itemSize)
+bool fifo_init(fifo_t *obj, void *buffer, size_t size)
 {
-    fifo_t *FIFO = (fifo_t *)obj;
-    
-    if (NULL == FIFO || NULL == buffer || (!IS_POWER_OF_2(size))) {
+    if (NULL == obj || NULL == buffer || (!IS_POWER_OF_2(size))) {
         return false;
     }
 
-    FIFO->Buffer    = buffer;
-    FIFO->ItemSize  = itemSize;
-    FIFO->Size      = size;
-    FIFO->Out       = 0u;
-    FIFO->In        = 0u;
+    obj->Buffer    = buffer;
+    obj->Size      = size;
+    obj->Out       = 0u;
+    obj->In        = 0u;
 
     return true;
 }
 
-bool fifo_in(void *obj, const void *buffer)
+size_t fifo_burst_in(fifo_t *obj, const char *buf, size_t len)
 {
-    fifo_t *FIFO = (fifo_t *)obj;
-    size_t L1;
+    size_t L1, L2;
 
-    if (NULL == FIFO || NULL == buffer) {
-        return false;
+    if (NULL == obj || NULL == buf) {
+        return 0;
     }
 
-    L1 = FIFO->Size - (FIFO->In - FIFO->Out);
-    if (L1 == 0u) {      //!< fifo is full.
-        return false;
+    L1 = obj->Size - (obj->In - obj->Out);       //! calculate the free space
+    L2 = obj->Size - (obj->In & (obj->Size - 1u));
+    if (L1 < len) {     //!< no enough space.
+        return 0;
     }
 
-    L1 = MIN(1u, L1);
+    L1 = len;
+    L2 = MIN(L1,  L2);
 
-    memory_copy((void *)((uintptr_t)FIFO->Buffer + (FIFO->In & (FIFO->Size - 1u)) * FIFO->ItemSize), buffer, FIFO->ItemSize);
-    FIFO->In += L1;
+    memcpy((char *)obj->Buffer + (obj->In & (obj->Size - 1u)), buf, L2);
+    memcpy(obj->Buffer, buf + L2, L1 - L2);
+    obj->In += L1;
 
-    return true;
+    return L1;
 }
 
-bool fifo_out(void *obj, void *buffer)
+size_t fifo_burst_out(fifo_t *obj, char *buf, size_t len)
 {
-    fifo_t *FIFO = (fifo_t *)obj;
-    size_t L1;
+    size_t L1, L2;
 
-    if (NULL == FIFO) {
-        return false;
+    if (NULL == obj) {
+        return 0;
     }
 
-    L1 = FIFO->In - FIFO->Out;
-    if (L1 == 0u) {      //!< fifo is empty.
-        return false;
+    L1 = obj->In - obj->Out;      //! calculate the length of data in the fifo.
+    L2 = obj->Size - (obj->Out & (obj->Size - 1u));
+    if (L1 < len) {     //!< no enough data.
+        return 0;
     }
 
-    L1 = MIN(1u, L1);
+    L1 = len;
+    L2 = MIN(L1,  L2);
 
-    if (NULL != buffer) {
-        memory_copy(buffer, (void *)((uintptr_t)FIFO->Buffer + (FIFO->Out & (FIFO->Size - 1u)) * FIFO->ItemSize), FIFO->ItemSize);
+    if (NULL != buf) {
+        memcpy(buf, (char *)obj->Buffer + (obj->Out & (obj->Size - 1u)), L2);
+        memcpy(buf + L2, obj->Buffer, L1 - L2);
     }
-    FIFO->Out += L1;
+    obj->Out += L1;
 
-    return true;
+    return L1;
 }
 
-bool fifo8_init(void *obj, uint8_t *buffer, size_t size)
+void fifo_flush(fifo_t *obj)
 {
-    fifo_t *FIFO = (fifo_t *)obj;
-    
-    if (NULL == FIFO || NULL == buffer || (!IS_POWER_OF_2(size))) {
-        return false;
-    }
-
-    FIFO->Buffer    = buffer;
-    FIFO->ItemSize  = sizeof(uint8_t);
-    FIFO->Size      = size;
-    FIFO->Out       = 0u;
-    FIFO->In        = 0u;
-
-    return true;
+    obj->Out = obj->In;
 }
-
-bool fifo8_in(void *obj, const uint8_t *buffer)
-{
-    fifo_t *FIFO = (fifo_t *)obj;
-    size_t L1;
-
-    if (NULL == FIFO || NULL == buffer) {
-        return false;
-    }
-
-    L1 = FIFO->Size - (FIFO->In - FIFO->Out);
-    if (L1 == 0u) {      //!< fifo is full.
-        return false;
-    }
-
-    L1 = MIN(1u, L1);
-
-    ((uint8_t *)FIFO->Buffer)[FIFO->In & (FIFO->Size - 1u)] = *buffer;
-    FIFO->In += L1;
-
-    return true;
-}
-
-bool fifo8_out(void *obj, uint8_t *buffer)
-{
-    fifo_t *FIFO = (fifo_t *)obj;
-    size_t L1;
-
-    if (NULL == FIFO) {
-        return false;
-    }
-
-    L1 = FIFO->In - FIFO->Out;
-    if (L1 == 0u) {      //!< fifo is empty.
-        return false;
-    }
-
-    L1 = MIN(1u, L1);
-
-    if (NULL != buffer) {
-        *buffer = ((uint8_t *)FIFO->Buffer)[FIFO->Out & (FIFO->Size - 1u)];
-    }
-    FIFO->Out += L1;
-
-    return true;
-}
-
-//size_t fifo8_in_burst(void *obj, const uint8_t *buffer, size_t bufferSize)
-//{
-//    fifo_t *FIFO = (fifo_t *)obj;
-//    size_t L1, L2;
-//
-//    if (NULL == FIFO || NULL == buffer) {
-//        return 0;
-//    }
-//
-//    L1 = FIFO->Size - (FIFO->In - FIFO->Out);
-//    L2 = FIFO->Size - (FIFO->In & (FIFO->Size - 1u));
-//    if (L1 == 0u) {     //!< fifo is full.
-//        return 0;
-//    }
-//
-//    L1 = MIN(bufferSize, L1); //!< all those without data, include back around
-//    L2 = MIN(L1, L2);   //!< those can be access at once.
-//
-//    memory_copy(FIFO->Buffer + (FIFO->In & (FIFO->Size - 1u)), buffer, L2);
-//    memory_copy(FIFO->Buffer, buffer + L2, L1 - L2);
-//    FIFO->In += L1;
-//
-//    return L1;
-//}
-//
-//size_t fifo8_out_burst(void *obj, uint8_t *buffer, size_t bufferSize)
-//{
-//    fifo_t *FIFO = (fifo_t *)obj;
-//    size_t L1, L2;
-//
-//    if (NULL == FIFO) {
-//        return 0;
-//    }
-//
-//    L1 = FIFO->In - FIFO->Out;
-//    L2 = FIFO->Size - (FIFO->Out & (FIFO->Size - 1u));
-//    if (L1 == 0u) {     //!< fifo is empty.
-//        return 0;
-//    }
-//
-//    L1 = MIN(bufferSize, L1); //!< all those with data, include back around
-//    L2 = MIN(L1, L2);   //!< those can be access at once.
-//
-//    if (NULL != buffer) {
-//        memory_copy(buffer, FIFO->Buffer + (FIFO->Out & (FIFO->Size - 1u)), L2);
-//        memory_copy(buffer + L2, FIFO->Buffer, L1 - L2);
-//    }
-//    FIFO->Out += L1;
-//
-//    return L1;
-//}
 
 /* EOF */

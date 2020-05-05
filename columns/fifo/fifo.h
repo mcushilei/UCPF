@@ -1,5 +1,5 @@
 /*******************************************************************************
- *  Copyright(C)2015-2017 by Dreistein<mcu_shilei@hotmail.com>                *
+ *  Copyright(C)2015-2020 by Dreistein<mcu_shilei@hotmail.com>                *
  *                                                                            *
  *  This program is free software; you can redistribute it and/or modify it   *
  *  under the terms of the GNU Lesser General Public License as published     *
@@ -28,22 +28,16 @@ typedef struct {
     void        *Buffer;
     size_t       Size;           //!< buffer size: the number of item it can store. 
                                  //   It must be the value of 2 to he power n.
-    size_t       ItemSize;       //!< item size.
     size_t       Out;            //!< point to space filled.
     size_t       In;             //!< point to space empty.
 } fifo_t;
 
 /*============================ GLOBAL VARIABLES ==============================*/
 /*============================ PROTOTYPES ====================================*/
-extern bool fifo_init       (void *obj, void *buffer, size_t size, size_t itemSize);
-extern bool fifo_in         (void *obj, const void *buffer);
-extern bool fifo_out        (void *obj, void *buffer);
-
-extern bool fifo8_init      (void *obj, uint8_t *buffer, size_t size);
-extern bool fifo8_in        (void *obj, const uint8_t *buffer);
-extern bool fifo8_out       (void *obj, uint8_t *buffer);
-//extern bool fifo8_in_burst  (void *obj, const uint8_t *buffer, size_t Size);
-//extern bool fifo8_out_burst (void *obj, uint8_t *buffer, size_t Size);
+extern bool     fifo_init       (fifo_t *obj, void *buffer, size_t size);
+extern void     fifo_flush      (fifo_t *obj);
+extern size_t   fifo_burst_in   (fifo_t *obj, const char *buf, size_t len);
+extern size_t   fifo_burst_out  (fifo_t *obj, char *buf, size_t len);
 
 #endif
 /* EOF */
