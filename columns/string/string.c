@@ -27,6 +27,37 @@
 /*============================ LOCAL VARIABLES ===============================*/
 /*============================ PROTOTYPES ====================================*/
 /*============================ IMPLEMENTATION ================================*/
+
+void n2h_8(char *n)
+{
+    dword_value_t v;
+    uint32_t j = 0;
+    for (uint32_t i = sizeof(v); i != 0; i--) {
+        v.Byte[i - 1] = n[j++];
+    }
+    memcpy(n, &v, sizeof(v));
+}
+
+void n2h_4(char *n)
+{
+    word_value_t v;
+    uint32_t j = 0;
+    for (uint32_t i = sizeof(v); i != 0; i--) {
+        v.Byte[i - 1] = n[j++];
+    }
+    memcpy(n, &v, sizeof(v));
+}
+
+void n2h_2(char *n)
+{
+    hword_value_t v;
+    uint32_t j = 0;
+    for (uint32_t i = sizeof(v); i != 0; i--) {
+        v.Byte[i - 1] = n[j++];
+    }
+    memcpy(n, &v, sizeof(v));
+}
+
 bool memory_is_same(const void *m1, const void *m2, size_t n)
 {
     if ((NULL == m1) || (NULL == m2) || (0 == n)) {

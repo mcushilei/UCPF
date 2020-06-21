@@ -69,5 +69,10 @@ extern uint32_t     itostr(int32_t value, char *integerString, int32_t radix);
 extern void         string_printf(const char *formatString, void *argument);
 extern unsigned int string_printf_to_buffer(char *buffer, unsigned int bufferLength, const char *formatString, void *argument);
 
+extern void n2h_8(char *n);
+extern void n2h_4(char *n);
+extern void n2h_2(char *n);
+
+
 #endif
 /* EOF */
