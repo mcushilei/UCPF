@@ -36,6 +36,7 @@ typedef struct {
 /*============================ PROTOTYPES ====================================*/
 extern bool     fifo_init       (fifo_t *obj, void *buffer, size_t size);
 extern void     fifo_flush      (fifo_t *obj);
+extern size_t   fifo_length     (fifo_t *obj);
 extern size_t   fifo_burst_in   (fifo_t *obj, const char *buf, size_t len);
 extern size_t   fifo_burst_out  (fifo_t *obj, char *buf, size_t len);
 

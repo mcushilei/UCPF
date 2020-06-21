@@ -78,11 +78,11 @@ size_t fifo_burst_out(fifo_t *obj, char *buf, size_t len)
 
     L1 = obj->In - obj->Out;      //! calculate the length of data in the fifo.
     L2 = obj->Size - (obj->Out & (obj->Size - 1u));
-    if (L1 < len) {     //!< no enough data.
+    if (0 == L1) {     //!< no data.
         return 0;
     }
 
-    L1 = len;
+    L1 = MIN(len, L1);
     L2 = MIN(L1,  L2);
 
     if (NULL != buf) {
@@ -90,6 +90,19 @@ size_t fifo_burst_out(fifo_t *obj, char *buf, size_t len)
         memcpy(buf + L2, obj->Buffer, L1 - L2);
     }
     obj->Out += L1;
+
+    return L1;
+}
+
+size_t fifo_length(fifo_t *obj)
+{
+    size_t L1 = 0;
+
+    if (NULL == obj) {
+        return 0;
+    }
+
+    L1 = obj->In - obj->Out;      //! calculate the length of data in the fifo.
 
     return L1;
 }
