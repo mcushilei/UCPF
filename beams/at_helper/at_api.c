@@ -3,6 +3,9 @@
 #include "./app_cfg.h"
 #include "./at_api.h"
 #include "./at_helper.h"
+#include "../deadline/deadline.h"
+
+THIS_FILE_NAME("at_api");
 
 #define SOCKET_STATUS_UNUSE		    0
 #define SOCKET_STATUS_INUSE 		1
@@ -32,34 +35,40 @@ static socket_t          link_array[AT_API_SOCKET_NUM] = {0};
 
 at_apn_info   apn_info;
 
-bool at_api_set_apn(char *name, char *usr, char *psw)
-{
-    if ( (strlen(name) >= sizeof(apn_info.name)) || (strlen(usr) >= sizeof(apn_info.usr)) || (strlen(psw) >= sizeof(apn_info.psw)) ) {
-        return false;
-    }
-    if (0 == strlen(name)) {
-        apn_info.name[0] = '\0';
-    } else {
-        string_copy(apn_info.name, name, sizeof(apn_info.name));
-    }
-    if (0 == strlen(usr)) {
-        apn_info.usr[0] = '\0';
-    } else {
-        string_copy(apn_info.usr, usr, sizeof(apn_info.usr));
-    }
-    if (0 == strlen(psw)) {
-        apn_info.psw[0] = '\0';
-    } else {
-        string_copy(apn_info.psw, psw, sizeof(apn_info.psw));
-    }
-    return true;
-}
 
-
-bool at_api_init(void)
+bool at_api_init(at_option_t *opt)
 {
     if (at_adaptor_api_mutex != NULL) {
+        // we only init it once.
         return true;
+    }
+    
+    memset(&apn_info, 0, sizeof(apn_info));
+    if (NULL != opt) {
+        if (NULL != opt->apn) {
+            if (strlen(opt->apn) < sizeof(apn_info.name)) {
+                strcpy(apn_info.name, opt->apn);
+            } else {
+                RTT_LOG("APN too long.");
+                return false;
+            }
+        }
+        if (NULL != opt->apn_user) {
+            if (strlen(opt->apn_user) < sizeof(apn_info.usr)) {
+                strcpy(apn_info.usr, opt->apn_user);
+            } else {
+                RTT_LOG("APN user too long.");
+                return false;
+            }
+        }
+        if (NULL != opt->apn_pswd) {
+            if (strlen(opt->apn_pswd) < sizeof(apn_info.psw)) {
+                strcpy(apn_info.psw, opt->apn_pswd);
+            } else {
+                RTT_LOG("APN pswd too long.");
+                return false;
+            }
+        }
     }
     
     at_adaptor_api   = NULL;
@@ -67,6 +76,15 @@ bool at_api_init(void)
     memset(link_array, 0, sizeof(link_array));
     for (uint32_t i = 0; i < AT_API_SOCKET_NUM; i++) {
         link_array[i].so  = i;
+        
+        if (OS_FLAG_CREATE(link_array[i].RecvFlag, false, false) != OS_ERR_NONE) {
+            RUNTIME_FAULT(-3, "init flag failed!");
+        }
+        
+        if (OS_MUTEX_CREATE(link_array[i].RecvMutex) != OS_ERR_NONE) {
+            RUNTIME_FAULT(-3, "init mutex failed!");
+        }
+        
     }
     
     OS_ERR err = OS_MUTEX_CREATE(at_adaptor_api_mutex);
@@ -83,6 +101,11 @@ bool at_api_deinit(void)
     at_api_deregister_adaptor();
     OS_MUTEX_DELETE(at_adaptor_api_mutex);
     at_adaptor_api_mutex = NULL;
+
+    for (uint32_t i = 0; i < AT_API_SOCKET_NUM; i++) {
+        OS_FLAG_DELETE(link_array[i].RecvFlag);
+        OS_MUTEX_DELETE(link_array[i].RecvMutex);
+    }
     
     return true;
 }
@@ -202,16 +225,6 @@ socket_t *socket_api_create(void)
 
     link_array[i].status = SOCKET_STATUS_INUSE;
     OS_MUTEX_RELEASE(at_adaptor_api_mutex);
-    
-    if (OS_FLAG_CREATE(link_array[i].RecvFlag, false, false) != OS_ERR_NONE) {
-        DBG_LOG("init flag failed!");
-        goto __CREAT_FLAG_FAIL;
-    }
-    
-    if (OS_MUTEX_CREATE(link_array[i].RecvMutex) != OS_ERR_NONE) {
-        DBG_LOG("init mutex failed!");
-        goto __CREAT_MUTEX_FAIL;
-    }
 
     if (!fifo_init(&link_array[i].RecvFIFO, link_array[i].RecvBuffer, AT_API_RECV_FIFO_SIZE)) {
         DBG_LOG("init FIFO failed!");
@@ -221,12 +234,6 @@ socket_t *socket_api_create(void)
     return &link_array[i];
     
 __INIT_FIFO_FAIL:
-    OS_MUTEX_DELETE(link_array[i].RecvMutex);
-    
-__CREAT_MUTEX_FAIL:
-    OS_FLAG_DELETE(link_array[i].RecvFlag);
-    
-__CREAT_FLAG_FAIL:
     link_array[i].status = SOCKET_STATUS_UNUSE;
     
     return NULL;
@@ -239,10 +246,6 @@ int socket_api_delete(socket_t *pSocket)
     socket_api_shutdown(pSocket);
     
     pSocket->status = SOCKET_STATUS_UNUSE;
-    OS_FLAG_DELETE(pSocket->RecvFlag);
-    OS_MUTEX_DELETE(pSocket->RecvMutex);
-    
-    memset(pSocket, 0, sizeof(socket_t));
     
     return SOCKET_ERR_NONE;
 }
@@ -278,7 +281,7 @@ int socket_api_bind(socket_t *pSocket, const char *host, uint32_t port)
         ret = at_adaptor_api->bind(&pSocket->so, host, port);
     }
     if (AT_OK != ret) {
-        DBG_LOG("bind failed!");
+        //DBG_LOG("bind failed!");
         rc = SOCKET_ERR_FAIL;
     } else {
         pSocket->type = SOCKET_TYPE_UDP;
@@ -305,7 +308,7 @@ int socket_api_connect(socket_t *pSocket, const char *host, uint32_t port)
     }
     if (AT_OK != ret) {
         at_adaptor_api->close(pSocket->so);
-        DBG_LOG("connect failed!");
+        //DBG_LOG("connect failed!");
         rc = SOCKET_ERR_FAIL;
     } else {
         pSocket->type = SOCKET_TYPE_TCP;
@@ -361,12 +364,40 @@ int socket_api_sendto(socket_t *pSocket, const char *buf, uint32_t *len, const c
     return SOCKET_ERR_NONE;
 }
 
+static int __socket_api_recv(socket_t *pSocket, char *buf, uint32_t buflen, uint32_t timeout)
+{
+    uint32_t rl = 0;
+    uint32_t cnt = 0;
+    OS_ERR ret;
+    deadline_t timer;
+    
+    deadline_init(&timer);
+    deadline_set_ms(&timer, timeout);
+
+    while (cnt < buflen) {
+        OS_MUTEX_WAIT(pSocket->RecvMutex, OS_INFINITE);
+        rl = fifo_burst_out(&pSocket->RecvFIFO, buf + cnt, buflen - cnt);
+        OS_MUTEX_RELEASE(pSocket->RecvMutex);
+        if (rl != 0u) {
+            cnt += rl;
+            continue;
+        }
+        ret = OS_FLAG_WAIT(pSocket->RecvFlag, deadline_left_ms(&timer));
+        if (OS_ERR_TIMEOUT == ret) {
+            break;
+        } else if (OS_ERR_NONE != ret) {
+            DBG_LOG("recv flag error: %u", ret);
+            break;
+        }
+    }
+    
+    return cnt;
+}
+
 int socket_api_recv(socket_t *pSocket, char *buf, uint32_t *len, uint32_t timeout)
 {
-    uint32_t buflen = *len;
-    int rc = SOCKET_ERR_NONE;
     uint32_t rl = 0;
-    OS_ERR ret;
+    uint32_t buflen = *len;
 
     if (NULL == pSocket) {
         return SOCKET_ERR_INVALID_SOCKET;
@@ -387,26 +418,14 @@ int socket_api_recv(socket_t *pSocket, char *buf, uint32_t *len, uint32_t timeou
     *len = 0;
     timeout = timeout > 20000 ? 20000 : timeout;        //!< max 20s to wait.
     
-    while (1) {
-        OS_MUTEX_WAIT(pSocket->RecvMutex, OS_INFINITE);
-        rl = fifo_burst_out(&pSocket->RecvFIFO, buf, buflen);
-        OS_MUTEX_RELEASE(pSocket->RecvMutex);
-        if (rl != 0u) {
-            *len = rl;
-            break;
-        }
-        ret = OS_FLAG_WAIT(pSocket->RecvFlag, timeout);
-        if (OS_ERR_TIMEOUT == ret) {
-            rc = SOCKET_ERR_TIMEOUT;
-            break;
-        } else if (OS_ERR_NONE != ret) {
-            DBG_LOG("recv flag error: %u", ret);
-            rc = SOCKET_ERR_FAIL;
-            break;
-        }
+    rl = __socket_api_recv(pSocket, buf, buflen, timeout);
+    *len = rl;
+    
+    if (0u == rl) {
+        return SOCKET_ERR_TIMEOUT;
     }
     
-    return rc;    
+    return SOCKET_ERR_NONE;    
 }
 
 /*  \note   if the len is too small, the data received will be lost and SOCKET_ERR_BUFFER_SIZE will be return.

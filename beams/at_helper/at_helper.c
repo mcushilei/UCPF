@@ -8,11 +8,14 @@
 /*============================ MACROS ========================================*/
 /*============================ MACROFIED FUNCTIONS ===========================*/
 //#define AT_INTO
+
 #ifdef AT_INTO
 #define AT_LOG      DBG_LOG
 #else
 #define AT_LOG(...)
 #endif
+
+THIS_FILE_NAME("at_helper");
 
 /*============================ TYPES =========================================*/
 /*============================ PRIVATE PROTOTYPES ============================*/
@@ -318,7 +321,7 @@ static uint32_t oob_cmd_matching(const char *buf, uint32_t len)
     return 0;
 }
 
-static OS_TASK_ENTRY(at_task)
+OS_TASK_ENTRY(at_task)
 {
     uint32_t    recv_len = 0;
     char       *tmp = at.data_buf;
@@ -363,7 +366,7 @@ static OS_TASK_ENTRY(at_task)
 
 static uint32_t create_at_task(void)
 {
-    return OS_TASK_CREATE(at.Task, "at_task", at_task, NULL, 0x200, 2, OS_TASK_OPT_STK_CHK | OS_TASK_OPT_STK_CLR);
+    return OS_TASK_CREATE(at.Task, "at_task", at_task, NULL, 512 + 128, 2, OS_TASK_OPT_STK_CHK | OS_TASK_OPT_STK_CLR);
 }
 
 static int32_t at_struct_init(at_t *at)
@@ -465,29 +468,27 @@ static int32_t at_struct_deinit(at_t *at)
 
 void at_init(const at_config_t *config)
 {
-
     if (NULL == config) {
-        AT_LOG("Config is NULL, failed!!");
         return;
     }
     
     memcpy(&at.Config, config, sizeof(at_config_t));
     
-    AT_LOG("Config %s(buffer total is %lu)......", at.Config.name, at.Config.user_buf_len);
+    DBG_LOG("Config %s(buffer total is %lu)......", at.Config.name, at.Config.user_buf_len);
 
     if (AT_OK != at_struct_init(&at)) {
-        AT_LOG("at_struct_init failed!");
+        DBG_LOG("at_struct_init failed!");
         return;
     }
 
     if (!at_usart_init()) {
-        AT_LOG("at_usart_init failed!");
+        DBG_LOG("at_usart_init failed!");
         at_struct_deinit(&at);
         return;
     }
     
     if (OS_ERR_NONE != create_at_task()) {
-        AT_LOG("create_at_task failed!");
+        DBG_LOG("create_at_task failed!");
         at_usart_deinit();
         at_struct_deinit(&at);
         return;
@@ -495,7 +496,7 @@ void at_init(const at_config_t *config)
     at.TaskIsRunning = true;
 
 
-    AT_LOG("Config complete.");
+    DBG_LOG("Config complete.");
 }
 
 void at_deinit(void)

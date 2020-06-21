@@ -37,11 +37,11 @@ typedef struct {
     uint32_t    RecvLength;     //! the packet size of received UDP.
 } socket_t;
 
-typedef struct {
-    char name[30];
-    char usr[30];
-    char psw[30];
-} at_apn_info;
+typedef struct at_option_t {
+	const char     *apn;
+	const char     *apn_user;
+	const char     *apn_pswd;
+} at_option_t;
 
 typedef struct {
 	int32_t  (*init)    (void);
@@ -63,12 +63,10 @@ typedef struct {
 
 
 /*============================ PUBLIC VARIABLES ==============================*/
-extern at_apn_info   apn_info;
-
 /*============================ PUBLIC PROTOTYPES =============================*/
 extern bool at_api_set_apn(char *name, char *usr, char *psw);
 
-extern bool at_api_init(void);
+extern bool at_api_init(at_option_t *opt);
 extern bool at_api_deinit(void);
 
 extern bool at_api_register_adaptor(const at_adaptor_api_t *api);

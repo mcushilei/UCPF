@@ -7,9 +7,11 @@
 #include "./at_api.h"
 
 
-#define AT_OK    		 0
-#define AT_FAILED 		-1
-#define AT_TIMEOUT      -2
+#define AT_OK    		 (0)
+#define AT_FAILED 		(-1)
+#define AT_TIMEOUT      (-2)
+#define AT_INVALID_OPT  (-3)
+#define AT_DEVICE_ERR   (-4)
 
 #define AT_OOB_MAX_NUM     (5u)
 #define AT_OOB_SUFFIX_LEN     (40u)
@@ -67,6 +69,12 @@ typedef struct at_config_t {
 } at_config_t;
 
 typedef struct {
+    char name[64];
+    char usr[64];
+    char psw[64];
+} at_apn_info;
+
+typedef struct {
 	OS_HANDLE       Task;
     OS_HANDLE       RecvQueue;          //!< msg queue
 	OS_HANDLE       resp_sem;
@@ -84,6 +92,8 @@ typedef struct {
 } at_t;
 
 extern at_t  at;
+extern at_apn_info   apn_info;
+
 
 extern void         at_init             (const at_config_t *config);
 extern void         at_deinit           (void);
