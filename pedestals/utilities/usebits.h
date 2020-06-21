@@ -1,5 +1,5 @@
 /*******************************************************************************
-*  Copyright(C)2015-2018 by Dreistein<mcu_shilei@hotmail.com>                *
+*  Copyright(C)2015-2020 by Dreistein<mcu_shilei@hotmail.com>                *
 *                                                                            *
 *  This program is free software; you can redistribute it and/or modify it   *
 *  under the terms of the GNU Lesser General Public License as published     *
@@ -86,18 +86,9 @@ do {\
 typedef union {
     uint16_t    Value;
 
-    uint8_t     Bytes[2];
-    //! Byte0 is always the LSB.
-    struct {
-#if defined(__BIG_ENDIAN__)
-        uint8_t Byte1;
-        uint8_t Byte0;
-#else
-        uint8_t Byte0;
-        uint8_t Byte1;
-#endif
-    };
+    uint8_t     Byte[2];
 
+    //! B0 is always the LSB.
     struct {
 #if defined(__BIG_ENDIAN__)
         uint8_t B1;
@@ -106,8 +97,9 @@ typedef union {
         uint8_t B0;
         uint8_t B1;
 #endif
-    } B0_LSB;
+    } LSB;
 
+    //! B0 is always the MSB.
     struct {
 #if defined(__BIG_ENDIAN__)
         uint8_t B0;
@@ -116,55 +108,121 @@ typedef union {
         uint8_t B1;
         uint8_t B0;
 #endif
-    } B0_MSB;
-} hword_t;
-
+    } MSB;
+} hword_value_t;
 
 
 typedef union {
     uint32_t    Value;
 
-    uint16_t    HWords[2];
-    struct {
-#if defined(__BIG_ENDIAN__)
-        uint16_t HWord1;
-        uint16_t HWord0;
-#else
-        uint16_t HWord0;
-        uint16_t HWord1;
-#endif
-    };
+    uint8_t     Byte[4];
 
-    uint8_t     Bytes[4];
-    //! Byte0 is always the LSB.
+    //! B0 is always the LSB.
     struct {
 #if defined(__BIG_ENDIAN__)
-        uint8_t Byte3;
-        uint8_t Byte2;
-        uint8_t Byte1;
-        uint8_t Byte0;
+        uint8_t B3;
+        uint8_t B2;
+        uint8_t B1;
+        uint8_t B0;
 #else
-        uint8_t Byte0;
-        uint8_t Byte1;
-        uint8_t Byte2;
-        uint8_t Byte3;
+        uint8_t B0;
+        uint8_t B1;
+        uint8_t B2;
+        uint8_t B3;
 #endif
-    };
+    } LSB;
 
+    //! B0 is always the MSB.
     struct {
 #if defined(__BIG_ENDIAN__)
-        uint8_t B3;
-        uint8_t B2;
-        uint8_t B1;
         uint8_t B0;
+        uint8_t B1;
+        uint8_t B2;
+        uint8_t B3;
 #else
-        uint8_t B0;
-        uint8_t B1;
-        uint8_t B2;
         uint8_t B3;
+        uint8_t B2;
+        uint8_t B1;
+        uint8_t B0;
 #endif
-    } B0_LSB;
+    } MSB;
+} word_value_t;
 
+
+typedef union {
+    uint64_t    Value;
+
+    uint8_t     Byte[8];
+
+    //! B0 is always the LSB.
+    struct {
+#if defined(__BIG_ENDIAN__)
+        uint8_t B7;
+        uint8_t B6;
+        uint8_t B5;
+        uint8_t B4;
+        uint8_t B3;
+        uint8_t B2;
+        uint8_t B1;
+        uint8_t B0;
+#else
+        uint8_t B0;
+        uint8_t B1;
+        uint8_t B2;
+        uint8_t B3;
+        uint8_t B4;
+        uint8_t B5;
+        uint8_t B6;
+        uint8_t B7;
+#endif
+    } LSB;
+
+    //! B0 is always the MSB.
+    struct {
+#if defined(__BIG_ENDIAN__)
+        uint8_t B0;
+        uint8_t B1;
+        uint8_t B2;
+        uint8_t B3;
+        uint8_t B4;
+        uint8_t B5;
+        uint8_t B6;
+        uint8_t B7;
+#else
+        uint8_t B7;
+        uint8_t B6;
+        uint8_t B5;
+        uint8_t B4;
+        uint8_t B3;
+        uint8_t B2;
+        uint8_t B1;
+        uint8_t B0;
+#endif
+    } MSB;
+} dword_value_t;
+
+
+typedef union {
+    float       Value;
+
+    uint8_t     Byte[4];
+
+    //! B0 is always the LSB.
+    struct {
+#if defined(__BIG_ENDIAN__)
+        uint8_t B3;
+        uint8_t B2;
+        uint8_t B1;
+        uint8_t B0;
+#else
+        uint8_t B0;
+        uint8_t B1;
+        uint8_t B2;
+        uint8_t B3;
+#endif
+    } LSB;
+
+    //! B0 is always the MSB.
     struct {
 #if defined(__BIG_ENDIAN__)
         uint8_t B0;
@@ -177,8 +235,61 @@ typedef union {
         uint8_t B1;
         uint8_t B0;
 #endif
-    } B0_MSB;
-} word_t;
+    } MSB;
+} float_value_t;
+
+
+typedef union {
+    float       Value;
+
+    uint8_t     Byte[8];
+
+    //! B0 is always the LSB.
+    struct {
+#if defined(__BIG_ENDIAN__)
+        uint8_t B7;
+        uint8_t B6;
+        uint8_t B5;
+        uint8_t B4;
+        uint8_t B3;
+        uint8_t B2;
+        uint8_t B1;
+        uint8_t B0;
+#else
+        uint8_t B0;
+        uint8_t B1;
+        uint8_t B2;
+        uint8_t B3;
+        uint8_t B4;
+        uint8_t B5;
+        uint8_t B6;
+        uint8_t B7;
+#endif
+    } LSB;
+
+    //! B0 is always the MSB.
+    struct {
+#if defined(__BIG_ENDIAN__)
+        uint8_t B0;
+        uint8_t B1;
+        uint8_t B2;
+        uint8_t B3;
+        uint8_t B4;
+        uint8_t B5;
+        uint8_t B6;
+        uint8_t B7;
+#else
+        uint8_t B7;
+        uint8_t B6;
+        uint8_t B5;
+        uint8_t B4;
+        uint8_t B3;
+        uint8_t B2;
+        uint8_t B1;
+        uint8_t B0;
+#endif
+    } MSB;
+} double_value_t;
 
 /*============================ GLOBAL VARIABLES ==============================*/
 /*============================ LOCAL VARIABLES ===============================*/
