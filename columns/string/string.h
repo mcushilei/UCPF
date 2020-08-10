@@ -56,6 +56,7 @@ extern bool         memory_copy(void *d, const void *s, size_t n);
 extern unsigned int hex_str2uint(const char *str);
 extern int          int_str2int(const char *str);
 extern float        dec_str2float(const char *decimalString);
+extern int          int_str_len(const char *str);
 extern void         string_to_lowercase(char *s);
 extern void         string_to_uppercase(char *s);
 extern unsigned int string_length(const char *s);

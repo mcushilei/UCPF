@@ -131,6 +131,15 @@ int int_str2int(const char *str)
     return val;
 }
 
+int int_str_len(const char *str)
+{
+    int len;
+    
+    for (len = 0; CHAR_IS_INT(str[len]); len++);
+    
+    return len;
+}
+
 float dec_str2float(const char *str)
 { 
     bool isNegative = false; 
