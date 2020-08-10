@@ -85,6 +85,7 @@ do {\
 /*============================ TYPES =========================================*/
 typedef union {
     uint16_t    Value;
+    int16_t     ValueInt;
 
     uint8_t     Byte[2];
 
@@ -114,6 +115,7 @@ typedef union {
 
 typedef union {
     uint32_t    Value;
+    int32_t     ValueInt;
 
     uint8_t     Byte[4];
 
@@ -151,6 +153,7 @@ typedef union {
 
 typedef union {
     uint64_t    Value;
+    int64_t     ValueInt;
 
     uint8_t     Byte[8];
 
@@ -240,7 +243,7 @@ typedef union {
 
 
 typedef union {
-    float       Value;
+    double      Value;
 
     uint8_t     Byte[8];
 
