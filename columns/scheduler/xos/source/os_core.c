@@ -923,12 +923,14 @@ void OS_TaskStkChk(OS_TCB *ptcb)
 
     nfree = 0u;
 #if OS_CPU_STK_GROWTH_DOWN == 1u
-    for (; *pstk == 0u && pstk != pBotStk; pstk++) {    //!< calculate the number of zero entries on the stack.
+    while (*pstk == OS_CPU_STK_CANARY_VALUE && pstk != pBotStk) {    //!< calculate the number of zero entries on the stack.
         nfree++;
+        pstk++;
     }
 #else
-    for (; *pstk == 0u && pstk != pBotStk; pstk--) {
+    while (*pstk == OS_CPU_STK_CANARY_VALUE && pstk != pBotStk) {
         nfree++;
+        pstk--;
     }
 #endif
     size -= nfree;  //!< calculate number of entries used on the stack.

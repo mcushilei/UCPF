@@ -311,7 +311,7 @@ static void os_task_stk_clr(CPU_STK  *pstk,
     if ((opt & OS_TASK_OPT_STK_CHK) != 0u) {        //!< stack checking has been enabled.
         while (size > 0u) {
             size--;
-            *pstk++ = (CPU_STK)0;
+            *pstk++ = (CPU_STK)OS_CPU_STK_CANARY_VALUE;
         }
     } else if ((opt & OS_TASK_OPT_STK_CLR) != 0u) { //!< stack needs to be cleared.
         while (size > 0u) {

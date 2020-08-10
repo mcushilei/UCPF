@@ -184,10 +184,10 @@ PendSV_Handler
     STR         R0, [R1, #8]                        ; osTCBCur->OSTCBStkPtr = SP
 
 __NO_SAVE
-    ;PUSH    {LR}                                    ; Save LR(EXC_RETURN value)
-    ;LDR     R0, =OSTaskSwHook                       ; Call OSTaskSwHook()
-    ;BLX     R0
-    ;POP     {LR}
+    PUSH    {LR}                                    ; Save LR(EXC_RETURN value)
+    LDR     R0, =OSTaskSwHook                       ; Call OSTaskSwHook()
+    BLX     R0
+    POP     {LR}
     
     LDR         R0, =osTCBCur                       ; osTCBCur = osTCBNextRdy;
     LDR         R1, =osTCBNextRdy

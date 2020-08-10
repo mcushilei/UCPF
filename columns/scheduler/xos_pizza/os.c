@@ -29,7 +29,7 @@
 #include "./os.h"
 
 /*============================ MACROS ========================================*/
-#define OS_MAX_TIMERS       (16u)
+#define OS_MAX_TIMERS       (32u)
 
 /*============================ MACROFIED FUNCTIONS ===========================*/
 /*============================ TYPES =========================================*/
@@ -45,11 +45,13 @@ struct os_timer_t {
 };
 
 
+/*============================ PRIVATE PROTOTYPES ============================*/
+static void os_timer_engine_timeout_callback(timer_t *timer);
+
 static  OS_MEM_POOL     osTimerObjPool;
 static  OS_TIMER        osTimerObjTbl[OS_MAX_TIMERS];
 
-/*============================ PRIVATE PROTOTYPES ============================*/
-static void os_timeout_callback(timer_t *timer);
+static timer_engine_t myOSTimerEngine;
 
 /*============================ PRIVATE VARIABLES =============================*/
 /*============================ PUBLIC VARIABLES ==============================*/
@@ -88,8 +90,7 @@ void osHeapFree(void *mem)
 
 
 
-
-static void os_timeout_callback(timer_t *timer)
+static void os_timer_engine_timeout_callback(timer_t *timer)
 {
     OS_TIMER *osTimer;
     
@@ -125,11 +126,16 @@ OS_ERR osTimerCreat(OS_HANDLE          *pTimerHandle,
     timer->OSTimerObjHeader.OSObjType = OS_OBJ_TYPE_SET(7);
     timer->OSTimerOpt = 0;
     if (initValue != 0u && reloadValue == 0u) {
-        timer->OSTimerOpt |= opt;
+        // nothing to do. 
+        // OS_TIMER_OPT_AUTO_DELETE can be used only when this condition is matched.
+    } else {
+        // disable OS_TIMER_OPT_AUTO_DELETE option.
+        opt &= ~(OS_TIMER_OPT_AUTO_DELETE);
     }
+    timer->OSTimerOpt           = opt;
     timer->OSTimerRoutine       = fnRoutine;
     timer->OSTimerRoutineArg    = RoutineArg;
-    timer_config(&timer->OSTimerData, initValue, reloadValue);
+    timer_config(&myOSTimerEngine, &timer->OSTimerData, initValue, reloadValue);  // Note: the timer will start if initValue is not 0.
     *pTimerHandle = timer;
     OSExitCriticalSection();
 
@@ -141,30 +147,33 @@ OS_ERR osTimerDelete(OS_HANDLE hTimer)
     OS_TIMER *timer = (OS_TIMER *)hTimer;
 
     OSEnterCriticalSection();
-    timer_stop(&timer->OSTimerData);
+    timer_stop(&myOSTimerEngine, &timer->OSTimerData);
     pool_free(&osTimerObjPool, timer);
     OSExitCriticalSection();
 
     return OS_ERR_NONE;
 }
 
+// if the timer is not running, the timer will start after calling this;
+// if the timer is running, the timer will restart with the time value timeMS.
 OS_ERR osTimerStart(OS_HANDLE hTimer, UINT32 timeMS)
 {
     OS_TIMER *timer = (OS_TIMER *)hTimer;
     
     OSEnterCriticalSection();
-    timer_start(&timer->OSTimerData, timeMS);
+    timer_start(&myOSTimerEngine, &timer->OSTimerData, timeMS);
     OSExitCriticalSection();
     
     return OS_ERR_NONE;
 }
 
+// stop a timer no matter whether it is running.
 OS_ERR osTimerStop(OS_HANDLE hTimer)
 {
     OS_TIMER *timer = (OS_TIMER *)hTimer;
     
     OSEnterCriticalSection();
-    timer_stop(&timer->OSTimerData);
+    timer_stop(&myOSTimerEngine, &timer->OSTimerData);
     OSExitCriticalSection();
     
     return OS_ERR_NONE;
@@ -172,9 +181,22 @@ OS_ERR osTimerStop(OS_HANDLE hTimer)
 
 
 
+
+
+
+static void timer_engine_safe_atom_start(void)
+{
+	OSEnterCriticalSection();
+}
+
+static void timer_engine_safe_atom_end(void)
+{
+    OSExitCriticalSection();
+}
+
 ROOT void OSSysTickHook(void)
 {
-    timer_tick();
+    timer_engine_tick(&myOSTimerEngine);
 }
 
 ROOT void OSInitHookEnd(void)
@@ -182,7 +204,7 @@ ROOT void OSInitHookEnd(void)
     memset((char *)osTimerObjTbl, 0, sizeof(osTimerObjTbl));
     pool_init(&osTimerObjPool, UBOUND(osTimerObjTbl), osTimerObjTbl, sizeof(OS_TIMER));
     
-    timer_init(&os_timeout_callback);
+    timer_engine_init(&myOSTimerEngine, &os_timer_engine_timeout_callback, &timer_engine_safe_atom_start, &timer_engine_safe_atom_end);
 }
 
 

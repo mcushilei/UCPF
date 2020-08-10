@@ -64,6 +64,10 @@ void OSTaskCreateHook(OS_TCB *ptcb)
 }
 #endif
 
+WEAK void task_exit_callback(void)
+{
+}
+
 /*!
  *! \Brief       TASK RETURN HOOK
  *!
@@ -83,6 +87,9 @@ void OSTaskReturnHook(OS_TCB *ptcb, void *parg)
 {
     (void)ptcb;
     (void)parg;
+#if defined(__DEBUG__)
+    task_exit_callback();
+#endif    
 }
 #endif
 
@@ -116,6 +123,8 @@ void OSTaskStatHook(void)
 }
 #endif
 
+extern void task_switch_callback(void);
+
 /*!
  *! \Brief       TASK SWITCH HOOK
  *!
@@ -138,6 +147,9 @@ void OSTaskSwHook(void)
 #if OS_STAT_EN > 0u
     osCtxSwCtr++;                           //!< Increment context switch counter
 #endif
+#if defined(__DEBUG__)
+    task_switch_callback();
+#endif    
 }
 #endif
 
