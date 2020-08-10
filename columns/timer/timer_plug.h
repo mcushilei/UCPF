@@ -1,5 +1,5 @@
 /*******************************************************************************
- *  Copyright(C)2019 by Dreistein<mcu_shilei@hotmail.com>                     *
+ *  Copyright(C)2016-2020 by Dreistein<mcu_shilei@hotmail.com>                *
  *                                                                            *
  *  This program is free software; you can redistribute it and/or modify it   *
  *  under the terms of the GNU Lesser General Public License as published     *
@@ -22,16 +22,10 @@
 #include "./app_cfg.h"
 
 /*============================ MACROS ========================================*/
+#define TIMER_COUNTER_BIT_WIDTH     (32u)
+#define TIMER_WHEEL_BIT_WIDTH       (4u)        //< must be the power of 2.
+
 /*============================ MACROFIED FUNCTIONS ===========================*/
-
-#ifndef TIMER_CRITICAL_SECTION_BEGIN
-#define TIMER_CRITICAL_SECTION_BEGIN()
-#endif
-
-#ifndef TIMER_CRITICAL_SECTION_END
-#define TIMER_CRITICAL_SECTION_END()
-#endif
-
 /*============================ TYPES =========================================*/
 /*============================ PUBLIC VARIABLES ==============================*/
 /*============================ PUBLIC PROTOTYPES =============================*/
