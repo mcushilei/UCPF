@@ -29,14 +29,25 @@
 #define OS_COUNT_LEADING_ZERO(__B)      (osLZTbl[__B])
 #endif
 
+#define OS_SYS_TIMER_WHEEL_BIT_MASK        \
+    ((1u << OS_SYS_TIMER_WHEEL_BIT_WIDTH) - 1u)
+        
+#define OS_SYS_TIMER_WHEEL_COUNTER_MASK(n) \
+    ((uint32_t)OS_SYS_TIMER_WHEEL_BIT_MASK << ( (n) * OS_SYS_TIMER_WHEEL_BIT_WIDTH) )
+        
+#define OS_SYS_TIMER_WHEEL_COUNTER_VALUE(c, n) \
+    (( (c) >> ((n) * OS_SYS_TIMER_WHEEL_BIT_WIDTH) ) & OS_SYS_TIMER_WHEEL_BIT_MASK)
+
 /*============================ TYPES =========================================*/
 /*============================ PROTOTYPES ====================================*/
 static  void    os_init_obj_pool(void);
 
 static  void    os_init_misc(void);
 
-static void OS_WaitListInsert(OS_TCB *ptcb);
-static void OS_WaitListRemove(OS_TCB *ptcb);
+static  int     os_sys_timer_insert(OS_TCB *ptcb);
+
+static  void    OS_PendTask(OS_TCB *ptcb);
+static  void    OS_UnpendTask(OS_TCB *ptcb);
 
 #if OS_STAT_EN > 0u
 static  void    os_init_statistics_task(void);
@@ -131,9 +142,6 @@ static void os_init_misc(void)
 
     osTCBCur        = NULL;
     osTCBNextRdy    = NULL;
-    
-    osSysClockScanHand     = 0u;
-    osSysClockScanHandOld  = 0u;
 
     osIntNesting            = 0u;                       //!< Clear the interrupt nesting counter
     osLockNesting           = 0u;                       //!< Clear the scheduling lock counter
@@ -147,8 +155,12 @@ static void os_init_misc(void)
     osTaskStatRunning       = FALSE;                    //!< Statistic task is not ready
 #endif
     
-    list_init(&osWaitList);
-    list_init(&osWaitRunoverList);
+	for (int j = 0u; j < OS_SYS_TIMER_WHEEL_NUM; j++) {
+		for (int i = 0u; i < OS_SYS_TIMER_WHEEL_BUCKET_NUM; i++) {
+			list_init(&osSysTimerWheel[j][i]);
+		}
+	}
+    osSysClockCounter = 0u;
 }
 
 static void os_init_obj_pool(void)
@@ -343,9 +355,7 @@ void osStart(void)
 }
 
 /*
- *  \brief      ADD TASK TO EVENT WAIT LIST
- * 
- *  \remark     Add a task to an event's wait list.
+ *  \brief      Add a task to an event's wait list.
  * 
  *  \param      pobj     a pointer to the object that this wati-node wait for.
  *              plist    a pointer to the list this node will be inserted to.
@@ -372,6 +382,13 @@ static void OS_WaitNodeInsert(OS_WAITABLE_OBJ *pobj, OS_LIST_NODE *plist, OS_WAI
     list_insert(&pnode->OSWaitNodeList, addTo->Prev);    //!< add wait node to the end of wait NODE list.
 }
 
+/*
+ *  \brief      Remove a task from an event's wait list.
+ * 
+ *  \param      ptcb     a pointer to the task's TCB.
+ * 
+ *  \return     none
+ */
 void OS_WaitNodeRemove(OS_TCB *ptcb)
 {
     OS_WAIT_NODE *pnode = ptcb->OSTCBWaitNode;
@@ -381,62 +398,35 @@ void OS_WaitNodeRemove(OS_TCB *ptcb)
     ptcb->OSTCBWaitNode = NULL;
 }
 
-
 /*
- *  \brief      ADD TASK TO WAIT LIST
+ *  \brief      PEND TASK
  * 
  *  \param      ptcb     is a pointer to the task to remove.
  * 
  *  \return     none
  * 
- *  \note       1) This function assumes that interrupts are DISABLED.
+ *  \note       1) interrupts shell be DISABLED.
  */
-static void OS_WaitListInsert(OS_TCB *ptcb)
+static void OS_PendTask(OS_TCB *ptcb)
 {
-    OS_LIST_NODE *pList;
-    
     if (ptcb->OSTCBDly == OS_INFINITE) {
         return;
     }
 
-
-    ptcb->OSTCBDly += osSysClockScanHand;
-    
-    //! to see to which list to add.
-    if (ptcb->OSTCBDly > osSysClockScanHand) {
-        pList = &osWaitList;
-    } else {
-        pList = &osWaitRunoverList;
-    }
-
-    //! is this list empty?
-    if (pList->Next == pList) {     //! yes.
-        list_insert(&ptcb->OSTCBList, pList);
-    } else {                        //! no.
-        OS_TCB          *tcb;
-        OS_LIST_NODE    *iterate;
-
-        //! insert sort.
-        for (iterate = pList->Next; iterate != pList; iterate = iterate->Next) {
-            tcb = CONTAINER_OF(iterate, OS_TCB, OSTCBList);
-            if (ptcb->OSTCBDly < tcb->OSTCBDly) {
-                break;
-            }
-        }
-        list_insert(&ptcb->OSTCBList, iterate->Prev);
-    }
+    ptcb->OSTCBDly += osSysClockCounter;
+    os_sys_timer_insert(ptcb);
 }
 
 /*
- *  \brief      REMOVE TASK FROM WAIT LIST
+ *  \brief      UNPEND TASK
  * 
  *  \param      ptcb     is a pointer to the task to remove.
  * 
  *  \return     none
  * 
- *  \note       1) This function assumes that interrupts are DISABLED.
+ *  \note       1) interrupts shell be DISABLED.
  */
-static void OS_WaitListRemove(OS_TCB *ptcb)
+static void OS_UnpendTask(OS_TCB *ptcb)
 {
     list_remove(&ptcb->OSTCBList);      //!< remove from wait list.
     ptcb->OSTCBDly = 0u;
@@ -478,7 +468,7 @@ void OS_WaitableObjAddTask( OS_WAITABLE_OBJ    *pobj,
     
     OS_WaitNodeInsert(pobj, plist, pnode);
     OS_SchedulerUnreadyTask(osTCBCur);
-    OS_WaitListInsert(osTCBCur);
+    OS_PendTask(osTCBCur);
 }
 
 /*
@@ -516,10 +506,33 @@ OS_TCB *OS_WaitableObjRdyTask(OS_WAITABLE_OBJ *pobj, OS_LIST_NODE *plist, UINT8 
     pnode->OSWaitNodeECB        = NULL;
     pnode->OSWaitNodeTCB        = NULL;
     
-    OS_WaitNodeRemove(ptcb);                //!< Remove this task from event's wait-node list
-    OS_WaitListRemove(ptcb);
-    OS_SchedulerReadyTask(ptcb);            //!< Put task in the ready list
+    OS_WaitNodeRemove(ptcb);                //!< Remove this task from event's wait-node-list
+    OS_UnpendTask(ptcb);                //!< Remove this task from wait-list.
+    OS_SchedulerReadyTask(ptcb);            //!< Put task in the ready-list
     return ptcb;
+}
+
+static int os_sys_timer_insert(OS_TCB *ptcb)
+{
+    int wheel;
+    UINT32 wheelCounter;
+    UINT32 a;
+    
+    //! to find which wheel the timer will be inserted.
+    a = osSysClockCounter ^ ptcb->OSTCBDly;
+    for (wheel = OS_SYS_TIMER_WHEEL_NUM - 1; wheel >= 0; wheel--) {
+        if ((a & OS_SYS_TIMER_WHEEL_COUNTER_MASK(wheel)) != 0u) {
+            break;
+        }
+    }
+    //! in case the timer is timeout. (where osSysClockCounter == ptcb->OSTCBDly)
+    if (wheel < 0) {
+        return wheel;
+    }
+
+    wheelCounter = OS_SYS_TIMER_WHEEL_COUNTER_VALUE(ptcb->OSTCBDly, wheel);
+    list_insert(&ptcb->OSTCBList, osSysTimerWheel[wheel][wheelCounter].Prev);
+    return wheel;
 }
 
 /*
@@ -535,9 +548,9 @@ OS_TCB *OS_WaitableObjRdyTask(OS_WAITABLE_OBJ *pobj, OS_LIST_NODE *plist, UINT8 
  */
 void osSysTick(void)
 {
-    OS_LIST_NODE       *list;
     OS_TCB             *ptcb;
-    OS_WAIT_NODE       *pnode;
+    int                 wheel;
+    UINT32              wheelCounter;
 
 
     if (osRunning == FALSE) {
@@ -549,56 +562,24 @@ void osSysTick(void)
 #endif
     
     OSEnterCriticalSection();
-    //! increase osSysClockScanHand
-    ++osSysClockScanHand;
-    //! so osSysClockScanHandOld is always AFTER osSysClockScanHand by 1 tick.
-    if (osSysClockScanHandOld > osSysClockScanHand) {
-        //! the hand has made a revolution.
-        //! all ptcb in osWaitList has timeout.
-        while (!LIST_IS_EMPTY(osWaitList)) {
-            list = osWaitList.Next;
-            ptcb = CONTAINER_OF(list, OS_TCB, OSTCBList);
-            pnode = ptcb->OSTCBWaitNode;
 
-            pnode->OSWaitNodeRes = OS_STAT_PEND_TO; //!< Indicate PEND timeout.
-
-            OS_WaitNodeRemove(ptcb);
-            OS_WaitListRemove(ptcb);
-            OS_SchedulerReadyTask(ptcb);
-        }
-
-        if (!LIST_IS_EMPTY(osWaitRunoverList)) {
-            //! move all emements form osWaitRunoverList to osWaitList.
-            OS_LIST_NODE *pHead = osWaitRunoverList.Next;
-            OS_LIST_NODE *pTail = osWaitRunoverList.Prev;
-            osWaitRunoverList.Next = &osWaitRunoverList;
-            osWaitRunoverList.Prev = &osWaitRunoverList;
-            osWaitList.Next = pHead;
-            osWaitList.Prev = pTail;
-            pHead->Prev = &osWaitList;
-            pTail->Next = &osWaitList;
-        }
-    }
+    ++osSysClockCounter;
     
-    //! to see if there is any ptcb overflow in the list.
-    while (!LIST_IS_EMPTY(osWaitList)) {
-        list = osWaitList.Next;
-        ptcb = CONTAINER_OF(list, OS_TCB, OSTCBList);
-                                                        //! to see if it has overflow.
-        if (ptcb->OSTCBDly > osSysClockScanHand) {      //!< no.
-            break;                                      //!< The list has been sorted, so we just break.
-        } else {                                        //!< yes
-            pnode = ptcb->OSTCBWaitNode;
-
-            pnode->OSWaitNodeRes = OS_STAT_PEND_TO;     //! to indicate that it has been timeout.
-
-            OS_WaitNodeRemove(ptcb);
-            OS_WaitListRemove(ptcb);
-            OS_SchedulerReadyTask(ptcb);
+    for (wheel = OS_SYS_TIMER_WHEEL_NUM - 1; wheel >= 0; wheel--) {
+        wheelCounter = OS_SYS_TIMER_WHEEL_COUNTER_VALUE(osSysClockCounter, wheel);
+        while (!LIST_IS_EMPTY(osSysTimerWheel[wheel][wheelCounter])) {
+            ptcb = CONTAINER_OF(osSysTimerWheel[wheel][wheelCounter].Next, OS_TCB, OSTCBList);
+            list_remove(&ptcb->OSTCBList);
+            
+            if (os_sys_timer_insert(ptcb) < 0) {
+                ptcb->OSTCBWaitNode->OSWaitNodeRes = OS_STAT_PEND_TO;     //! to indicate that it has been timeout.
+                OS_WaitNodeRemove(ptcb);
+                OS_UnpendTask(ptcb);
+                OS_SchedulerReadyTask(ptcb);
+            }
         }
     }
 
-    osSysClockScanHandOld = osSysClockScanHand;
     OSExitCriticalSection();
 }
 
@@ -642,7 +623,7 @@ OS_ERR osTaskSleep(UINT32 ticks)
     osTCBCur->OSTCBDly      = ticks;
     osTCBCur->OSTCBWaitNode = &node;            //!< it is just a tag that this task is not owned by the scheduler.
     OS_SchedulerUnreadyTask(osTCBCur);          //!< remove this task from scheduler's ready list.
-    OS_WaitListInsert(osTCBCur);                //!< add task to waiting task list.
+    OS_PendTask(osTCBCur);                //!< add task to waiting task list.
     OSExitCriticalSection();
     OS_SchedulerRunNext();                      //!< Find next task to run!
 
@@ -806,9 +787,13 @@ static void *os_task_statistics(void *parg)
 
 #if (OS_STAT_TASK_STK_CHK_EN > 0u)
         OSEnterCriticalSection();
-        for (list = osWaitList.Next; list != &osWaitList; list = list->Next) {
-            ptcb = CONTAINER_OF(list, OS_TCB, OSTCBList);
-            OS_TaskStkChk(ptcb);
+        for (int i = 0; i < OS_SYS_TIMER_WHEEL_NUM; i++) {
+            for (int j = 0; j < OS_SYS_TIMER_WHEEL_BUCKET_NUM; j++) {
+                for (list = osSysTimerWheel[i][j].Next; list != &osSysTimerWheel[i][j]; list = list->Next) {
+                    ptcb = CONTAINER_OF(list, OS_TCB, OSTCBList);
+                    OS_TaskStkChk(ptcb);
+                }
+            }
         }
         OSExitCriticalSection();
 #endif
@@ -987,7 +972,7 @@ void OS_TaskStop(void)
     //! set free from any object that it suspend for.
     if (ptcb->OSTCBWaitNode != NULL) {      //!< Is this task suspend for any object?
         OS_WaitNodeRemove(ptcb);            //!< Yes, set it free from that object ...
-        OS_WaitListRemove(ptcb);            //!< ... and set it free from wait list.
+        OS_UnpendTask(ptcb);            //!< ... and set it free from wait list.
     } else {                                //!< NO. It's owned by scheduler ...
         OS_SchedulerUnreadyTask(ptcb);      //!< ... set it free from scheduler.
     }
@@ -1112,7 +1097,7 @@ UINT32 osGetSysTickCount(void)
     UINT32 value;
     
     OSEnterCriticalSection();
-    value = osSysClockScanHand;
+    value = osSysClockCounter;
     OSExitCriticalSection();
     return value;
 }

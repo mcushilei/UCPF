@@ -62,7 +62,9 @@
 #define OS_STAT_PEND_TO             (1u)      //!< Pending timed out
 #define OS_STAT_PEND_ABORT          (2u)      //!< Pending aborted
 
-
+#define OS_SYS_TIMER_WHEEL_BIT_WIDTH    (4u)
+#define OS_SYS_TIMER_WHEEL_NUM          (32u / OS_SYS_TIMER_WHEEL_BIT_WIDTH)
+#define OS_SYS_TIMER_WHEEL_BUCKET_NUM   (1u << OS_SYS_TIMER_WHEEL_BIT_WIDTH)        //!< 2 ^ OS_SYS_TIMER_WHEEL_BIT_WIDTH
 
 /*
  *  OBJECT TYPES
@@ -291,14 +293,10 @@ OS_EXT  OS_MEM_POOL     osTCBFreePool;                                  //!< Lis
 OS_EXT  OS_TCB          osTCBFreeTbl[OS_MAX_TASKS + OS_N_SYS_TASKS];    //!< Table of free TCBs
 
 
-OS_EXT  OS_LIST_NODE    osWaitList;                             //!< list of waiting task.
-OS_EXT  OS_LIST_NODE    osWaitRunoverList;
-
 //! TODO: adjust the value when it wakes up from sleep.
-OS_EXT  volatile UINT32 osSysClockScanHand;
-OS_EXT  volatile UINT32 osSysClockScanHandOld;
-
-
+OS_EXT  OS_LIST_NODE    osSysTimerWheel[OS_SYS_TIMER_WHEEL_NUM][OS_SYS_TIMER_WHEEL_BUCKET_NUM];
+OS_EXT  volatile UINT32 osSysClockCounter;
+    
 OS_EXT  OS_PRIO_BITMAP  osRdyBitmap;                            //!< bitmap that indicates which priority has threads that are ready to run.
 OS_EXT  OS_LIST_NODE    osRdyList[OS_MAX_PRIO_LEVELS];          //!< Table of pointers to TCB of active task
 
