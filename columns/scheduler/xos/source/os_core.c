@@ -1,5 +1,5 @@
 /*******************************************************************************
- *  Copyright(C)2017-2019 by Dreistein<mcu_shilei@hotmail.com>                *
+ *  Copyright(C)2017-2020 by Dreistein<mcu_shilei@hotmail.com>                *
  *                                                                            *
  *  This program is free software; you can redistribute it and/or modify it   *
  *  under the terms of the GNU Lesser General Public License as published     *
@@ -31,9 +31,6 @@
 
 #define OS_SYS_TIMER_WHEEL_BIT_MASK        \
     ((1u << OS_SYS_TIMER_WHEEL_BIT_WIDTH) - 1u)
-        
-#define OS_SYS_TIMER_WHEEL_COUNTER_MASK(n) \
-    ((uint32_t)OS_SYS_TIMER_WHEEL_BIT_MASK << ( (n) * OS_SYS_TIMER_WHEEL_BIT_WIDTH) )
         
 #define OS_SYS_TIMER_WHEEL_COUNTER_VALUE(c, n) \
     (( (c) >> ((n) * OS_SYS_TIMER_WHEEL_BIT_WIDTH) ) & OS_SYS_TIMER_WHEEL_BIT_MASK)
@@ -506,29 +503,29 @@ OS_TCB *OS_WaitableObjRdyTask(OS_WAITABLE_OBJ *pobj, OS_LIST_NODE *plist, UINT8 
     pnode->OSWaitNodeECB        = NULL;
     pnode->OSWaitNodeTCB        = NULL;
     
-    OS_WaitNodeRemove(ptcb);                //!< Remove this task from event's wait-node-list
+    OS_WaitNodeRemove(ptcb);            //!< Remove this task from event's wait-node-list
     OS_UnpendTask(ptcb);                //!< Remove this task from wait-list.
-    OS_SchedulerReadyTask(ptcb);            //!< Put task in the ready-list
+    OS_SchedulerReadyTask(ptcb);        //!< Put task in the ready-list
     return ptcb;
 }
 
 static int os_sys_timer_insert(OS_TCB *ptcb)
 {
-    int wheel;
+    UINT32 wheel;
     UINT32 wheelCounter;
     UINT32 a;
+    UINT32 b;
+    
+    if (osSysClockCounter == ptcb->OSTCBDly) {
+        return -1;
+    }
     
     //! to find which wheel the timer will be inserted.
     a = osSysClockCounter ^ ptcb->OSTCBDly;
-    for (wheel = OS_SYS_TIMER_WHEEL_NUM - 1; wheel >= 0; wheel--) {
-        if ((a & OS_SYS_TIMER_WHEEL_COUNTER_MASK(wheel)) != 0u) {
-            break;
-        }
-    }
-    //! in case the timer is timeout. (where osSysClockCounter == ptcb->OSTCBDly)
-    if (wheel < 0) {
-        return wheel;
-    }
+    U32_COUNT_LEADING_ZEROS(a, b);
+	b = 32u - 1u - b;
+	U32_COUNT_TRAILING_ZEROS(OS_SYS_TIMER_WHEEL_BIT_WIDTH, a);
+	wheel = b >> a;     //!< wheel = b / OS_SYS_TIMER_WHEEL_BIT_WIDTH
 
     wheelCounter = OS_SYS_TIMER_WHEEL_COUNTER_VALUE(ptcb->OSTCBDly, wheel);
     list_insert(&ptcb->OSTCBList, osSysTimerWheel[wheel][wheelCounter].Prev);
@@ -621,9 +618,9 @@ OS_ERR osTaskSleep(UINT32 ticks)
     
     OSEnterCriticalSection();
     osTCBCur->OSTCBDly      = ticks;
-    osTCBCur->OSTCBWaitNode = &node;            //!< it is just a tag that this task is not owned by the scheduler.
+    osTCBCur->OSTCBWaitNode = &node;            //!< a node is used just as a tag that this task is not owned by the scheduler.
     OS_SchedulerUnreadyTask(osTCBCur);          //!< remove this task from scheduler's ready list.
-    OS_PendTask(osTCBCur);                //!< add task to waiting task list.
+    OS_PendTask(osTCBCur);                      //!< pend the task.
     OSExitCriticalSection();
     OS_SchedulerRunNext();                      //!< Find next task to run!
 
