@@ -25,9 +25,11 @@
 #include "./timer.h"
 
 /*============================ MACROS ========================================*/
-#define TIMER_WHEEL_BIT_MASK        ((1u << TIMER_WHEEL_BIT_WIDTH) - 1u)
-#define TIMER_WHEEL_COUNTER_MASK(n) ((uint32_t)TIMER_WHEEL_BIT_MASK << ((n) * TIMER_WHEEL_BIT_WIDTH))
-#define TIMER_WHEEL_COUNTER_VALUE(c, n) (( (c) >> ((n) * TIMER_WHEEL_BIT_WIDTH) ) & TIMER_WHEEL_BIT_MASK)
+#define TIMER_WHEEL_BIT_MASK        \
+    ((1u << TIMER_WHEEL_BIT_WIDTH) - 1u)
+        
+#define TIMER_WHEEL_COUNTER_VALUE(c, n) \
+    (( (c) >> ((n) * TIMER_WHEEL_BIT_WIDTH) ) & TIMER_WHEEL_BIT_MASK)
 
 /*============================ MACROFIED FUNCTIONS ===========================*/
 /*============================ TYPES =========================================*/
@@ -38,21 +40,21 @@
 
 static bool insert_timer(timer_engine_t *timerEngine, timer_t *timer)
 {
-    int wheel;
-    uint32_t wheelCounter;
-    uint32_t a;
+    uint32_t    wheel;
+    uint32_t    wheelCounter;
+    uint32_t    a;
+    uint32_t    b;
+    
+    if (timerEngine->Counter == timer->Value) {
+        return false;
+    }
     
     //! to find which wheel the timer will be inserted.
     a = timerEngine->Counter ^ timer->Value;
-    for (wheel = TIMER_WHEEL_NUM - 1; wheel >= 0; wheel--) {
-        if ((a & TIMER_WHEEL_COUNTER_MASK(wheel)) != 0u) {
-            break;
-        }
-    }
-    //! in case the timer is timeout. (where timerEngine->Counter == timer->Value)
-    if (wheel < 0) {
-        return false;
-    }
+    U32_COUNT_LEADING_ZEROS(a, b);
+	b = 32u - 1u - b;
+	U32_COUNT_TRAILING_ZEROS(TIMER_WHEEL_BIT_WIDTH, a);
+	wheel = b >> a;     //!< wheel = b / TIMER_WHEEL_BIT_WIDTH
 
     wheelCounter = TIMER_WHEEL_COUNTER_VALUE(timer->Value, wheel);
     list_insert(&timer->ListNode, timerEngine->TimerWheel[wheel][wheelCounter].Prev);
@@ -77,30 +79,15 @@ static void timer_timeout_processs(timer_engine_t *timerEngine, timer_t *timer)
     }
 }
 
-static void timer_wheel_timeout_processs(timer_engine_t *timerEngine, uint32_t wheel, uint32_t wheelCounter)
-{
-    timer_t *timer;
-	list_node_t *node;
-    
-    while (!LIST_IS_EMPTY(timerEngine->TimerWheel[wheel][wheelCounter])) {
-        node = timerEngine->TimerWheel[wheel][wheelCounter].Next;
-        timer = CONTAINER_OF(node, timer_t, ListNode);
-        list_remove(node);
-        
-        if (!insert_timer(timerEngine, timer)) {
-            timer_timeout_processs(timerEngine, timer);
-        }
-    }
-}
-
 /*
  \note  This function should be called periodically by a clock source normally in
         a interrupt of a hardware counter/timer.
  */
 void timer_engine_tick(timer_engine_t *timerEngine)
 {
-    int wheel;
-    uint32_t wheelCounter;
+    int         wheel;
+    uint32_t    wheelCounter;
+    timer_t    *timer;
 
     if (!timerEngine->IsRunning) {
         return;
@@ -111,11 +98,16 @@ void timer_engine_tick(timer_engine_t *timerEngine)
     //! first increase timerEngine->Counter
     ++timerEngine->Counter;
 
-    //! then check if there is any timer that has been timeout.   
+    //! then check if there is any timer that has been timeout.
     for (wheel = TIMER_WHEEL_NUM - 1; wheel >= 0; wheel--) {
         wheelCounter = TIMER_WHEEL_COUNTER_VALUE(timerEngine->Counter, wheel);
-        if (!LIST_IS_EMPTY(timerEngine->TimerWheel[wheel][wheelCounter])) {
-            timer_wheel_timeout_processs(timerEngine, wheel, wheelCounter);
+        while (!LIST_IS_EMPTY(timerEngine->TimerWheel[wheel][wheelCounter])) {
+            timer = CONTAINER_OF(timerEngine->TimerWheel[wheel][wheelCounter].Next, timer_t, ListNode);
+            list_remove(&timer->ListNode);
+            
+            if (!insert_timer(timerEngine, timer)) {
+                timer_timeout_processs(timerEngine, timer);
+            }
         }
     }
     

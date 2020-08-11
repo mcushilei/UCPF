@@ -22,7 +22,6 @@
 #include "./app_cfg.h"
 
 /*============================ MACROS ========================================*/
-#define TIMER_COUNTER_BIT_WIDTH     (32u)
 #define TIMER_WHEEL_BIT_WIDTH       (4u)        //< must be the power of 2.
 
 /*============================ MACROFIED FUNCTIONS ===========================*/

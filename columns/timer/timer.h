@@ -25,7 +25,7 @@
 #include "../list/list.h"
 
 /*============================ MACROS ========================================*/
-#define TIMER_WHEEL_NUM             (TIMER_COUNTER_BIT_WIDTH / TIMER_WHEEL_BIT_WIDTH)
+#define TIMER_WHEEL_NUM             (32u / TIMER_WHEEL_BIT_WIDTH)
 #define TIMER_WHEEL_BUCKET_NUM      (1u << TIMER_WHEEL_BIT_WIDTH)
 
 /*============================ MACROFIED FUNCTIONS ===========================*/
