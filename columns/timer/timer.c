@@ -159,6 +159,41 @@ void timer_stop(timer_engine_t *timerEngine, timer_t *timer)
 }
 
 /*
+ \brief get the value left in the next timer.
+ */
+uint32_t timer_next_expiry_left(timer_engine_t *timerEngine)
+{
+	uint32_t left = ~(uint32_t)0;
+
+	timerEngine->SafeAtomStart();
+	for (uint32_t wheel = 0; wheel < TIMER_WHEEL_NUM; wheel++) {
+		uint32_t wheelCounter = TIMER_WHEEL_COUNTER_VALUE(timerEngine->Counter, wheel);
+		for (uint32_t j = (wheelCounter + 1u) & TIMER_WHEEL_BIT_MASK;
+			(j & TIMER_WHEEL_BIT_MASK) != wheelCounter;
+			j++) {
+			if (!LIST_IS_EMPTY(timerEngine->TimerWheel[wheel][j])) {
+				//! find the smallest value left in the timer list.
+				for (list_node_t *node = timerEngine->TimerWheel[wheel][j].Next;
+					 node != &timerEngine->TimerWheel[wheel][j];
+					 node = node->Next) {
+					timer_t *timer = CONTAINER_OF(node, timer_t, ListNode);
+					uint32_t t = timer->Value - timerEngine->Counter;
+					if (t < left) {
+						left = t;
+					}
+				}
+				goto end;
+			}
+		}
+	}
+	left = 0u;
+end:
+	timerEngine->SafeAtomEnd();
+
+	return left;
+}
+
+/*
  \param [I] timer_engine_timout_fn  this callback will be called by timer_tick()
     when any timer reaches it's deadline. Do NOT do any heavy job in it.
  */

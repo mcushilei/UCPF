@@ -60,6 +60,7 @@ extern void timer_engine_tick(timer_engine_t *timerEngine);
 extern bool timer_config(timer_engine_t *timerEngine, timer_t *timer, uint32_t initValue, uint32_t reloadValue);
 extern void timer_start(timer_engine_t *timerEngine, timer_t *timer, uint32_t value);
 extern void timer_stop(timer_engine_t *timerEngine, timer_t *timer);
+extern uint32_t timer_next_expiry_left(timer_engine_t *timerEngine);
 
 #endif  //! #ifndef __COLUMNS_TIMER_H__
 /* EOF */
