@@ -79,16 +79,35 @@ static void timer_timeout_processs(timer_engine_t *timerEngine, timer_t *timer)
     }
 }
 
+static void timeout_check(timer_engine_t *timerEngine)
+{
+    int         wheel;
+    uint32_t    wheelCounter;
+
+    for (wheel = TIMER_WHEEL_NUM - 1; wheel >= 0; wheel--) {
+        
+        wheelCounter = TIMER_WHEEL_COUNTER_VALUE(timerEngine->Counter, wheel);
+        list_node_t *list = &timerEngine->TimerWheel[wheel][wheelCounter];
+        
+        while (!LIST_IS_EMPTY(list)) {
+            
+            list_node_t *node = list->Next;
+            timer_t *timer = CONTAINER_OF(node, timer_t, ListNode);
+            list_remove(&timer->ListNode);
+            
+            if (!insert_timer(timerEngine, timer)) {
+                timer_timeout_processs(timerEngine, timer);
+            }
+        }
+    }
+}
+
 /*
  \note  This function should be called periodically by a clock source normally in
         a interrupt of a hardware counter/timer.
  */
 void timer_engine_tick(timer_engine_t *timerEngine)
 {
-    int         wheel;
-    uint32_t    wheelCounter;
-    timer_t    *timer;
-
     if (!timerEngine->IsRunning) {
         return;
     }
@@ -99,17 +118,7 @@ void timer_engine_tick(timer_engine_t *timerEngine)
     ++timerEngine->Counter;
 
     //! then check if there is any timer that has been timeout.
-    for (wheel = TIMER_WHEEL_NUM - 1; wheel >= 0; wheel--) {
-        wheelCounter = TIMER_WHEEL_COUNTER_VALUE(timerEngine->Counter, wheel);
-        while (!LIST_IS_EMPTY(timerEngine->TimerWheel[wheel][wheelCounter])) {
-            timer = CONTAINER_OF(timerEngine->TimerWheel[wheel][wheelCounter].Next, timer_t, ListNode);
-            list_remove(&timer->ListNode);
-            
-            if (!insert_timer(timerEngine, timer)) {
-                timer_timeout_processs(timerEngine, timer);
-            }
-        }
-    }
+    timeout_check(timerEngine);
     
     timerEngine->SafeAtomEnd();
 }
@@ -158,39 +167,76 @@ void timer_stop(timer_engine_t *timerEngine, timer_t *timer)
     timerEngine->SafeAtomEnd();
 }
 
-/*
- \brief get the value left in the next timer.
- */
-uint32_t timer_next_expiry_left(timer_engine_t *timerEngine)
+static uint32_t next_expiry_left(timer_engine_t *timerEngine)
 {
+    uint32_t wheel = 0;
+    uint32_t wheelCounter = 0;
 	uint32_t left = ~(uint32_t)0;
 
-	timerEngine->SafeAtomStart();
-	for (uint32_t wheel = 0; wheel < TIMER_WHEEL_NUM; wheel++) {
-		uint32_t wheelCounter = TIMER_WHEEL_COUNTER_VALUE(timerEngine->Counter, wheel);
+	for (wheel = 0; wheel < TIMER_WHEEL_NUM; wheel++) {
+        
+		wheelCounter = TIMER_WHEEL_COUNTER_VALUE(timerEngine->Counter, wheel);
+        
 		for (uint32_t j = (wheelCounter + 1u) & TIMER_WHEEL_BIT_MASK;
 			(j & TIMER_WHEEL_BIT_MASK) != wheelCounter;
 			j++) {
-			if (!LIST_IS_EMPTY(timerEngine->TimerWheel[wheel][j])) {
+            
+			if (!LIST_IS_EMPTY(&timerEngine->TimerWheel[wheel][j])) {
 				//! find the smallest value left in the timer list.
-				for (list_node_t *node = timerEngine->TimerWheel[wheel][j].Next;
-					 node != &timerEngine->TimerWheel[wheel][j];
-					 node = node->Next) {
+                list_node_t *node;
+                LIST_FOR_EARCH(node, &timerEngine->TimerWheel[wheel][j]) {
+                    
 					timer_t *timer = CONTAINER_OF(node, timer_t, ListNode);
 					uint32_t t = timer->Value - timerEngine->Counter;
 					if (t < left) {
 						left = t;
 					}
 				}
-				goto end;
+				return left;
 			}
 		}
 	}
-	left = 0u;
-end:
+	return 0u;
+}
+
+/*
+ \brief get the value left in the next timer.
+ \note  this will be used in the tickless mode.
+ */
+uint32_t timer_engine_next_expiry_left(timer_engine_t *timerEngine)
+{
+    uint32_t left = 0;
+    
+	timerEngine->SafeAtomStart();
+	left = next_expiry_left(timerEngine);
 	timerEngine->SafeAtomEnd();
 
 	return left;
+}
+
+/*
+ \brief adjust the counter forward.
+ \note  this will be used in the tickless mode.
+ */
+bool timer_engine_adjust_forward(timer_engine_t *timerEngine, uint32_t value)
+{
+    bool rv = false;
+    uint32_t expiry;
+    
+    timerEngine->SafeAtomStart();
+    do {
+        expiry = next_expiry_left(timerEngine);
+        if (expiry < value) {
+            break;
+        }
+        if (expiry == value) {
+            timeout_check(timerEngine);
+        }
+        rv = true;
+    } while (0);
+    timerEngine->SafeAtomEnd();
+    
+    return rv;
 }
 
 /*
