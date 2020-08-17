@@ -209,7 +209,7 @@ OS_ERR osTaskChangePrio(OS_HANDLE taskHandle, UINT8 newprio)
 
     OSEnterCriticalSection();
 #if OS_MUTEX_EN > 0u
-    if (!LIST_IS_EMPTY(ptcb->OSTCBOwnMutexList)) {      //!< See if the task ownes any mutex.
+    if (!LIST_IS_EMPTY(&ptcb->OSTCBOwnMutexList)) {      //!< See if the task ownes any mutex.
                                                         //!< Yes. Update the priority store in the mutex(es).
         for (OS_LIST_NODE *iterate = ptcb->OSTCBOwnMutexList.Next; iterate != &ptcb->OSTCBOwnMutexList; iterate = iterate->Next) {
             OS_MUTEX *pmutex = CONTAINER_OF(iterate, OS_MUTEX, OSMutexOvlpList);

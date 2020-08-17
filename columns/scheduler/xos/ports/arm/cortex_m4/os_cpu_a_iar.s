@@ -181,7 +181,7 @@ PendSV_Handler
 
     STMDB       R0!, {R4 - R11, LR}                 ; PUSH regs r4-11 and LR on current thread's stack. R0-r3 have been saved automatically
     
-    STR         R0, [R1, #8]                        ; osTCBCur->OSTCBStkPtr = SP
+    STR         R0, [R1, #4]                        ; osTCBCur->OSTCBStkPtr = SP
 
 __NO_SAVE
     PUSH    {LR}                                    ; Save LR(EXC_RETURN value)
@@ -194,7 +194,7 @@ __NO_SAVE
     LDR         R2, [R1]
     STR         R2, [R0]
     
-    LDR         R0, [R2, #8]                        ; R0 = osTCBCur->OSTCBStkPtr;
+    LDR         R0, [R2, #4]                        ; R0 = osTCBCur->OSTCBStkPtr;
     
     LDMIA       R0!, {R4-R11, LR}                   ; POP r4-11 and r14 from new thread's stack.
 

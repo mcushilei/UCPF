@@ -108,7 +108,7 @@ static void check_date_alarm(bool isTimeout)
 {
     clock_alarm_t *pAlarm;
 
-    while (!LIST_IS_EMPTY(realClock.DateAlarm)) {
+    while (!LIST_IS_EMPTY(&realClock.DateAlarm)) {
         pAlarm = CONTAINER_OF(realClock.DateAlarm.Next, clock_alarm_t, ListNode);
         if (realClock.TickTock < pAlarm->Time) {
             break;
@@ -298,7 +298,7 @@ bool clock_init_alarm(clock_alarm_t *alarm)
     return true;
 }
 
-bool clock_add_alarm(clock_alarm_t *alarm, time24_t *time)
+bool clock_add_alarm(clock_alarm_t *alarm, const time24_t *time)
 {
     uint32_t sec = 0u;
 

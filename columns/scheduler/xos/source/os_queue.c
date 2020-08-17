@@ -198,7 +198,7 @@ OS_ERR osQueueDelete(OS_HANDLE hQueue, UINT16 opt)
         OSExitCriticalSection();
         return OS_ERR_OBJ_TYPE;
     }
-    if (!LIST_IS_EMPTY(pqueue->OSQueueEnqueueWaitList) || !LIST_IS_EMPTY(pqueue->OSQueueDequeueWaitList)) {     //!< check wait list if it's empty.
+    if (!LIST_IS_EMPTY(&pqueue->OSQueueEnqueueWaitList) || !LIST_IS_EMPTY(&pqueue->OSQueueDequeueWaitList)) {     //!< check wait list if it's empty.
         taskPend    = TRUE;
     } else {
         taskPend    = FALSE;
@@ -218,10 +218,10 @@ OS_ERR osQueueDelete(OS_HANDLE hQueue, UINT16 opt)
             OSExitCriticalSection();
             return OS_ERR_INVALID_OPT;
     }
-    while (!LIST_IS_EMPTY(pqueue->OSQueueEnqueueWaitList)) {  //!< Ready ALL suspended tasks.
+    while (!LIST_IS_EMPTY(&pqueue->OSQueueEnqueueWaitList)) {  //!< Ready ALL suspended tasks.
         OS_WaitableObjRdyTask((OS_WAITABLE_OBJ *)pqueue, &pqueue->OSQueueEnqueueWaitList, OS_STAT_PEND_ABORT);
     }
-    while (!LIST_IS_EMPTY(pqueue->OSQueueDequeueWaitList)) {  //!< Ready ALL suspended tasks.
+    while (!LIST_IS_EMPTY(&pqueue->OSQueueDequeueWaitList)) {  //!< Ready ALL suspended tasks.
         OS_WaitableObjRdyTask((OS_WAITABLE_OBJ *)pqueue, &pqueue->OSQueueDequeueWaitList, OS_STAT_PEND_ABORT);
     }
     
@@ -332,7 +332,7 @@ OS_ERR osQueueWrite(OS_HANDLE hQueue, const void *buffer, UINT32 timeout)
     }
     pqueue->OSQueueLength++;
     pqueue->OSQueueReadToken++;
-    if (!LIST_IS_EMPTY(pqueue->OSQueueDequeueWaitList)) { //!< Is any task waiting for reading?
+    if (!LIST_IS_EMPTY(&pqueue->OSQueueDequeueWaitList)) { //!< Is any task waiting for reading?
         pqueue->OSQueueReadToken--;
         OS_WaitableObjRdyTask((OS_WAITABLE_OBJ *)pqueue, &pqueue->OSQueueDequeueWaitList, OS_STAT_PEND_OK);
         OSExitCriticalSection();
@@ -429,7 +429,7 @@ OS_ERR osQueueRead(OS_HANDLE hQueue, void *buffer, UINT32 timeout)
     }
     pqueue->OSQueueLength--;
     pqueue->OSQueueWriteToken++;
-    if (!LIST_IS_EMPTY(pqueue->OSQueueEnqueueWaitList)) { //!< Is any task waiting for writing?
+    if (!LIST_IS_EMPTY(&pqueue->OSQueueEnqueueWaitList)) { //!< Is any task waiting for writing?
         pqueue->OSQueueWriteToken--;
         OS_WaitableObjRdyTask((OS_WAITABLE_OBJ *)pqueue, &pqueue->OSQueueEnqueueWaitList, OS_STAT_PEND_OK);
         OSExitCriticalSection();

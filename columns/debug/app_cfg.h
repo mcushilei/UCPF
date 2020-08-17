@@ -1,5 +1,5 @@
 /*******************************************************************************
- *  Copyright(C)2015 by Dreistein<mcu_shilei@hotmail.com>                     *
+ *  Copyright(C)2015-2020 by Dreistein<mcu_shilei@hotmail.com>                *
  *                                                                            *
  *  This program is free software; you can redistribute it and/or modify it   *
  *  under the terms of the GNU Lesser General Public License as published     *
@@ -29,12 +29,6 @@
 #define DEBUG_ROM_VAR_TYPE      
 
 /*============================ MACROFIED FUNCTIONS ===========================*/
-//-------------------------------------------------------
-// Output Method
-//-------------------------------------------------------
-#ifndef DEBUG_OUTPUT_CHAR
-    #define DEBUG_OUTPUT_CHAR(a) debug_output_char(a)
-#endif
 
 //-------------------------------------------------------
 // Int Support
@@ -107,7 +101,6 @@ typedef char _CHAR;
 
 /*============================ GLOBAL VARIABLES ==============================*/
 /*============================ PROTOTYPES ====================================*/
-extern void DEBUG_OUTPUT_CHAR(_CHAR);
 
 #endif
 /* EOF */

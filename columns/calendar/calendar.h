@@ -22,9 +22,9 @@
 #include ".\app_cfg.h"
 
 /*============================ MACROS ========================================*/
-#define SECONDS_OF_MINUTE       (60u)
-#define SECONDS_OF_HOUR         (60u * 60u)
-#define SECONDS_OF_DAY          (24u * 60u * 60u)
+#define SECONDS_OF_MINUTE       (60)
+#define SECONDS_OF_HOUR         (60 * 60)
+#define SECONDS_OF_DAY          (24 * 60 * 60)
 
 /*============================ MACROFIED FUNCTIONS ===========================*/
 /*============================ TYPES =========================================*/
@@ -65,6 +65,7 @@ extern int32_t  count_seconds_between(const time24_t *pStart, const time24_t *pE
 
 extern bool validate_date(const date_t *pDate);
 extern void correct_date(date_t *pDate);
+extern void correct_time(time24_t *pTime);
 
 #endif  //! #ifndef __CALENDAR_H__
 /* EOF */

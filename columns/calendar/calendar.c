@@ -354,7 +354,7 @@ __ADD_STATE_0:
     return true;
 }
 
-static void correct_time(time24_t *pTime)
+void correct_time(time24_t *pTime)
 {
     pTime->Hour   %= 24u;
     pTime->Minute %= 60u;
@@ -363,13 +363,10 @@ static void correct_time(time24_t *pTime)
 
 uint32_t time_to_seconds(const time24_t *pTime)
 {
-    uint32_t t, s;
+    uint32_t s = 0;
     
-    s  = 0u;
-    t  = pTime->Hour;
-    s += SECONDS_OF_HOUR * t;
-    t  = pTime->Minute;
-    s += SECONDS_OF_MINUTE * t;
+    s += SECONDS_OF_HOUR * pTime->Hour;
+    s += SECONDS_OF_MINUTE * pTime->Minute;
     s += pTime->Second;
     
     return s;
@@ -403,6 +400,43 @@ int32_t count_seconds_between(const time24_t *pStart, const time24_t *pEnd)
     s2 = time_to_seconds(pEnd);
     
     return s2 - s1;
+}
+
+// TODO: test this funtion
+bool datetime_plus_seconds(date_time_t *datetime, int32_t deltaSeconds)
+{
+    int32_t deltaDays = deltaSeconds / SECONDS_OF_DAY;
+    int32_t secondRemain;
+    
+    deltaSeconds -= deltaDays * SECONDS_OF_DAY;
+    secondRemain = time_to_seconds(&datetime->Time);
+    
+    if (deltaSeconds < 0) {
+        if ((-deltaSeconds) >= secondRemain) {
+            deltaDays--;
+            deltaSeconds = deltaSeconds + secondRemain + SECONDS_OF_DAY;
+            datetime->Hour = 0;
+            datetime->Minute = 0;
+            datetime->Second = 0;
+        } else {
+        }
+    } else {
+        if (deltaSeconds >= (SECONDS_OF_DAY - secondRemain)) {
+            deltaDays++;
+            deltaSeconds = deltaSeconds + secondRemain - SECONDS_OF_DAY;
+            datetime->Hour = 0;
+            datetime->Minute = 0;
+            datetime->Second = 0;
+        } else {
+        }
+    }
+    
+    if (!date_plus_days(&datetime->Date, deltaDays)) {
+        // we cannot support AC.
+        return false;
+    }
+    seconds_to_time(&datetime->Time, deltaSeconds);
+    return true;
 }
 
 /* EOF */

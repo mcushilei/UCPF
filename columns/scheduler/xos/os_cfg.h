@@ -1,5 +1,5 @@
 /*******************************************************************************
- *  Copyright(C)2017-2019 by Dreistein<mcu_shilei@hotmail.com>                *
+ *  Copyright(C)2017-2020 by Dreistein<mcu_shilei@hotmail.com>                *
  *                                                                            *
  *  This program is free software; you can redistribute it and/or modify it   *
  *  under the terms of the GNU Lesser General Public License as published     *
@@ -31,14 +31,14 @@
 
 #define OS_TICKS_PER_SEC        100u   //!< Set the number of ticks in one second
 
-#define OS_MAX_PRIO_LEVELS       64u   //!< Max. number of priority levels ...
+#define OS_MAX_PRIO_LEVELS       32u   //!< Max. number of priority levels ...
                                        //!< ... MUST be >= 1 and <= 256!
 
-#define OS_MAX_QUEUES            16u   //!< Max. number of queues    in your application
-#define OS_MAX_SEMAPHORES        16u   //!< Max. number of semaphore in your application
+#define OS_MAX_TASKS             12u   //!< Max. number of task      in your application
 #define OS_MAX_MUTEXES           16u   //!< Max. number of mutex     in your application
+#define OS_MAX_QUEUES            16u   //!< Max. number of queue     in your application
+#define OS_MAX_SEMAPHORES        16u   //!< Max. number of semaphore in your application
 #define OS_MAX_FLAGS             16u   //!< Max. number of flag      in your application
-#define OS_MAX_TASKS             12u   //!< Max. number of tasks     in your application
 
 
 #define OS_STAT_EN                1u   //!< Enable (1) or Disable (0) the statistics task

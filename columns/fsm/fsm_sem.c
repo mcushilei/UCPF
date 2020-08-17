@@ -153,7 +153,7 @@ fsm_err_t fsm_semaphore_release(fsm_handle_t hObject, uint16_t releaseCount)
         }
         
         //! wake up blocked tasks.
-        while ((!LIST_IS_EMPTY(pSem->TaskQueue)) && (0u != pSem->SemCounter)) {
+        while ((!LIST_IS_EMPTY(&pSem->TaskQueue)) && (0u != pSem->SemCounter)) {
             pSem->SemCounter--;
             fsm_waitable_obj_rdy_task(hObject, FSM_TASK_STATUS_PEND_OK);
         }

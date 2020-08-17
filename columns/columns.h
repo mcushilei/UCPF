@@ -40,6 +40,7 @@
 #include "./heap_memory/heap_first_fit/heap_first_fit.h"
 #include "./json_checker/json_checker.h"
 #include "./cJSON/cJSON.h"
+#include "./runtime_fault/runtime_fault.h"
 
 /*============================ MACROS ========================================*/
 /*============================ MACROFIED FUNCTIONS ===========================*/

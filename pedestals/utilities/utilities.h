@@ -58,7 +58,7 @@
         ((__N) != 0u) && (( ((__N) - 1u) & (__N) ) == 0) )
 
 #define NEXT_POEWER_OF_2(__N, __V)          do {\
-            uint32_t x = __N;                   \
+            uint32_t x = (__N);                 \
             if (IS_POWER_OF_2(x)) {             \
                 __V = x;                        \
                 break;                          \
@@ -72,7 +72,7 @@
         } while (0)
 
 #define U32_COUNT_1S(__N, __V)  do {\
-            uint32_t x = __N;                   \
+            uint32_t x = (__N);                 \
             x = (x & 0x55555555) + ((x >> 1)  & 0x55555555);\
             x = (x & 0x33333333) + ((x >> 2)  & 0x33333333);\
             x = (x & 0x0F0F0F0F) + ((x >> 4)  & 0x0F0F0F0F);\
@@ -82,7 +82,7 @@
         } while (0)
 
 #define U64_COUNT_1S(__N, __V)  do {\
-            uint64_t x = __N;                   \
+            uint64_t x = (__N);                 \
             x = (x & 0x5555555555555555) + ((x >> 1)  & 0x5555555555555555);\
             x = (x & 0x3333333333333333) + ((x >> 2)  & 0x3333333333333333);\
             x = (x & 0x0F0F0F0F0F0F0F0F) + ((x >> 4)  & 0x0F0F0F0F0F0F0F0F);\
@@ -93,7 +93,7 @@
         } while (0)
 
 #define U32_COUNT_TRAILING_ZEROS(__N, __V)  do {\
-            uint32_t x = __N;                   \
+            uint32_t x = (__N);                 \
             x = ((x - 1) | x) ^ x;              \
             x = (x & 0x55555555) + ((x >> 1)  & 0x55555555);\
             x = (x & 0x33333333) + ((x >> 2)  & 0x33333333);\
@@ -104,7 +104,7 @@
         } while (0)
 
 #define U64_COUNT_TRAILING_ZEROS(__N, __V)  do {\
-            uint64_t x = __N;                   \
+            uint64_t x = (__N);                 \
             x = ((x - 1) | x) ^ x;              \
             x = (x & 0x5555555555555555) + ((x >> 1)  & 0x5555555555555555);\
             x = (x & 0x3333333333333333) + ((x >> 2)  & 0x3333333333333333);\
@@ -116,7 +116,7 @@
         } while (0)
     
 #define U32_COUNT_LEADING_ZEROS(__N, __V)   do {\
-            uint32_t x = __N;                   \
+            uint32_t x = (__N);                 \
             x |= x >> 1;                        \
             x |= x >> 2;                        \
             x |= x >> 4;                        \

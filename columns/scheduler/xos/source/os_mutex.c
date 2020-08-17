@@ -200,7 +200,7 @@ OS_ERR osMutexDelete(OS_HANDLE hMutex, UINT16 opt)
     }
     
     //! Ready ALL tasks that are waiting for this mutex.
-    while (!LIST_IS_EMPTY(pmutex->OSMutexWaitList)) {
+    while (!LIST_IS_EMPTY(&pmutex->OSMutexWaitList)) {
         OS_WaitableObjRdyTask((OS_WAITABLE_OBJ *)pmutex, &pmutex->OSMutexWaitList, OS_STAT_PEND_ABORT);
     }
     
@@ -386,7 +386,7 @@ OS_ERR osMutexPost(OS_HANDLE hMutex)
     }
     list_remove(&pmutex->OSMutexOvlpList);
     
-    if (!LIST_IS_EMPTY(pmutex->OSMutexWaitList)) {              //!< Is any task waiting for the mutex?...
+    if (!LIST_IS_EMPTY(&pmutex->OSMutexWaitList)) {              //!< Is any task waiting for the mutex?...
         ptcb = OS_WaitableObjRdyTask((OS_WAITABLE_OBJ *)pmutex, //!< ... Yes, Make the HPT waiting for the mutex ready
                                      &pmutex->OSMutexWaitList,
                                      OS_STAT_PEND_OK);

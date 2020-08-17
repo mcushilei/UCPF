@@ -564,7 +564,7 @@ void osSysTick(void)
     
     for (wheel = OS_SYS_TIMER_WHEEL_NUM - 1; wheel >= 0; wheel--) {
         wheelCounter = OS_SYS_TIMER_WHEEL_COUNTER_VALUE(osSysClockCounter, wheel);
-        while (!LIST_IS_EMPTY(osSysTimerWheel[wheel][wheelCounter])) {
+        while (!LIST_IS_EMPTY(&osSysTimerWheel[wheel][wheelCounter])) {
             ptcb = CONTAINER_OF(osSysTimerWheel[wheel][wheelCounter].Next, OS_TCB, OSTCBList);
             list_remove(&ptcb->OSTCBList);
             
@@ -934,7 +934,7 @@ static void os_unlock_mutex(OS_MUTEX *pmutex)
 
     list_remove(&pmutex->OSMutexOvlpList);
     
-    if (!LIST_IS_EMPTY(pmutex->OSMutexWaitList)) {                  //!< Is any task waiting for the mutex?
+    if (!LIST_IS_EMPTY(&pmutex->OSMutexWaitList)) {                  //!< Is any task waiting for the mutex?
         ptcb = OS_WaitableObjRdyTask((OS_WAITABLE_OBJ *)pmutex,     //!< Yes, Make HPT waiting for mutex ready
                                     &pmutex->OSMutexWaitList,
                                     OS_STAT_PEND_OK);
@@ -976,7 +976,7 @@ void OS_TaskStop(void)
 
     //! to ensure task releases all mutex(es) that it has had got. This should be a fatal error???
 #if OS_MUTEX_EN > 0u
-    while (!LIST_IS_EMPTY(ptcb->OSTCBOwnMutexList)) {
+    while (!LIST_IS_EMPTY(&ptcb->OSTCBOwnMutexList)) {
         OS_LIST_NODE *list = ptcb->OSTCBOwnMutexList.Next;
         OS_MUTEX *pmutex = CONTAINER_OF(list, OS_MUTEX, OSMutexOvlpList);
         os_unlock_mutex(pmutex);

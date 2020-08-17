@@ -159,7 +159,7 @@ OS_ERR osSemDelete(OS_HANDLE hSemaphore, UINT16 opt)
             return OS_ERR_INVALID_OPT;
     }
     
-    while (!LIST_IS_EMPTY(psem->OSSemWaitList)) {  //!< Ready ALL suspended tasks.
+    while (!LIST_IS_EMPTY(&psem->OSSemWaitList)) {  //!< Ready ALL suspended tasks.
         OS_WaitableObjRdyTask((OS_WAITABLE_OBJ *)psem, &psem->OSSemWaitList, OS_STAT_PEND_ABORT);
     }
     psem->OSSemObjHead.OSObjType = OS_OBJ_TYPE_UNUSED;
@@ -298,8 +298,8 @@ OS_ERR osSemPost(OS_HANDLE hSemaphore, UINT16 cnt)
         return OS_ERR_SEM_OVF;
     }
     psem->OSSemToken += cnt;
-    if (!LIST_IS_EMPTY(psem->OSSemWaitList)) {          //!< if any tasks waiting for semaphore
-        while (!LIST_IS_EMPTY(psem->OSSemWaitList)) {
+    if (!LIST_IS_EMPTY(&psem->OSSemWaitList)) {          //!< if any tasks waiting for semaphore
+        while (!LIST_IS_EMPTY(&psem->OSSemWaitList)) {
             psem->OSSemToken--;                         //!< decrement semaphore count...
             OS_WaitableObjRdyTask((OS_WAITABLE_OBJ *)psem, &psem->OSSemWaitList, OS_STAT_PEND_OK);    //!< ...and ready HPT waiting on it.
         }
@@ -348,8 +348,8 @@ OS_ERR osSemPendAbort(OS_HANDLE hSemaphore)
         OSExitCriticalSection();
         return OS_ERR_OBJ_TYPE;
     }
-    if (!LIST_IS_EMPTY(psem->OSSemWaitList)) {           //!< See if any task waiting on semaphore?
-        while (!LIST_IS_EMPTY(psem->OSSemWaitList)) {    //!< Yes, ready ALL tasks waiting on semaphore
+    if (!LIST_IS_EMPTY(&psem->OSSemWaitList)) {           //!< See if any task waiting on semaphore?
+        while (!LIST_IS_EMPTY(&psem->OSSemWaitList)) {    //!< Yes, ready ALL tasks waiting on semaphore
             OS_WaitableObjRdyTask((OS_WAITABLE_OBJ *)psem, &psem->OSSemWaitList, OS_STAT_PEND_ABORT);
         }
         OSExitCriticalSection();
@@ -398,7 +398,7 @@ OS_ERR osSemSet(OS_HANDLE hSemaphore, UINT16 cnt)
         OSExitCriticalSection();
         return OS_ERR_OBJ_TYPE;
     }
-    if (!LIST_IS_EMPTY(psem->OSSemWaitList)) {      //!< See if task(s) waiting?
+    if (!LIST_IS_EMPTY(&psem->OSSemWaitList)) {      //!< See if task(s) waiting?
         OSExitCriticalSection();
         return OS_ERR_INVALID_OPT;
     }

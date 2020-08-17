@@ -1,5 +1,5 @@
 /*******************************************************************************
- *  Copyright(C)2015-2017 by Dreistein<mcu_shilei@hotmail.com>                *
+ *  Copyright(C)2015-2020 by Dreistein<mcu_shilei@hotmail.com>                *
  *                                                                            *
  *  This program is free software; you can redistribute it and/or modify it   *
  *  under the terms of the GNU Lesser General Public License as published     *
@@ -16,22 +16,17 @@
 *******************************************************************************/
 
 
-//! \note do not move this pre-processor statement to other places
-#define __SERVICE_DEBUG_C__
 
 /*============================ INCLUDES ======================================*/
-#include ".\app_cfg.h"
-
-
-#if DEBUG_FOMART_STRING == ENABLED
-#   include <stdio.h>
-#endif
+#include "./app_cfg.h"
+#include "./debug_plug.h"
+#include "./debug.h"
 
 /*============================ MACROS ========================================*/
 /*============================ MACROFIED FUNCTIONS ===========================*/
 #define DEBUG_PRINT_EOL {                            \
-    DEBUG_OUTPUT_CHAR('\r');                         \
-    DEBUG_OUTPUT_CHAR('\n');                         \
+    debug_output_char('\r');                         \
+    debug_output_char('\n');                         \
 }
 
 #if DEBUG_DISALLOW_FILE_INFO == ENABLED
@@ -39,23 +34,13 @@
 #else 
 #   define DEBUG_PRINT_LOCATION(__FILE, __LINE) {   \
         debug_print_string(__FILE);                 \
-        DEBUG_OUTPUT_CHAR(':');                     \
+        debug_output_char(':');                     \
         debug_print_number_unsigned(__LINE);        \
-        DEBUG_OUTPUT_CHAR('>');                     \
+        debug_output_char('>');                     \
     }
 #endif
 
 /*============================ TYPES =========================================*/
-//-------------------------------------------------------
-// Internal Structs Needed
-//-------------------------------------------------------
-enum {
-    DEBUG_DISPLAY_STYLE_INT      = 0,
-    DEBUG_DISPLAY_STYLE_UINT,
-    DEBUG_DISPLAY_STYLE_HEX,
-    DEBUG_DISPLAY_STYLE_POINTER,
-};
-
 /*============================ PROTOTYPES ====================================*/
 static void debug_print_number_signed(const _SINT number);
 static void debug_print_number_unsigned(const _UINT number);
@@ -96,7 +81,7 @@ void debug_print_string(const _CHAR *string)
 {
     if (string != NULL) {
         for (; *string != '\0'; string++) {
-            DEBUG_OUTPUT_CHAR(*string);
+            debug_output_char(*string);
         }
     }
 }
@@ -120,7 +105,7 @@ static void debug_print_number_unsigned(const _UINT number)
 
     // now mod and print, then divide divisor
     do {
-        DEBUG_OUTPUT_CHAR('0' + (number / divisor % 10));
+        debug_output_char('0' + (number / divisor % 10));
         divisor /= 10;
     } while (divisor > 0);
 }
@@ -130,7 +115,7 @@ static void debug_print_number_unsigned(const _UINT number)
 static void debug_print_number_signed(const _SINT number)
 {
     if (number < 0) {
-        DEBUG_OUTPUT_CHAR('-');
+        debug_output_char('-');
         debug_print_number_unsigned((_UINT)-number);
     } else {
         debug_print_number_unsigned((_UINT)number);
@@ -150,9 +135,9 @@ static void debug_print_number_hex(const _UINT number, const _UINT lengthToPrint
     for (; l; --l) {
         nibble = (number >> ((l - 1u) * 4u)) & 0x0Fu;
         if (nibble <= 9) {
-            DEBUG_OUTPUT_CHAR('0' + nibble);
+            debug_output_char('0' + nibble);
         } else {
-            DEBUG_OUTPUT_CHAR('A' - 10u + nibble);
+            debug_output_char('A' - 10u + nibble);
         }
     }
 }
@@ -186,12 +171,12 @@ static void debug_print_mask(const _UINT mask, const _UINT number)
     for (i = 0; i < DEBUG_INT_WIDTH; i++) {
         if (current_bit & mask) {
             if (current_bit & number) {
-                DEBUG_OUTPUT_CHAR('1');
+                debug_output_char('1');
             } else {
-                DEBUG_OUTPUT_CHAR('0');
+                debug_output_char('0');
             }
         } else {
-            DEBUG_OUTPUT_CHAR('X');
+            debug_output_char('X');
         }
         current_bit = current_bit >> 1;
     }
@@ -211,18 +196,18 @@ void debug_print_expected_actual_string(const _CHAR *expected, const _CHAR *actu
 {
     debug_print_string(DebugStrExpected);
     if (expected != NULL) {
-        DEBUG_OUTPUT_CHAR('\"');
+        debug_output_char('\"');
         debug_print_string(expected);
-        DEBUG_OUTPUT_CHAR('\"');
+        debug_output_char('\"');
     } else {
       debug_print_string(DebugStrNull);          
     }
 
     debug_print_string(DebugStrWas);
     if (actual != NULL) {
-        DEBUG_OUTPUT_CHAR('\"');
+        debug_output_char('\"');
         debug_print_string(actual);
-        DEBUG_OUTPUT_CHAR('\"');
+        debug_output_char('\"');
     } else {
       debug_print_string(DebugStrNull);          
     }

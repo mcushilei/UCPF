@@ -309,7 +309,7 @@ static fsm_tcb_t *fsm_task_dequeue(list_node_t *pTaskQueue)
 {
     fsm_tcb_t *pTask;
     
-    if (LIST_IS_EMPTY(*pTaskQueue)) {
+    if (LIST_IS_EMPTY(pTaskQueue)) {
         return NULL;
     }
     
@@ -366,7 +366,7 @@ fsm_tcb_t *fsm_waitable_obj_rdy_task(fsm_waitable_obj_t *pObj, uint8_t pendStat)
 {
     fsm_tcb_t *pTask;
     
-    if (LIST_IS_EMPTY(pObj->TaskQueue)) {
+    if (LIST_IS_EMPTY(&pObj->TaskQueue)) {
         return NULL;
     }
     

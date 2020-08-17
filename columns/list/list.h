@@ -1,5 +1,5 @@
 /*******************************************************************************
- *  Copyright(C)2015-2019 by Dreistein<mcu_shilei@hotmail.com>                *
+ *  Copyright(C)2015-2020 by Dreistein<mcu_shilei@hotmail.com>                *
  *                                                                            *
  *  This program is free software; you can redistribute it and/or modify it   *
  *  under the terms of the GNU Lesser General Public License as published     *
@@ -23,13 +23,24 @@
 
 /*============================ MACROS ========================================*/
 /*============================ MACROFIED FUNCTIONS ===========================*/
-#define LIST_IS_EMPTY(__NODE)       ( (__NODE).Next == &(__NODE) )
+#define LIST_IS_EMPTY(__LIST)               ( (__LIST)->Next == (__LIST) )
 
+#define LIST_NODE_IS_HEAD(__NODE, __LIST)   ( (__NODE) == (__LIST) )
+
+#define LIST_FOR_EARCH(__NODE, __LIST) \
+    for (__NODE = (__LIST)->Next; __NODE != (__LIST); __NODE = __NODE->Next)
+
+#define LIST_FOR_EACH_SAFE(__NODE, __NEXT, __LIST)          \
+	for (__NODE = (__LIST)->Next, __NEXT = __NODE->Next;  \
+        __NODE != (__LIST);                                   \
+		__NODE = __NEXT, __NEXT = __NODE->Next)
+        
 /*============================ TYPES =========================================*/
-DEF_STRUCTURE(list_node_t)
+typedef struct list_node_t list_node_t;
+struct list_node_t {
     list_node_t       *Prev;
     list_node_t       *Next;
-END_DEF_STRUCTURE(list_node_t)
+};
 
 /*============================ PUBLIC VARIABLES ==============================*/
 /*============================ PUBLIC PROTOTYPES =============================*/

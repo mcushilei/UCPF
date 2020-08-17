@@ -107,12 +107,6 @@ enum {
 #define OS_QUEUE_STOP_ENQUEUE       (0x0004)
 
 
-/*
- *  \brief  ELEMENTARY TYPE
- */
-
-typedef UINT16                  OS_BITMAP_UINT;
-
 
 typedef struct list_node_t      OS_LIST_NODE;
 typedef struct pool_t           OS_MEM_POOL;
@@ -128,18 +122,17 @@ typedef struct os_wait_node     OS_WAIT_NODE;
 
 /*
  *  \brief  all kernel's object shall begin with this header.
- *  \note   This structure shall be always kept 32bits length.
+ *  \note   This structure shall be always kept aligned to sizeof(void *).
  */
 typedef union {
     UINT16              OSObjType;
-    UINT32              OSObj32;
     void               *OSObjPointer;
 } OS_OBJ_HEAD;
 
 //! Ready bitmap
 struct os_prio_bitmap {
-    OS_BITMAP_UINT      Y;
-    OS_BITMAP_UINT      X[OS_BITMAP_TBL_SIZE];
+    UINT16      Y;
+    UINT16      X[OS_BITMAP_TBL_SIZE];
 };
 
 //! wait-node object.
@@ -165,11 +158,6 @@ struct os_waitable_obj {
 #if (OS_QUEUE_EN > 0u) && (OS_MAX_QUEUES > 0u)
 struct os_queue {
     OS_OBJ_HEAD         OSQueueObjHead;
-
-    UINT16              OSQueueOpt;
-    
-    UINT16              OSQueueWriteToken;
-    UINT16              OSQueueReadToken;
     
     OS_LIST_NODE        OSQueueEnqueueWaitList;     //!< List of wait-node of task waiting on it.
     OS_LIST_NODE        OSQueueDequeueWaitList;     //!< List of wait-node of task waiting on it.
@@ -180,6 +168,11 @@ struct os_queue {
     UINT16              OSQueueHead;
     UINT16              OSQueueTail;
     UINT16              OSQueueLength;              //!< The amount of items in queue.
+
+    UINT16              OSQueueOpt;
+    
+    UINT16              OSQueueWriteToken;
+    UINT16              OSQueueReadToken;
 };
 #endif
 
@@ -189,10 +182,10 @@ struct os_queue {
 #if (OS_SEM_EN > 0u) && (OS_MAX_SEMAPHORES > 0u)
 struct os_sem {
     OS_OBJ_HEAD         OSSemObjHead;
-
-    UINT16              OSSemToken;                 //!< Semaphore count.
     
     OS_LIST_NODE        OSSemWaitList;              //!< List of wait-node of task waiting on it.
+
+    UINT16              OSSemToken;                 //!< Semaphore count.
 };
 #endif
 
@@ -202,17 +195,17 @@ struct os_sem {
 #if (OS_MUTEX_EN > 0u) && (OS_MAX_MUTEXES > 0u)
 struct os_mutex {
     OS_OBJ_HEAD         OSMutexObjHeader;
-
-    UINT16              OSMutexCnt;                 //!< recursive counter. to allow a task to get the same mutex multiple times.
-
-    UINT8               OSMutexOwnerPrio;           //!< Backup of mutex owner's prio, for owner's prio may be changed to a higher one.
-    UINT8               OSMutexCeilingPrio;         //!< Mutex's ceiling prio.
     
     OS_LIST_NODE        OSMutexWaitList;            //!< List of wait-node of task waiting on this mutex.
 
     OS_LIST_NODE        OSMutexOvlpList;            //!< list of mutex. to allow a task to own multiple mutex.
     
     OS_TCB             *OSMutexOwnerTCB;            //!< Pointer to mutex owner's TCB
+
+    UINT16              OSMutexCnt;                 //!< recursive counter. to allow a task to get the same mutex multiple times.
+
+    UINT8               OSMutexOwnerPrio;           //!< Backup of mutex owner's prio, for owner's prio may be changed to a higher one.
+    UINT8               OSMutexCeilingPrio;         //!< Mutex's ceiling prio.
 };
 #endif
 
@@ -222,10 +215,10 @@ struct os_mutex {
 #if (OS_FLAG_EN > 0u) && (OS_MAX_FLAGS > 0u)
 struct os_flag {
     OS_OBJ_HEAD         OSFlagObjHeader;
-
-    UINT16              OSFlagFlags;                //!< Flag options
     
     OS_LIST_NODE        OSFlagWaitList;             //!< List of wait-node of task waiting on it.
+
+    UINT16              OSFlagFlags;                //!< Flag bits.
 };
 #endif
 
@@ -235,32 +228,32 @@ struct os_flag {
 struct os_tcb {
     OS_OBJ_HEAD         OSTCBObjHeader;
 
-    UINT32              OSTCBDly;                   //!< Ticks to wait for.
-    
     //! Caution: always keeping 8 bytes offsets from here!
     CPU_STK            *OSTCBStkPtr;                //!< Stack point
-#if OS_TASK_PROFILE_EN > 0u || OS_TASK_STACK_ON_HEAP_EN > 0
+#if (OS_TASK_PROFILE_EN > 0u) || (OS_TASK_STACK_ON_HEAP_EN > 0u)
     CPU_STK            *OSTCBStkBase;               //!< Base address of the task stack
 #endif
     
     OS_WAIT_NODE       *OSTCBWaitNode;
-
-    OS_LIST_NODE        OSTCBList;                  //!< TCB list for scheduler.
     
 #if (OS_MUTEX_EN > 0u) && (OS_MAX_MUTEXES > 0u)
     OS_LIST_NODE        OSTCBOwnMutexList;
 #endif
+
+    OS_LIST_NODE        OSTCBList;                  //!< TCB list for scheduler.
     
-    UINT16              OSTCBOpt;                   //!< Task options as passed by osTaskCreate()
+    UINT32              OSTCBDly;                   //!< Ticks to pend for.
     
-    UINT8               OSTCBPrio;                  //!< Task priority (0 == highest)
+    UINT16              OSTCBOpt;                   //!< Task options (as passed by osTaskCreate())
+    
+    UINT8               OSTCBPrio;                  //!< Task priority (0 -> highest)
 
     
 #if OS_TASK_PROFILE_EN > 0u
     const char         *OSTCBName;
+    UINT32              OSTCBCtxSwCtr;              //!< Number of times the task was switched in
     UINT16              OSTCBStkSize;               //!< Size of task stack (in number of stack elements)
     UINT16              OSTCBStkUsed;               //!< Number of BYTES used from the stack
-    UINT32              OSTCBCtxSwCtr;              //!< Number of times the task was switched in
 #endif
     
 };
@@ -335,8 +328,6 @@ void        OS_SchedulerPrio       (void);
 void        OS_SchedulerNext       (void);
 void        OS_SchedulerRunPrio    (void);
 void        OS_SchedulerRunNext    (void);
-void        OS_LockSched           (void);
-void        OS_UnlockSched         (void);
 
 #if OS_STAT_TASK_STK_CHK_EN > 0u
 void        OS_TaskStkChk          (OS_TCB         *ptcb);

@@ -506,10 +506,10 @@ static bool print_number(const cJSON * const item, printbuffer * const output_bu
         length = snprintf((char*)number_buffer, 26, "%1.4g", d);        //%1.15g
 
         /* Check whether the original double can be recovered */
-        if ((sscanf((char*)number_buffer, "%lg", &test) != 1) || ((double)test != d))
+        if ((sscanf((char*)number_buffer, "%lf", &test) != 1) || ((double)test != d))
         {
             /* If not, print with 17 decimal places of precision */
-            length = snprintf((char*)number_buffer, 26, "%1.6g", d);    //%1.17g
+            length = snprintf((char*)number_buffer, 26, "%1.11g", d);   //%1.17g
         }
     }
 

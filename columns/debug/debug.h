@@ -1,5 +1,5 @@
 /*******************************************************************************
- *  Copyright(C)2015-2017 by Dreistein<mcu_shilei@hotmail.com>                *
+ *  Copyright(C)2015-2020 by Dreistein<mcu_shilei@hotmail.com>                *
  *                                                                            *
  *  This program is free software; you can redistribute it and/or modify it   *
  *  under the terms of the GNU Lesser General Public License as published     *
@@ -16,18 +16,12 @@
 *******************************************************************************/
 
 
-#ifndef __SERVICE_DEBUG_C__
 #ifndef __SERVICE_DEBUG_H__
 #define __SERVICE_DEBUG_H__
 
 /*============================ INCLUDES ======================================*/
 #include ".\app_cfg.h"
-
-#if DEBUG_USE_PRINTF == ENABLED
-#   include <stdio.h>
-#else
-#   include "..\string\string.h"
-#endif
+#include <stdio.h>
 
 /*============================ MACROS ========================================*/
 /** lower two bits indicate debug level
@@ -57,34 +51,33 @@
 #define DEBUG_ANY           DEBUG_ON
 
 /*============================ MACROFIED FUNCTIONS ===========================*/
-#if ((DEBUG_MSG_ENABLE == ENABLED) || (DEBUG_ASSERT_ENABLE == ENABLED)) && DEBUG_DISALLOW_FILE_INFO == DISABLED
-#   define DEBUG_DEFINE_THIS_FILE(string)       \
+#if defined(__DEBUG__)
+#   define THIS_FILE_NAME(string)       \
         static DEBUG_ROM_VAR_TYPE const _CHAR __ThisFileName[] = string
 #else
-#   define DEBUG_DEFINE_THIS_FILE(string)
+#   define THIS_FILE_NAME(string)
 #endif
 
 //-------------------------------------------------------
-// Debug Asserts
+// Debug Log Message
+//-------------------------------------------------------
+#if !defined(__DEBUG_PRINTF)
+#   define __DEBUG_PRINTF(...)      printf(##__VA_ARGS__)
+#endif
+
+#if defined(__DEBUG__)
+#   define DBG_LOG(fmt, ...)        __DEBUG_PRINTF("\r\n[D][%s:%d]"fmt, __ThisFileName, __LINE__, ##__VA_ARGS__)
+#else
+#   define DBG_LOG(fmt, ...)
+#endif
+
+//-------------------------------------------------------
+// Debug Log Message with Filter
 //-------------------------------------------------------
 /** print debug message only if debug message type is enabled...
  *  AND is of correct type AND is at least DEBUG_LEVEL
  */
-#if DEBUG_USE_PRINTF == ENABLED
-#   define __DEBUG_PRINT(...)                   printf(__VA_ARGS__)
-#else
-#   define __DEBUG_PRINT(__STR, ...)            debug_print_string(__STR)
-#endif
-
-#if DEBUG_DISALLOW_FILE_INFO == ENABLED
-#   define __DEBUG_ASSERT(condition, line, ...) do {\
-        if (!(condition)) {                         \
-            debug_failure_captured((void *)0, 0);   \
-            __VA_ARGS__                             \
-        }                                           \
-    } while (0);
-
-#   define __DEBUG_MSG(ctrl, line, ...)         do {\
+#define __DEBUG_FILTER(ctrl, line, ...)         do {\
         if (( (ctrl) & (DEBUG_ON)) &&               \
             ( (ctrl) & (DEBUG_TYPES_ON)) &&         \
             (((ctrl) & (DEBUG_LEVEL_MASK)) >= DEBUG_MIN_LEVEL)) {\
@@ -95,40 +88,25 @@
                 }                                   \
         }                                           \
     } while(0);
-#else
-#   define __DEBUG_ASSERT(condition, line, ...) do {    \
-        if (!(condition)) {                             \
-            debug_failure_captured(__ThisFileName, line);\
-            __VA_ARGS__                                 \
-        }                                               \
-    } while (0);
-
-#   define __DEBUG_MSG(ctrl, line, ...)         do {    \
-        if (( (ctrl) & (DEBUG_ON)) &&                   \
-            ( (ctrl) & (DEBUG_TYPES_ON)) &&             \
-            (((ctrl) & (DEBUG_LEVEL_MASK)) >= DEBUG_MIN_LEVEL)) {\
-                debug_msg_output(__ThisFileName, line); \
-                __VA_ARGS__                             \
-                if ((ctrl) & DEBUG_HALT) {              \
-                    debug_trap();                       \
-                }                                       \
-        }                                               \
-    } while(0);
-#endif
-
-#if defined(__DEBUG__)
-#   define DEBUG_PRINT(...)                 __DEBUG_PRINT(__VA_ARGS__)
-#else
-#   define DEBUG_PRINT(...)
-#endif
 
 #if DEBUG_MSG_ENABLE == ENABLED
-#   define DEBUG_MSG(ctrl, ...)             __DEBUG_MSG(ctrl, __LINE__, __VA_ARGS__)
+#   define DEBUG_MSG(ctrl, ...)             __DEBUG_FILTER(ctrl, __LINE__, __VA_ARGS__)
 #else
 #   define DEBUG_MSG(ctrl, ...)
 #endif
             
+//-------------------------------------------------------
+// Debug Asserts
+//-------------------------------------------------------
 #if DEBUG_ASSERT_ENABLE == ENABLED
+
+#   define __DEBUG_ASSERT(condition, line, ...)    do {\
+        if (!(condition)) {                         \
+            debug_failure_captured((void *)0, 0);   \
+            __VA_ARGS__                             \
+        }                                           \
+    } while (0);
+
 #   define DEBUG_ASSERT(condition, ...)     __DEBUG_ASSERT(condition, __LINE__, __VA_ARGS__)
 
 #   define DEBUG_ASSERT_NOT_NULL(pointer, ...)                      \
@@ -219,5 +197,4 @@ extern void debug_trap              (void);
 extern void debug_exit_trap         (void);
 
 #endif      //!< #ifndef __SERVICE_DEBUG_H__
-#endif      //!< #ifndef __SERVICE_DEBUG_C__
 /* EOF */

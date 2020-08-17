@@ -153,7 +153,7 @@ OS_ERR osFlagDelete(OS_HANDLE hFlag, UINT16 opt)
         OSExitCriticalSection();
         return OS_ERR_OBJ_TYPE;
     }
-    if (!LIST_IS_EMPTY(pflag->OSFlagWaitList)) {    //!< Is any tasks taskPend on this flag...
+    if (!LIST_IS_EMPTY(&pflag->OSFlagWaitList)) {    //!< Is any tasks taskPend on this flag...
         taskPend    = TRUE;                         //!< ...Yes
         taskSched   = TRUE;
     } else {
@@ -175,7 +175,7 @@ OS_ERR osFlagDelete(OS_HANDLE hFlag, UINT16 opt)
              return OS_ERR_INVALID_OPT;
     }
     
-    while (!LIST_IS_EMPTY(pflag->OSFlagWaitList)) {  //!< Ready ALL tasks task pend for this flag.
+    while (!LIST_IS_EMPTY(&pflag->OSFlagWaitList)) {  //!< Ready ALL tasks task pend for this flag.
         OS_WaitableObjRdyTask((OS_WAITABLE_OBJ *)pflag, &pflag->OSFlagWaitList, OS_STAT_PEND_ABORT);
     }
     pflag->OSFlagObjHeader.OSObjType      = OS_OBJ_TYPE_UNUSED;
@@ -310,8 +310,8 @@ OS_ERR osFlagSet(OS_HANDLE hFlag)
         return OS_ERR_OBJ_TYPE;
     }
     pflag->OSFlagFlags |= OS_FLAG_STATUS_BIT;               //!< Set the flags.
-    if (!LIST_IS_EMPTY(pflag->OSFlagWaitList)) {            //!< See if any task is waiting for this flag.
-        while (!LIST_IS_EMPTY(pflag->OSFlagWaitList)) {     //!< Yes, Ready ALL tasks waiting for this flag.
+    if (!LIST_IS_EMPTY(&pflag->OSFlagWaitList)) {            //!< See if any task is waiting for this flag.
+        while (!LIST_IS_EMPTY(&pflag->OSFlagWaitList)) {     //!< Yes, Ready ALL tasks waiting for this flag.
             OS_WaitableObjRdyTask((OS_WAITABLE_OBJ *)pflag, &pflag->OSFlagWaitList, OS_STAT_PEND_OK);
         }
         if (pflag->OSFlagFlags & OS_FLAG_MANUAL_RESET_BIT) {    //!< Is this a auto-reset flag?

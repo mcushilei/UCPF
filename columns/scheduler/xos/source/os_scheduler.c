@@ -79,7 +79,7 @@ void OS_SchedulerUnreadyTask(OS_TCB *ptcb)
     prio = ptcb->OSTCBPrio;
     
     list_remove(&ptcb->OSTCBList);
-    if (LIST_IS_EMPTY(osRdyList[prio])) {
+    if (LIST_IS_EMPTY(&osRdyList[prio])) {
         OS_BitmapClr(&osRdyBitmap, prio);
     }
 }
