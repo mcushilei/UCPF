@@ -1,5 +1,5 @@
 /*******************************************************************************
- *  Copyright(C)2018 by Dreistein<mcu_shilei@hotmail.com>                     *
+ *  Copyright(C)2020 by Dreistein<mcu_shilei@hotmail.com>                     *
  *                                                                            *
  *  This program is free software; you can redistribute it and/or modify it   *
  *  under the terms of the GNU Lesser General Public License as published     *
@@ -15,39 +15,20 @@
  *  along with this program; if not, see http://www.gnu.org/licenses/.        *
 *******************************************************************************/
 
-//! Do not move this pre-processor statement to other places
-#ifndef __UCPF_COLUMNS_H__
-#define __UCPF_COLUMNS_H__
+#ifndef __DEADLINE_PLUG_H__
+#define __DEADLINE_PLUG_H__
 
 /*============================ INCLUDES ======================================*/
-#include ".\app_cfg.h"
-#include ".\calendar\calendar.h"
-#include ".\clock\clock.h"
-#include ".\codec\codec.h"
-#include ".\debug\debug.h"
-#include ".\event_fsm\event_fsm.h"
-#include ".\fifo\fifo.h"
-#include ".\fsm\fsm.h"
-#include ".\geometry\geometry.h"
-#include ".\hash\hash.h"
-#include ".\list\list.h"
-#include ".\pool\pool.h"
-#include ".\queue\queue.h"
-#include ".\scheduler\os.h"
-#include ".\string\string.h"
-#include ".\timer\timer.h"
-#include ".\ttp\ttp.h"
-#include "./heap_memory/heap_first_fit/heap_first_fit.h"
-#include "./json_checker/json_checker.h"
-#include "./cJSON/cJSON.h"
-#include "./runtime_fault/runtime_fault.h"
-#include "./deadline/deadline.h"
+#include "./app_cfg.h"
 
 /*============================ MACROS ========================================*/
 /*============================ MACROFIED FUNCTIONS ===========================*/
 /*============================ TYPES =========================================*/
-/*============================ GLOBAL VARIABLES ==============================*/
-/*============================ PROTOTYPES ====================================*/
+/*============================ PUBLIC VARIABLES ==============================*/
+/*============================ PUBLIC PROTOTYPES =============================*/
+extern void dead_line_get_tick(uint32_t *value);
+extern uint32_t dead_line_ms_to_tick(uint32_t timeMS);
+extern uint32_t dead_line_tick_to_ms(uint32_t ticks);
 
-#endif  //!< #ifndef __UCPF_COLUMNS_H__
+#endif  //!< #ifndef __DEADLINE_PLUG_H__
 /* EOF */
