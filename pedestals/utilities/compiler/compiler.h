@@ -34,9 +34,10 @@
 #endif
 
 #include <stdint.h>     //!< integer type
-#include <stddef.h>     //!< NULL
+#include <stddef.h>     //!< NULL, size_t, offsetof
 #include <stdbool.h>    //!< bool
 #include <limits.h>     //!< CHAR_BIT, xxx_MAX, xxx_MIN
+#include <string.h>     //!< memcpy, memset, strlen, strcpy
 
 /*============================ MACROS ========================================*/
 /*============================ MACROFIED FUNCTIONS ===========================*/

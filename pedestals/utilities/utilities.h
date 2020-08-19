@@ -183,6 +183,14 @@
         LFSM_STATE_END(state_2)
     LFSM_END(test_fsm)
 */
+
+#if defined(__DEBUG__)
+#   define THIS_FILE_NAME(string)       \
+        static const char __ThisFileName[] = string
+#else
+#   define THIS_FILE_NAME(string)
+#endif
+
 /*============================ TYPES =========================================*/
 /*============================ GLOBAL VARIABLES ==============================*/
 /*============================ PROTOTYPES ====================================*/

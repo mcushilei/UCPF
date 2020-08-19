@@ -36,6 +36,8 @@
 
 //! \brief none standard memory types
 #if     __IS_COMPILER_VS__
+#	include <vcruntime.h>	//!< for NULL.
+
 #   define NO_INIT          
 #   define INLINE           inline
 #   define WEAK
