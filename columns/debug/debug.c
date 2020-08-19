@@ -19,6 +19,13 @@
 
 /*============================ INCLUDES ======================================*/
 #include "./app_cfg.h"
+
+#if !defined(DEBUG_CONFIG_FILE)
+#include "./debug_config.h"
+#else
+#include DEBUG_CONFIG_FILE
+#endif
+
 #include "./debug_plug.h"
 #include "./debug.h"
 
@@ -59,6 +66,32 @@ static volatile _CHAR exitTrap = 0;
 
 /*============================ GLOBAL VARIABLES ==============================*/
 /*============================ IMPLEMENTATION ================================*/
+
+#if defined(DEBUG_PRINTF_ALT)
+
+#if !defined(DEBUG_STD_PRINTF)
+/*
+ * Make dummy function to prevent NULL pointer dereferences before
+ * debug_printf has been set by calling debug_set_printf().
+ */
+static int debug_printf_uninit( const char *format, ... )
+{
+    ((void) format);
+    return( 0 );
+}
+#define DEBUG_STD_PRINTF    debug_printf_uninit
+#endif /* !DEBUG_STD_PRINTF */
+
+int (*debug_printf)( const char *, ... ) = DEBUG_STD_PRINTF;
+
+int debug_set_printf( int (*printf_func)( const char *, ... ) )
+{
+    debug_printf = printf_func;
+    return( 0 );
+}
+#endif /* DEBUG_PRINTF_ALT */
+
+
 int debug_string_compare(const _CHAR *expected, const _CHAR *actual)
 {
     if (expected && actual) {

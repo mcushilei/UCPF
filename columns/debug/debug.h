@@ -51,22 +51,45 @@
 #define DEBUG_ANY           DEBUG_ON
 
 /*============================ MACROFIED FUNCTIONS ===========================*/
-#if defined(__DEBUG__)
-#   define THIS_FILE_NAME(string)       \
-        static DEBUG_ROM_VAR_TYPE const _CHAR __ThisFileName[] = string
+
+#if defined(DEBUG_PRINTF_ALT)
+/*
+ * The function pointers for printf
+ */
+extern int (*debug_printf)( const char *format, ... );
+
+/**
+ * \brief               This function dynamically configures the printf
+ *                      function that is called when the debug_printf()
+ *                      function is invoked.
+ *
+ * \param printf_func   The \c printf function implementation.
+ *
+ * \return              \c 0 on success.
+ */
+int debug_set_printf( int (*printf_func)( const char *, ... ) );
+
+#else /* !DEBUG_PRINTF_ALT */
+
+#if defined(DEBUG_PRINTF_MACRO)
+#define debug_printf     DEBUG_PRINTF_MACRO
 #else
-#   define THIS_FILE_NAME(string)
+#define debug_printf     printf
+#endif /* DEBUG_PRINTF_MACRO */
+
+#endif /* DEBUG_PRINTF_ALT */
+
+#ifdef __DEBUG__
+#define RTT_LOG(fmt, ...)  debug_printf("\r\n[I][%s:%d]"fmt, __ThisFileName, __LINE__, ##__VA_ARGS__)
+#else
+#define RTT_LOG(fmt, ...)  debug_printf("\r\n[I]"fmt, ##__VA_ARGS__)
 #endif
 
 //-------------------------------------------------------
 // Debug Log Message
 //-------------------------------------------------------
-#if !defined(__DEBUG_PRINTF)
-#   define __DEBUG_PRINTF(...)      printf(##__VA_ARGS__)
-#endif
-
 #if defined(__DEBUG__)
-#   define DBG_LOG(fmt, ...)        __DEBUG_PRINTF("\r\n[D][%s:%d]"fmt, __ThisFileName, __LINE__, ##__VA_ARGS__)
+#   define DBG_LOG(fmt, ...)        debug_printf("\r\n[D][%s:%d]"fmt, __ThisFileName, __LINE__, ##__VA_ARGS__)
 #else
 #   define DBG_LOG(fmt, ...)
 #endif

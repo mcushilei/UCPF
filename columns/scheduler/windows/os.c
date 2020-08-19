@@ -37,13 +37,15 @@ CRITICAL_SECTION __globalCriticalSection;
 static HANDLE hTimer = NULL;
 static HANDLE hTimerQueue = NULL;
 
+static timer_engine_t myOSTimerEngine;
+
 /*============================ IMPLEMENTATION ================================*/
 
 
 static VOID CALLBACK timer_routine(PVOID lpParam, BOOLEAN isTimeOut)
 {
     if (isTimeOut) {
-        timer_tick();
+        timer_engine_tick(&myOSTimerEngine);
     }
 }
 
@@ -86,13 +88,47 @@ static bool os_tick_stop(void)
     return true;
 }
 
+static void timer_engine_safe_atom_start(void)
+{
+	OS_CRITICAL_SECTION_BEGIN();
+}
+
+static void timer_engine_safe_atom_end(void)
+{
+    OS_CRITICAL_SECTION_END();
+}
+
+typedef struct os_timer_t OS_TIMER;
+
+struct os_timer_t {
+    timer_t             OSTimerData;
+    OS_TIMER_ROUTINE   *OSTimerRoutine;
+    void               *OSTimerRoutineArg;
+    UINT16              OSTimerOpt;
+};
+
+static void os_timer_timeout_callback(timer_t *timer)
+{
+    OS_TIMER *osTimer;
+    
+    osTimer = CONTAINER_OF(timer, OS_TIMER, OSTimerData);
+
+    if (NULL != osTimer->OSTimerRoutine) {
+        osTimer->OSTimerRoutine(osTimer->OSTimerRoutineArg);
+    }
+    
+    if (osTimer->OSTimerOpt & OS_TIMER_OPT_AUTO_DELETE) {
+        free(osTimer);
+    }
+}
+
 bool osInit (void)
 {
     //! init critical section.
     InitializeCriticalSectionAndSpinCount(&__globalCriticalSection, 0x00000400);
 
     //! init system timer.
-    if (!timer_init(&os_timer_timeout_callback)) {
+    if (!timer_engine_init(&myOSTimerEngine, &os_timer_timeout_callback, &timer_engine_safe_atom_start, &timer_engine_safe_atom_end)) {
         return false;
     }
 
@@ -387,29 +423,6 @@ OS_ERR osQueueRead (OS_HANDLE hQueue, void *buffer, UINT32 timeMS)
 
 
 
-typedef struct os_timer_t OS_TIMER;
-
-struct os_timer_t {
-    timer_t             OSTimerData;
-    OS_TIMER_ROUTINE   *OSTimerRoutine;
-    void               *OSTimerRoutineArg;
-    UINT16              OSTimerOpt;
-};
-
-static void os_timer_timeout_callback(timer_t *timer)
-{
-    OS_TIMER *osTimer;
-    
-    osTimer = CONTAINER_OF(timer, OS_TIMER, OSTimerData);
-
-    if (NULL != osTimer->OSTimerRoutine) {
-        osTimer->OSTimerRoutine(osTimer->OSTimerRoutineArg);
-    }
-    
-    if (osTimer->OSTimerOpt & OS_TIMER_OPT_AUTO_DELETE) {
-        free(osTimer);
-    }
-}
 
 OS_ERR osTimerCreat(OS_HANDLE          *pTimerHandle,
                     UINT32		        initValue,
@@ -437,7 +450,7 @@ OS_ERR osTimerCreat(OS_HANDLE          *pTimerHandle,
     timer->OSTimerRoutine       = fnRoutine;
     timer->OSTimerRoutineArg    = RoutineArg;
     OS_CRITICAL_SECTION_BEGIN();
-    timer_config(&timer->OSTimerData, initValue, reloadValue);
+    timer_config(&myOSTimerEngine, &timer->OSTimerData, initValue, reloadValue);
     OS_CRITICAL_SECTION_END();
     *pTimerHandle = timer;
 
@@ -449,7 +462,7 @@ OS_ERR osTimerDelete(OS_HANDLE hTimer)
     OS_TIMER *timer = (OS_TIMER *)hTimer;
 
     OS_CRITICAL_SECTION_BEGIN();
-    timer_stop(&timer->OSTimerData);
+    timer_stop(&myOSTimerEngine, &timer->OSTimerData);
     free(timer);
     OS_CRITICAL_SECTION_END();
 
@@ -463,7 +476,7 @@ OS_ERR osTimerStart(OS_HANDLE hTimer, UINT32 timeMS)
     timeMS /= OS_TIMER_TICK_MS;
 
     OS_CRITICAL_SECTION_BEGIN();
-    timer_start(&timer->OSTimerData, timeMS);
+    timer_start(&myOSTimerEngine, &timer->OSTimerData, timeMS);
     OS_CRITICAL_SECTION_END();
     
     return OS_ERR_NONE;
@@ -474,7 +487,7 @@ OS_ERR osTimerStop(OS_HANDLE hTimer)
     OS_TIMER *timer = (OS_TIMER *)hTimer;
     
     OS_CRITICAL_SECTION_BEGIN();
-    timer_stop(&timer->OSTimerData);
+    timer_stop(&myOSTimerEngine, &timer->OSTimerData);
     OS_CRITICAL_SECTION_END();
     
     return OS_ERR_NONE;

@@ -53,6 +53,7 @@
 /*============================ PROTOTYPES ====================================*/
 extern bool         memory_is_same(const void *m1, const void *m2, size_t n);
 extern bool         memory_copy(void *d, const void *s, size_t n);
+extern bool         mmemory_zeroize( void *buf, size_t len );
 extern unsigned int hex_str2uint(const char *str);
 extern int          int_str2int(const char *str);
 extern float        dec_str2float(const char *decimalString);

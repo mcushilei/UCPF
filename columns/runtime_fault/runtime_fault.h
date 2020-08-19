@@ -23,37 +23,46 @@
 
 /*============================ MACROS ========================================*/
 /*============================ MACROFIED FUNCTIONS ===========================*/
-#ifdef __DEBUG__
-#define RTT_LOG(fmt, ...)  printf("\r\n[I][%s:%d]"fmt, __ThisFileName, __LINE__, ##__VA_ARGS__)
+
+#if defined(__DEBUG__)
+#define RUNTIME_FAULT( error_code, error_string )	\
+        runtime_fault( error_code, __ThisFileName, __LINE__, error_string )
 #else
-#define RTT_LOG(fmt, ...)  printf("\r\n[I]"fmt, ##__VA_ARGS__)
+#define RUNTIME_FAULT( error_code, error_string )	\
+        runtime_fault( error_code, error_string )
 #endif
 
 
 #if defined(__DEBUG__)
-#define RUNTIME_FAULT(__error_code, __info)     \
-        runtime_fault(__error_code, __ThisFileName, __LINE__, __info)
+#define LOWLEVEL_RUNTIME_FAULT( error_code )		\
+        runtime_fault( error_code, __ThisFileName, __LINE__, NULL )
 #else
-#define RUNTIME_FAULT(__error_code, __info)     \
-        runtime_fault(__error_code, __info)
+#define LOWLEVEL_RUNTIME_FAULT( error_code )		\
+        runtime_fault( error_code, NULL )
 #endif
 
+                                        
+#define VALIDATE_RET( cond, ret )	do {			\
+        if( !(cond) ) {                             \
+            RUNTIME_FAULT( 0, NULL );               \
+            return( ret );                          \
+        }                                           \
+    } while( 0 )
 
-#if defined(__DEBUG__)
-#define LOWLEVEL_RUNTIME_FAULT(__error_code)    \
-        runtime_fault(__error_code, __ThisFileName, __LINE__, NULL)
-#else
-#define LOWLEVEL_RUNTIME_FAULT(__error_code)    \
-        runtime_fault(__error_code, NULL)
-#endif
+#define VALIDATE( cond )			do {			\
+        if( !(cond) ) {                             \
+            RUNTIME_FAULT( 0, NULL );               \
+            return;                                 \
+        }                                           \
+    } while( 0 )
 
 /*============================ TYPES =========================================*/
 /*============================ PUBLIC VARIABLES ==============================*/
 /*============================ PUBLIC PROTOTYPES =============================*/
 #if defined(__DEBUG__)
-extern void runtime_fault           (int ec, const char *file, int line, const char *info);
+extern void runtime_fault( int ec, const char *file, int line, const char *info );
 #else
-extern void runtime_fault           (int ec, const char *info);
+extern void runtime_fault( int ec, const char *info );
 #endif
 
 #endif  //!< #ifndef __BEAM_RUNTIME_FAULT_H__

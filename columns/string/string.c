@@ -17,8 +17,8 @@
 
 
 /*============================ INCLUDES ======================================*/
-#include ".\app_cfg.h"
-#include ".\string.h"
+#include "./app_cfg.h"
+#include "./string.h"
 
 /*============================ MACROS ========================================*/
 /*============================ MACROFIED FUNCTIONS ===========================*/
@@ -87,6 +87,18 @@ bool memory_copy(void *d, const void *s, size_t n)
         s = (char *)s + 1;
     }
 
+    return true;
+}
+
+bool mmemory_zeroize( void *buf, size_t len )
+{
+    if (!( len >= 0 || buf != NULL)) {
+        return false;
+    }
+
+    if (len > 0) {
+        memset( buf, 0, len );
+    }
     return true;
 }
 
