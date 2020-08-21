@@ -6,6 +6,7 @@
 #include "../../at_helper/at_api.h"
 #include "../../at_helper/at_helper.h"
 
+THIS_FILE_NAME("nl668");
 
 static const char * const AT_RCV_TCP_PREFIX = "\r\n+MIPRTCP:";
 static const char * const AT_RCV_UDP_PREFIX = "\r\n+MIPRUDP:";
@@ -83,6 +84,11 @@ static char *nl668_at_get_imsi(void)
     
     strncpy(imsi, &tmpbuf[strlen("\r\n+CIMI: ")], UBOUND(imsi));
     imsi[15] = '\0';
+    
+    if (15 != int_str_len(imsi)) {
+        return NULL;
+    }
+    
     return imsi;
 }
 
@@ -97,6 +103,11 @@ static char *nl668_at_get_imei(void)
     
     strncpy(imei, &tmpbuf[strlen("\r\n+CGSN: ")], UBOUND(imei));
     imei[15] = '\0';
+    
+    if (15 != int_str_len(imei)) {
+        return NULL;
+    }
+    
     return imei;
 }
 
@@ -136,7 +147,7 @@ static int32_t nl668_at_get_netstat(void)
 static int32_t nl668_at_ppp(void)
 {
     int cmd_len = 0;
-    char tmpbuf[128] = {0};
+    char tmpbuf[128 + 64] = {0};
     uint32_t buf_len = UBOUND(tmpbuf);
     int match;
     
@@ -251,7 +262,7 @@ static int32_t nl668_at_send(int32_t id, const char *buf, uint32_t len)
     }
     
     cmd_len = snprintf(cmd, 64, "AT+MIPPUSH=%d", id);
-    if (0 != at_cmd_with_2_suffix(cmd, cmd_len, "+MIPPUSH:", "ERROR", NULL, NULL, 0)) {
+    if (0 != at_cmd_with_2_suffix(cmd, cmd_len, "+MIPPUSH:", "ERROR", NULL, NULL, 5000)) {
         return AT_FAILED;
     }
     
@@ -505,11 +516,12 @@ static int32_t nl668_init(void)
     int32_t rssi = nl668_at_get_csq();
     RTT_LOG("rssi:%d", rssi);
     
-	for (timecnt = 10; timecnt != 0u; timecnt--) {
+	for (timecnt = 20; timecnt != 0u; timecnt--) {
         ret = nl668_at_cgatt_attach();
 		if(ret != AT_FAILED) {
 			break;
 		}
+        OS_TASK_SLEEP(1000);
 	}
 	if(timecnt == 0u) {
         RTT_LOG("ERROR: net error!");
@@ -517,11 +529,12 @@ static int32_t nl668_init(void)
 	}
 
     //! wait for net to be ok.
-	for (timecnt = 20; timecnt != 0u; timecnt--) {
+	for (timecnt = 40; timecnt != 0u; timecnt--) {
         ret = nl668_at_get_netstat();
 		if(ret != AT_FAILED) {
 			break;
 		}
+        OS_TASK_SLEEP(1000);
 	}
 	if(timecnt == 0u) {
         RTT_LOG("ERROR: connect net timeout!");

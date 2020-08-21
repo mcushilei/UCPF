@@ -248,7 +248,7 @@ bool com_close(com_t *ptThis)
  *  \param  wLen        number of bytes to be written
  *  \retval number of bytes has been written.
  */
-uint32_t com_write(com_t *ptThis, uint8_t *pchData, uint32_t wLen, uint32_t timeoutMS)
+uint32_t com_write(com_t *ptThis, const uint8_t *pchData, uint32_t wLen, uint32_t timeoutMS)
 {
     DWORD       numBytesWrite = 0;
     OVERLAPPED  oWriter = {0};

@@ -33,7 +33,7 @@ static OS_HANDLE         at_adaptor_api_mutex = NULL;
 static uint32_t          at_device_status = AT_DEVICE_UNINIT;
 static socket_t          link_array[AT_API_SOCKET_NUM] = {0};
 
-at_apn_info   apn_info;
+at_apn_info   apn_info = {0};
 
 
 bool at_api_init(at_option_t *opt)
@@ -368,7 +368,7 @@ static int __socket_api_recv(socket_t *pSocket, char *buf, uint32_t buflen, uint
 {
     uint32_t rl = 0;
     uint32_t cnt = 0;
-    OS_ERR ret;
+    OS_ERR err;
     deadline_t timer;
     
     deadline_init(&timer);
@@ -382,11 +382,11 @@ static int __socket_api_recv(socket_t *pSocket, char *buf, uint32_t buflen, uint
             cnt += rl;
             continue;
         }
-        ret = OS_FLAG_WAIT(pSocket->RecvFlag, deadline_left_ms(&timer));
-        if (OS_ERR_TIMEOUT == ret) {
+        err = OS_FLAG_WAIT(pSocket->RecvFlag, deadline_left_ms(&timer));
+        if (OS_ERR_TIMEOUT == err) {
             break;
-        } else if (OS_ERR_NONE != ret) {
-            DBG_LOG("recv flag error: %u", ret);
+        } else if (OS_ERR_NONE != err) {
+            DBG_LOG("recv flag error: %u", err);
             break;
         }
     }

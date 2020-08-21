@@ -15,36 +15,14 @@
  *  along with this program; if not, see http://www.gnu.org/licenses/.        *
 *******************************************************************************/
 
-#ifndef __FRAMEWORK_TRACE_LOG_H__
-#define __FRAMEWORK_TRACE_LOG_H__
+/*
+ *  \brief  this file shell be pre-include by your compilor.
+ *  \note   in this file, only macro should be defined.
+ */
 
-/*============================ INCLUDES ======================================*/
-/*============================ MACROS ========================================*/
-/*============================ MACROFIED FUNCTIONS ===========================*/
+#define UCPF_PLATEFORM_CONFIG_FILE  "./frameworks/template_win/plateform_cfg.h"
+#define UCPF_ENVIRONMENT_CONFIG_FILE    "./frameworks/template_win/environment_cfg.h"
+#define FRAMEWORK_DEADLINE_IMPLEMNET_FILE   "../frameworks/template_win/deadline_type.h"
+#define MBEDTLS_CONFIG_FILE   "mbedtls_config.h"
 
-#define PRINT_LOG
-
-#ifdef __DEBUG__
-#define DBG_LOG(fmt, ...)  printf("\r\n[D][%s:%d]"fmt, __func__, __LINE__, ##__VA_ARGS__)
-#else
-#define DBG_LOG(fmt, ...)
-#endif
-
-#ifdef PRINT_LOG
-#ifdef __DEBUG__
-#define RTT_LOG(fmt, ...)  printf("\r\n[I][%s:%d]"fmt, __func__, __LINE__, ##__VA_ARGS__)
-#else
-#define RTT_LOG(fmt, ...)  printf("\r\n[I]"fmt, ##__VA_ARGS__)
-#endif
-#else
-#define RTT_LOG(fmt, ...)
-#endif
-
-
-
-/*============================ TYPES =========================================*/
-/*============================ PUBLIC VARIABLES ==============================*/
-/*============================ PUBLIC PROTOTYPES =============================*/
-
-#endif  //!< #ifndef __FRAMEWORK_TRACE_LOG_H__
 /* EOF */

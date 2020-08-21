@@ -32,7 +32,7 @@ extern bool file_api_open(file_t *pHandle, char *fileName);
 extern bool file_api_close(file_t fileHandle);
 extern bool file_api_get_size(file_t fileHandle, uint64_t *fileSize);
 extern bool file_api_write(file_t fileHandle, uint64_t offset, const char *buf, uint32_t bufSize);
-extern bool file_api_read(file_t fileHandle, uint64_t offset, char *buf, uint32_t bufSize);
+extern bool file_api_read(file_t fileHandle, uint64_t offset, char *buf, uint32_t *dataLength);
 extern bool file_api_erase_all(file_t fileHandle);
 
 #endif  //!< #ifndef __WIN_FILE_H__

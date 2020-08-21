@@ -21,11 +21,15 @@
 #include "./app_cfg.h"
 #include "./framework.h"
 
+extern int app_main(void);
+
 /*============================ MACROS ========================================*/
 /*============================ MACROFIED FUNCTIONS ===========================*/
 /*============================ TYPES =========================================*/
 /*============================ PRIVATE PROTOTYPES ============================*/
 /*============================ PRIVATE VARIABLES =============================*/
+THIS_FILE_NAME("framework");
+
 /*============================ PUBLIC VARIABLES ==============================*/
 /*============================ IMPLEMENTATION ================================*/
 
@@ -51,25 +55,29 @@ bool framework_init(void)
     DBG_LOG("heap start at: %p", heapMemory1);
 
     if (!rtc_api_init()) {
-        DBG_LOG("rtc_api_init() fail!");
+        DBG_LOG("%s", "rtc_api_init() fail!");
         return false;
     }
 
     if (!socket_api_init()) {
-        DBG_LOG("socket_api_init() fail!");
+        DBG_LOG("%s", "socket_api_init() fail!");
     }
 
     enum_all_comm();
     com_cfg_t myComPortCfg = { .wBaudrate = 9600,.hwMode = UART_NO_PARITY | UART_1_STOPBIT | UART_8_BIT_LENGTH };
-    if (!com_open(&myComPort, "\\\\.\\COM11", &myComPortCfg, NULL)) {
-        printf("\r\n cannot open com!");
-        return false;
+    //if (!com_open(&myComPort, "\\\\.\\COM11", &myComPortCfg, NULL)) {
+    //    printf("\r\n cannot open com!");
+    //    return false;
+    //}
+
+
+    app_main();
+
+    while (1) {
+        OS_TASK_SLEEP(1000);
     }
 
-
-
-
-    return app_main();
+    return 0;
 }
 
 

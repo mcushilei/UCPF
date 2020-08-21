@@ -27,6 +27,8 @@
 /*============================ TYPES =========================================*/
 /*============================ PRIVATE PROTOTYPES ============================*/
 /*============================ PRIVATE VARIABLES =============================*/
+THIS_FILE_NAME("win_file");
+
 /*============================ PUBLIC VARIABLES ==============================*/
 /*============================ IMPLEMENTATION ================================*/
 
@@ -145,10 +147,13 @@ __Exit:
     return retVal;
 }
 
-bool file_api_read(file_t fileHandle, uint64_t offset, char *buf, uint32_t bufSize)
+bool file_api_read(file_t fileHandle, uint64_t offset, char *buf, uint32_t *dataLength)
 {
     DWORD errorCode;
     bool retVal = false;
+    DWORD bufSize = *dataLength;
+
+    *dataLength = 0;
 
     OVERLAPPED oWriteFile = {0};
     oWriteFile.Offset       = offset;
@@ -160,7 +165,7 @@ bool file_api_read(file_t fileHandle, uint64_t offset, char *buf, uint32_t bufSi
         return false;
     }
 
-    DWORD byteWritten = 0;
+    DWORD lengthRead = 0;
     BOOL  boolValue;
     boolValue = ReadFile(  fileHandle,
                             buf,
@@ -187,16 +192,16 @@ bool file_api_read(file_t fileHandle, uint64_t offset, char *buf, uint32_t bufSi
         case WAIT_TIMEOUT:
             CancelIoEx(fileHandle, &oWriteFile);
             if (WAIT_OBJECT_0 == WaitForSingleObject(oWriteFile.hEvent, 0)) {
-                //! write ok
+                //! read ok
+                GetOverlappedResult(fileHandle, &oWriteFile, &lengthRead, TRUE);
+                *dataLength = lengthRead;
             } else {
                 break;
             }
 
         case WAIT_OBJECT_0:
-            GetOverlappedResult(fileHandle, &oWriteFile, &byteWritten, TRUE);
-            if (byteWritten != bufSize) {
-                goto __Exit;
-            }
+            GetOverlappedResult(fileHandle, &oWriteFile, &lengthRead, TRUE);
+            *dataLength = lengthRead;
             break;
 
         case WAIT_FAILED:

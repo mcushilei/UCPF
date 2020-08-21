@@ -23,15 +23,20 @@
 #include "../../windows/socket_api/socket_api.h"
 #include "../../windows/rtc_api/rtc_api.h"
 #include "../../windows/uart_api/uart_api.h"
+#include "../../windows/file_api/win_file.h"
 #include "../../parser_curly_bracket/parser_curly_bracket.h"
-#include "../../rtu_modbus/rtu_modbus.h"
+
+#include "../../mbedtls/ssl.h"
+#include "../../mbedtls/net_sockets.h"
+#include "../../mbedtls/entropy.h"
+#include "../../mbedtls/ctr_drbg.h"
+#include "../../mbedtls/mbedtls_debug.h"
 
 /*============================ MACROS ========================================*/
 /*============================ MACROFIED FUNCTIONS ===========================*/
 /*============================ TYPES =========================================*/
 /*============================ GLOBAL VARIABLES ==============================*/
 /*============================ PROTOTYPES ====================================*/
-extern bool framework_init(void);
 
 #endif  //! #ifndef __FRAMEWORK_H__
 /* EOF */

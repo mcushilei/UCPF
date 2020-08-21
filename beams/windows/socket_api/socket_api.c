@@ -28,6 +28,8 @@
 /*============================ PROTOTYPES ====================================*/
 /*============================ GLOBAL VARIABLES ==============================*/
 /*============================ LOCAL VARIABLES ===============================*/
+THIS_FILE_NAME("socket_api");
+
 /*============================ IMPLEMENTATION ================================*/
 
 static int tcp_write(socket_t *pSocket, const uint8_t *pBuffer, uint32_t *bufferSize, uint32_t timeout)
@@ -293,7 +295,7 @@ socket_t *socket_api_create(void)
  *  \return <0       cannot bind a socket.
  *  \return >=0      The socket ID to be used.
  */
-int socket_api_connect(socket_t *pSocket, const char *host, const char *port)
+int socket_api_connect(socket_t *pSocket, const char *host, uint32_t port)
 {
     int     socketErrorCode;
     int     returnValue;
@@ -301,12 +303,15 @@ int socket_api_connect(socket_t *pSocket, const char *host, const char *port)
                     *pAddrInfo = NULL,
                     addrInfo = {0};
     SOCKET  so = INVALID_SOCKET;
+	char portName[8] = { 0 };
+
+	snprintf(portName, 8, "%u", port);
 
     // Resolve the server address and port
     addrInfo.ai_family   = AF_INET;
     addrInfo.ai_socktype = SOCK_STREAM;
     addrInfo.ai_protocol = IPPROTO_TCP;
-    returnValue = GetAddrInfo(host, port, &addrInfo, &pAddrInfoList);
+    returnValue = GetAddrInfo(host, portName, &addrInfo, &pAddrInfoList);
     if (returnValue != 0) {
         socketErrorCode = WSAGetLastError();
         DBG_LOG("getaddrinfo failed. Error: %u", socketErrorCode);
@@ -368,7 +373,7 @@ int socket_api_connect(socket_t *pSocket, const char *host, const char *port)
     WSAEventSelect(so, pSocket->ReadEvent, FD_CLOSE);
     WSAEventSelect(so, pSocket->WriteEvent, FD_CLOSE);
 
-    DBG_LOG("TCP connected.");
+    DBG_LOG("%s", "TCP connected.");
 
     return SOCKET_ERR_NONE;
 }
@@ -378,14 +383,30 @@ int socket_api_connect(socket_t *pSocket, const char *host, const char *port)
  *  \return AT_OK
  *  \return AT_FAILED
  */
-int socket_api_send(socket_t *pSocket, const uint8_t *buf, uint32_t *len)
+int socket_api_send(socket_t *pSocket, const char *buf, uint32_t *len)
 {
     return tcp_write(pSocket, buf, len, INFINITE);
 }
 
-int socket_api_recv(socket_t *pSocket, uint8_t *buf, uint32_t *len, uint32_t timeout)
+int socket_api_recv(socket_t *pSocket, char *buf, uint32_t *len, uint32_t timeout)
 {
-    return tcp_read(pSocket , buf, len, timeout);
+    return tcp_read(pSocket, buf, len, timeout);
+}
+
+int socket_api_recvfrom(socket_t *pSocket, char *buf, uint32_t *len, char *senderIP, int *senderPort, uint32_t timeout)
+{
+    struct sockaddr addr = {0};
+    uint32_t addrSize = 0;
+    int rc;
+    
+    rc = udp_read(pSocket, &addr, &addrSize, buf, len);
+    return rc;
+}
+
+int socket_api_shutdown(socket_t *pSocket)
+{
+    shutdown(pSocket->so, SD_BOTH);
+    return SOCKET_ERR_NONE;
 }
 
 int socket_api_delete(socket_t *pSocket)

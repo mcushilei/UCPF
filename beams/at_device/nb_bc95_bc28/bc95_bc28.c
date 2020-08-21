@@ -4,6 +4,7 @@
 #include "../../at_helper/at_api.h"
 #include "../../at_helper/at_helper.h"
 
+THIS_FILE_NAME("bc95");
 
 #define AT_NB_get_auto_connect  "AT+NCONFIG?\r"
 
@@ -11,16 +12,16 @@
 #define AT_SOCKET_UDP       (17u)
 #define AT_SOCKET_TCP       (6u)
 
-#define AT_DATA_LEN         (1024 + 512)
-#define AT_MAX_PAYLOADLEN   (512 + 128)
+#define AT_DATA_LEN         (2048)
+#define AT_MAX_PAYLOADLEN   (1024 + 512)
 #define MAX_SOCK_NUM        (4)
 
 
 static char wbuf[AT_DATA_LEN];
 static char rbuf[AT_DATA_LEN];
 
-static int32_t  nb_init    (void);
-static int32_t  nb_deinit  (void);
+static int32_t  nb_bc28_init    (void);
+static int32_t  nb_bc28_deinit  (void);
 static int32_t  nb_get_imsi(char *buf, uint32_t len);
 static int32_t  nb_get_imei(char *buf, uint32_t len);
 static int32_t  nb_bind    (int32_t *id, const char *host, uint32_t port);
@@ -31,8 +32,8 @@ static int32_t  nb_close   (int32_t id);
 
 const at_adaptor_api_t bc95_bc28_interface =
 {
-    .init       = nb_init,
-    .deinit     = nb_deinit,
+    .init       = nb_bc28_init,
+    .deinit     = nb_bc28_deinit,
     
     .get_imsi   = nb_get_imsi,
     .get_imei   = nb_get_imei,
@@ -43,10 +44,9 @@ const at_adaptor_api_t bc95_bc28_interface =
     .send       = nb_send,
     .sendto     = nb_sendto,
 
-
     .close      = nb_close,
-    .link_num   = MAX_SOCK_NUM,
 
+    .link_num   = MAX_SOCK_NUM,
 };
 
 static char imsi[16];
@@ -55,7 +55,7 @@ static char imei[16];
 
 
 #if defined ( __CC_ARM ) || defined ( __ICCARM__ )  /* KEIL and IAR */
-char *strnstr(const char *s1, const char *s2, size_t len)
+static char *strnstr(const char *s1, const char *s2, size_t len)
 {
     size_t l2;
 
@@ -75,11 +75,10 @@ char *strnstr(const char *s1, const char *s2, size_t len)
 
 
 
-
-static int32_t bc95_hw_detect(void)
+static int32_t bc95_check_connection(void)
 {
-    const char *cmd = "AT+CFUN?\r";
-    return at_cmd(cmd, strlen(cmd), "+CFUN:1", NULL,NULL);
+    char *cmd = "AT\r";
+    return at_cmd(cmd, strlen(cmd), "OK\r\n", NULL,NULL);
 }
 
 static int32_t bc95_echo_off(void)
@@ -94,9 +93,33 @@ static int32_t bc95_reboot(void)
     return at_cmd(cmd, strlen(cmd), "OK", NULL,NULL);
 }
 
+static int32_t bc95_check_ue(void)
+{
+    const char *cmd = "AT+CFUN?\r";
+    return at_cmd(cmd, strlen(cmd), "+CFUN:1", NULL,NULL);
+}
+
+static int32_t bc95_disable_rf(void)
+{
+    char *cmd = "AT+CFUN=4,1\r";
+    return at_cmd(cmd, strlen(cmd), "OK", NULL,NULL);
+}
+
+static int32_t bc95_enable_rf(void)
+{
+    char *cmd = "AT+CFUN=1\r";
+    return at_cmd(cmd, strlen(cmd), "OK", NULL,NULL);
+}
+
 static int32_t bc95_shutdown(void)
 {
     char *cmd = "AT+CFUN=0\r";
+    return at_cmd(cmd, strlen(cmd), "OK", NULL,NULL);
+}
+
+static int32_t bc95_disable_huawei_iot(void)
+{
+    char *cmd = "AT+QREGSWT=2\r";
     return at_cmd(cmd, strlen(cmd), "OK", NULL,NULL);
 }
 
@@ -128,10 +151,33 @@ static char *bc95_get_imei(void)
     return imei;
 }
 
-static int32_t bc95_disable_huawei_iot(void)
+static int32_t bc95_disable_edrx(void)
 {
-    char *cmd = "AT+QREGSWT=2\r";
+    char *cmd = "AT+CEDRXS=0,5\r";
     return at_cmd(cmd, strlen(cmd), "OK", NULL,NULL);
+}
+
+static int32_t bc95_disable_psm(void)
+{
+    char *cmd = "AT+CPSMS=0\r";
+    return at_cmd(cmd, strlen(cmd), "OK", NULL,NULL);
+}
+
+// \note NB has no usr and psw.
+static int32_t bc95_set_pdp(void)
+{
+    int cmd_len = 0;
+    char cmd[128] = {0};
+    uint32_t buf_len = UBOUND(cmd);
+    int match;
+    
+    if (strlen(apn_info.name)) {
+        DBG_LOG("%s", apn_info.name);
+        cmd_len = snprintf(cmd, buf_len, "AT+CGDCONT=0,\"IP\",\"%s\"", apn_info.name);
+        return at_cmd(cmd, cmd_len, "OK", NULL,NULL);
+    } else {
+        return AT_OK;
+    }
 }
 
 static int32_t bc95_cfg_data_rcv(void)
@@ -263,7 +309,7 @@ static int32_t bc95_sendto(int32_t id , const char *buf, uint32_t len, const cha
     int cmd_len;
 
     if ((len * 2) > AT_MAX_PAYLOADLEN) {
-        DBG_LOG("invalid length");
+        DBG_LOG("data length too long: %u", len);
         return AT_FAILED;
     }
 
@@ -287,7 +333,7 @@ static int32_t bc95_send(int32_t id , const char *buf, uint32_t len)
     int cmd_len;
 
     if ((len * 2) > AT_MAX_PAYLOADLEN) {
-        DBG_LOG("invalid length");
+        DBG_LOG("data length too long: %u", len);
         return AT_FAILED;
     }
 
@@ -301,7 +347,7 @@ static int32_t bc95_send(int32_t id , const char *buf, uint32_t len)
         return AT_FAILED;
     }
 
-    return len;
+    return AT_OK;
 }
 
 static int32_t bc95_data_handler(void *arg, const char *buf, uint32_t len)
@@ -327,8 +373,8 @@ static int32_t bc95_data_handler(void *arg, const char *buf, uint32_t len)
         DBG_LOG("at cmd incomplete!");
         goto END;
     }
-    if (data_len > AT_DATA_LEN) {
-        DBG_LOG("at cmd too large!");
+    if ((data_len * 2) > AT_MAX_PAYLOADLEN) {
+        DBG_LOG("data length too long: %u", data_len);
         goto END;
     }
     decode_hex_str(p1, data_len * 2, rbuf);
@@ -399,12 +445,13 @@ static int32_t nb_sendto(int32_t id, const char *buf, uint32_t len, const char *
     return bc95_sendto(id, buf, len, ip, port);
 }
 
-static int32_t nb_init(void)
+static int32_t nb_bc28_init(void)
 {
     int ret;
     int timecnt = 0;
+    
     /* config AT engine. */
-    static const at_config_t bc95_conf = {
+    static const at_config_t atCfg = {
         .name           = "nb_bc95_bc28",
         .usart_port     = 2,
         .buardrate      = 9600,
@@ -418,17 +465,17 @@ static int32_t nb_init(void)
     int32_t rssi;
     char ip[20] = {'\0'};
 
-    at_init(&bc95_conf);
+    at_init(&atCfg);
 
     bc95_bc28_power_on();
     OS_TASK_SLEEP(6000);
     
-	for (timecnt = 20; timecnt != 0u; timecnt--) {
-        ret = bc95_hw_detect();
+	for (timecnt = 10; timecnt != 0u; timecnt--) {
+        ret = bc95_check_connection();
 		if(ret != AT_FAILED) {
 			break;
 		}
-		OS_TASK_SLEEP(500);
+		OS_TASK_SLEEP(2000);
 	}
 	if(timecnt == 0u) {
         RTT_LOG("ERROR: cannot connect to AT device!");
@@ -440,7 +487,7 @@ static int32_t nb_init(void)
 		if(ret != AT_FAILED) {
 			break;
 		}
-		OS_TASK_SLEEP(500);
+		OS_TASK_SLEEP(1000);
 	}
 	if(timecnt == 0u) {
         goto __err_exit;
@@ -466,6 +513,7 @@ static int32_t nb_init(void)
 		if(pstring != NULL) {
 			break;
 		}
+        OS_TASK_SLEEP(500);
 	}
 	if(timecnt == 0u) {
         RTT_LOG("ERROR: cannot read SIM card!");
@@ -474,9 +522,43 @@ static int32_t nb_init(void)
         RTT_LOG("imsi:%s", pstring);
     }
     
+	for (timecnt = 10; timecnt != 0u; timecnt--) {
+        ret = bc95_check_ue();
+		if(ret != AT_FAILED) {
+			break;
+		}
+		OS_TASK_SLEEP(1000);
+	}
+	if(timecnt == 0u) {
+        RTT_LOG("ERROR: AT device error!");
+        goto __err_exit;
+	}    
     
     for (timecnt = 5; timecnt != 0u; timecnt--) {
         ret = bc95_disable_huawei_iot();
+		if(ret != AT_FAILED) {
+			break;
+		}
+		OS_TASK_SLEEP(500);
+	}
+	if(timecnt == 0u) {
+        goto __err_exit;
+	}
+    
+    
+    for (timecnt = 5; timecnt != 0u; timecnt--) {
+        ret = bc95_disable_edrx();
+		if(ret != AT_FAILED) {
+			break;
+		}
+		OS_TASK_SLEEP(500);
+	}
+	if(timecnt == 0u) {
+        goto __err_exit;
+	}
+    
+    for (timecnt = 5; timecnt != 0u; timecnt--) {
+        ret = bc95_disable_psm();
 		if(ret != AT_FAILED) {
 			break;
 		}
@@ -498,6 +580,17 @@ static int32_t nb_init(void)
         goto __err_exit;
 	}
     
+    for (timecnt = 5; timecnt != 0u; timecnt--) {
+        ret = bc95_set_pdp();
+		if(ret != AT_FAILED) {
+			break;
+		}
+		OS_TASK_SLEEP(500);
+	}
+	if(timecnt == 0u) {
+        goto __err_exit;
+	}
+    
     
     
     bc95_check_csq();
@@ -505,7 +598,7 @@ static int32_t nb_init(void)
     RTT_LOG("rssi:%d", rssi);
     
     
-	for (timecnt = 20; timecnt != 0u; timecnt--) {
+	for (timecnt = 60; timecnt != 0u; timecnt--) {
         ret = bc95_get_regstat();
 		if (ret == AT_OK) {
 			break;
@@ -555,10 +648,11 @@ __err_exit:
     return AT_FAILED;
 }
 
-int32_t nb_deinit(void)
+static int32_t nb_bc28_deinit(void)
 {
     bc95_shutdown();
     OS_TASK_SLEEP(6000);
+    bc95_enable_rf();
     bc95_bc28_power_off();
     at_deinit();
     DBG_LOG("at device power off.");

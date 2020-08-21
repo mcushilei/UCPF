@@ -23,6 +23,8 @@
 #include "./parser_curly_bracket.h"
 
 /*============================ MACROS ========================================*/
+THIS_FILE_NAME("paser_curly_bracket");
+
 enum {
     WAIT_FOR_HEAD = 0,
     WAIT_FOR_TAIL,
@@ -120,7 +122,6 @@ void curly_bracket_paser(curly_bracket_paser_t *pasrer, char byte, bool timeout)
 
                             //! handle the frame here.
                             pasrer->RcvFrameBuffer[pasrer->RcvWriteIndex] = '\0';
-                            DBG_LOG("paser: %s", pasrer->RcvFrameBuffer);
                             if (NULL != pasrer->Callback) {
                                 pasrer->Callback(pasrer->RcvFrameBuffer, pasrer->RcvWriteIndex);
                             }

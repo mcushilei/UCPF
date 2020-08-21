@@ -18,8 +18,8 @@
 //! \note do not move this pre-processor statement to other places
 #include "..\app_cfg.h"
 
-#ifndef __AT_DEVICE_NB_N700_APP_CFG_H__
-#define __AT_DEVICE_NB_N700_APP_CFG_H__
+#ifndef __AT_DEVICE_NB_BC95_bc28_APP_CFG_H__
+#define __AT_DEVICE_NB_BC95_bc28_APP_CFG_H__
 
 /*============================ INCLUDES ======================================*/
 /*============================ MACROS ========================================*/
@@ -28,5 +28,5 @@
 /*============================ GLOBAL VARIABLES ==============================*/
 /*============================ PROTOTYPES ====================================*/
 
-#endif  //! #ifndef __AT_DEVICE_NB_N700_APP_CFG_H__
+#endif  //! #ifndef __AT_DEVICE_NB_BC95_bc28_APP_CFG_H__
 /* EOF */

@@ -48,9 +48,13 @@ extern bool socket_api_deinit(void);
 
 extern socket_t *socket_api_create(void);
 extern int       socket_api_delete(socket_t *pSocket);
-extern int socket_api_connect(socket_t *pSocket, const char *host, const char *port);
-extern int socket_api_send(socket_t *pSocket, const uint8_t *buf, uint32_t *len);
-extern int socket_api_recv(socket_t *pSocket, uint8_t *buf, uint32_t *len, uint32_t timeout);
+extern int  socket_api_connect(socket_t *pSocket, const char* host, uint32_t port);
+extern int  socket_api_bind(socket_t *pSocket, const char *host, uint32_t port);
+extern int  socket_api_send(socket_t *pSocket, const char *buf, uint32_t *len);
+extern int  socket_api_sendto(socket_t *pSocket, const char *buf, uint32_t *len, const char *ipaddr, int port);
+extern int  socket_api_recv(socket_t *pSocket, char *buf, uint32_t *len, uint32_t timeout);
+extern int  socket_api_recvfrom(socket_t *pSocket, char *buf, uint32_t *len, char *senderIP, int *senderPort, uint32_t timeout);
+extern int  socket_api_shutdown(socket_t *pSocket);
 
 #endif  //!< #ifndef __WINDOWS_SOCKET_H__
 /* EOF */

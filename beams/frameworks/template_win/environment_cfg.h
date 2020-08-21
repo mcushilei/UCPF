@@ -19,7 +19,6 @@
 #define __ENVIRONMENT_CFG_H__
 
 /*============================ INCLUDES ======================================*/
-#include "./trace_log.h"
 #include "./ports/json_checker/JSON_checker_port.h"
 #include "./ports/cJSON/cJSON_port.h"
 

@@ -22,7 +22,6 @@
 /*============================ INCLUDES ======================================*/
 #include "../pedestals/pedestals.h"
 #include "../columns/columns.h"
-#include "../applications/applications.h"
 
 /*============================ MACROS ========================================*/
 /*============================ MACROFIED FUNCTIONS ===========================*/
