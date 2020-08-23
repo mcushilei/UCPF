@@ -1,5 +1,5 @@
 /*******************************************************************************
- *  Copyright(C)2015-2020 by Dreistein<mcu_shilei@hotmail.com>                *
+ *  Copyright(C)2020 by Dreistein<mcu_shilei@hotmail.com>                     *
  *                                                                            *
  *  This program is free software; you can redistribute it and/or modify it   *
  *  under the terms of the GNU Lesser General Public License as published     *
@@ -15,39 +15,16 @@
  *  along with this program; if not, see http://www.gnu.org/licenses/.        *
 *******************************************************************************/
 
+//! Do not move this pre-processor statement to other places
+#include "../app_cfg.h"
 
-
+#ifndef __DEADLINE_APP_CFG_H__
+#define __DEADLINE_APP_CFG_H__
 
 /*============================ INCLUDES ======================================*/
-#include ".\beams\beams.h"
-#ifdef __OS_WINDOWS__
-#include ".\stdafx.h"
-#endif
-
-extern bool framework_init(void);
-
 /*============================ MACROS ========================================*/
 /*============================ MACROFIED FUNCTIONS ===========================*/
 /*============================ TYPES =========================================*/
-/*============================ GLOBAL VARIABLES ==============================*/
-/*============================ LOCAL VARIABLES ===============================*/
-/*============================ PROTOTYPES ====================================*/
-/*============================ IMPLEMENTATION ================================*/
 
-/*! \note main function
- *  \param none
- *  \return none
- */
-#ifdef __OS_WINDOWS__
-int main(int argc, uint8_t *argv[], uint8_t *envp[])
-#else
-int main(void)
-#endif
-{
-    /* initialize whole system */
-    if (!framework_init()) {
-        return -1;
-    }
-}
- 
+#endif  //!< #ifndef __DEADLINE_APP_CFG_H__
 /* EOF */

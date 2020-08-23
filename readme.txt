@@ -9,24 +9,24 @@ high level
 |   |---applications are placed here.
 |
 |---beams: 
-|   |---application-oriented hardware/software abstraction:
-|   |   |---HAL, event driver framework, etc
-|   |   |   OS, none OS
-|   |   |   ports between pedestals and columns
-|   |   |   ports between different components in columns
+|   |---protocol stack: TCP/IP, USB, CANOpen, Xmodem, etc
 |   |
-|   |---general hardware/software abstraction:
+|   |---board-level peripheral drivers: E2PROM, FLASH, RTC, ADC, Codec, Modules, etc
+|   |
+|   |---frameworks
 |   |   |---boards
-|   |   |   thirdparty middlewares
+|   |   |---general hardware/software abstraction
+|   |   |---ports between pedestals and columns
+|   |   |   ports between different components in columns
 |
 |---columns: 
-|   |---multithreading scheduler: xos, Windows, Linux
-|   |   protocol stack: TCP/IP, USB, CANOpen, Xmodem, etc
-|   |   other middleware: FIFO, pool, list, hash, timer, etc
+|   |---generic infrastructural middlewares
+|   |   data structure: FIFO, pool, list, hash, timer, etc
+|   |   algorithm: calendar, cipher, parser, etc
+|   |   multithreading scheduler: xos, Windows, Linux
 |   
 |---pedestals:
-|   |---chip-level peripheral drivers: UART, SPI, USB, I2C, I2S, ADC, RTC, E2PROM, etc
-|   |---board-level peripheral drivers: E2PROM, FLASH, RTC, ADC, Codec, Modules, etc
+|   |---on-chip peripheral drivers: UART, SPI, USB, I2C, I2S, ADC, RTC, E2PROM, etc
 |   |---compiler pragma
 |   |   general macro
 |
@@ -40,3 +40,12 @@ Other computer architectures like FPGAs are not concerned.
 This framework is intended to be used on MCUs.
 
 Developing principle: Readable, Simple, Scalable.
+
+
+guide for compiling:
+1, the path of "beams", "columns" and "pedestals" should be in your "include path". eg:
+    for gcc:
+    -I <your path>/beams -I <your path>/columns -I <your path>/pedestals 
+2, the header files in <your path>\beams\frameworks\<your framework>\toolchain_preinclude should be pre-included. eg:
+    for gcc:
+    -include <your path>\beams\frameworks\<your framework>\toolchain_preinclude\preinclude.h

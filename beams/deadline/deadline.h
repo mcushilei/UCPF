@@ -1,5 +1,5 @@
 /*******************************************************************************
- *  Copyright(C)2015-2020 by Dreistein<mcu_shilei@hotmail.com>                *
+ *  Copyright(C)2020 by Dreistein<mcu_shilei@hotmail.com>                     *
  *                                                                            *
  *  This program is free software; you can redistribute it and/or modify it   *
  *  under the terms of the GNU Lesser General Public License as published     *
@@ -15,39 +15,28 @@
  *  along with this program; if not, see http://www.gnu.org/licenses/.        *
 *******************************************************************************/
 
-
-
+#ifndef __DEADLINE_H__
+#define __DEADLINE_H__
 
 /*============================ INCLUDES ======================================*/
-#include ".\beams\beams.h"
-#ifdef __OS_WINDOWS__
-#include ".\stdafx.h"
+#include "./app_cfg.h"
+ 
+#if !defined(FRAMEWORK_DEADLINE_IMPLEMNET_FILE)
+#error "deadline_type.h path must be defined by FRAMEWORK_DEADLINE_IMPLEMNET_FILE."
+#else
+#include FRAMEWORK_DEADLINE_IMPLEMNET_FILE
 #endif
-
-extern bool framework_init(void);
 
 /*============================ MACROS ========================================*/
 /*============================ MACROFIED FUNCTIONS ===========================*/
 /*============================ TYPES =========================================*/
-/*============================ GLOBAL VARIABLES ==============================*/
-/*============================ LOCAL VARIABLES ===============================*/
-/*============================ PROTOTYPES ====================================*/
-/*============================ IMPLEMENTATION ================================*/
+/*============================ PUBLIC VARIABLES ==============================*/
+/*============================ PUBLIC PROTOTYPES =============================*/
+extern void deadline_init(deadline_t *dlTimer);
+extern bool deadline_is_expired(deadline_t *dlTimer);
+extern void deadline_set_ms(deadline_t *dlTimer, uint32_t timeout);
+extern void deadline_set(deadline_t *dlTimer, uint32_t timeout);
+extern int deadline_left_ms(deadline_t *dlTimer);
 
-/*! \note main function
- *  \param none
- *  \return none
- */
-#ifdef __OS_WINDOWS__
-int main(int argc, uint8_t *argv[], uint8_t *envp[])
-#else
-int main(void)
-#endif
-{
-    /* initialize whole system */
-    if (!framework_init()) {
-        return -1;
-    }
-}
- 
+#endif  //!< #ifndef __DEADLINE_H__
 /* EOF */
