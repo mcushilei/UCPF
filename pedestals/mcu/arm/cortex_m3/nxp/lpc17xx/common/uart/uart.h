@@ -84,6 +84,13 @@ DEF_INTERFACE(i_baudrate_t)
 END_DEF_INTERFACE(i_baudrate_t)
 //! @}
 
+//! \name interrupt control interface
+//! @{
+DEF_INTERFACE(i_uart_int_t)
+    bool        (*Enable)(uint32_t mask);
+    bool        (*Disable)(uint32_t mask);
+END_DEF_INTERFACE(i_uart_int_t)
+//! @}
 //! \name  uart interface
 //! @{
 DEF_INTERFACE(i_uart_t)
@@ -94,6 +101,7 @@ DEF_INTERFACE(i_uart_t)
     bool            (*WriteByte)(uint8_t chByte);
     bool            (*ReadByte)(uint8_t *pchByte);
     i_baudrate_t    Baudrate;
+    i_uart_int_t    Interrupt;
 END_DEF_INTERFACE(i_uart_t)
 //! @}
 

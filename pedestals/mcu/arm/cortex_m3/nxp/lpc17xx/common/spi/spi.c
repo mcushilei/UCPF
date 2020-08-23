@@ -54,9 +54,8 @@
 //! \brief Macro for spi interface init
 #define __SPI_INTERFACE(__N,__A)                                                \
     {                                                                           \
-        &spi##__N##_config,                                                       \
-        &spi##__N##_open,                                                       \
-        &spi##__N##_close,                                                      \
+        &spi##__N##_init,                                                       \
+        &spi##__N##_deinit,                                                       \
         &spi##__N##_idle,                                                       \
         &spi##__N##_write,                                                      \
         &spi##__N##_read,                                                       \
@@ -64,38 +63,33 @@
 
 //! \brief Macro for spi interface function prototypes
 #define __SPI_INTERFACE_PROTOTYPES(__N,__DATA)                                  \
-    extern bool spi##__N##_config(spi_cfg_t *ptSpiCfg);                            \
-    extern bool spi##__N##_open(void);                                          \
-    extern bool spi##__N##_close(void);                                         \
+    extern bool spi##__N##_init(spi_cfg_t *ptSpiCfg);                            \
+    extern bool spi##__N##_deinit(void);                                          \
     extern bool spi##__N##_idle(void);                                          \
     extern bool spi##__N##_write(uint16_t hwOut);                               \
     extern bool spi##__N##_read(uint16_t *phwIn);
 
 //! \brief Macro of spi modules interface function body
 #define __SPI_INTERFACE_DEFINE(__N, __DATA)                                     \
-    bool spi##__N##_config(spi_cfg_t *ptSpiCfg)                                    \
+    bool spi##__N##_init(spi_cfg_t *ptSpiCfg)                                    \
     {                                                                           \
-        return ssp_config(ptSpiCfg, (__spi_t *)&__SPI[__N]);                       \
+        return ssp_init(ptSpiCfg, __N);                       \
     }                                                                           \
-    bool spi##__N##_open(void)                                                  \
+    bool spi##__N##_deinit(void)                                                  \
     {                                                                           \
-        return ssp_open((__spi_t *)&__SPI[__N]);                                \
-    }                                                                           \
-    bool spi##__N##_close(void)                                                 \
-    {                                                                           \
-        return ssp_close((__spi_t *)&__SPI[__N]);                               \
+        return ssp_deinit(__N);                                \
     }                                                                           \
     bool spi##__N##_idle(void)                                                  \
     {                                                                           \
-        return ssp_is_idle((__spi_t *)&__SPI[__N]);                             \
+        return ssp_is_idle(__N);                             \
     }                                                                           \
     bool spi##__N##_write(uint16_t hwOut)                                       \
     {                                                                           \
-        return ssp_write(hwOut, (__spi_t *)&__SPI[__N]);                        \
+        return ssp_write(hwOut, __N);                        \
     }                                                                           \
     bool spi##__N##_read(uint16_t *phwIn)                                       \
     {                                                                           \
-        return ssp_read(phwIn, (__spi_t *)&__SPI[__N]);                         \
+        return ssp_read(phwIn, __N);                         \
     }
 
 /*============================ TYPES =========================================*/
@@ -126,13 +120,23 @@ const i_spi_t SPI[] = {
 };
 
 /*============================ IMPLEMENTATION ================================*/
+
+
+WEAK void ssp_init_callback(const i_spi_t *interface)
+{
+    
+}
+
+
 /*! \brief initialize spi
  *! \param ptSpiCfg spi configuration object
  *! \retval true initialization succeed
  *! \retval false initialization failed
  */
-static bool ssp_config(spi_cfg_t *ptSpiCfg, __spi_t *ptThis)
+static bool ssp_init(spi_cfg_t *ptSpiCfg, uint32_t index)
 {
+    const __spi_t *ptThis = &__SPI[index];
+    
     if ((ptSpiCfg->chDataSize < SPI_MODE_DATASIZE_4)
     ||  (ptSpiCfg->chDataSize > SPI_MODE_DATASIZE_16)) {
         return false;
@@ -141,17 +145,17 @@ static bool ssp_config(spi_cfg_t *ptSpiCfg, __spi_t *ptThis)
     if ((ptSpiCfg->chClockDiv < 2) || (ptSpiCfg->chClockDiv > 254)) {
         return false;
     }
+    
+    ssp_init_callback(&SPI[index]);
+    
+    //! enable AHBCLK
+    PM_POWER_ENABLE(ptThis->tPOWER);
 
     __SAFE_CLK_CODE_BEGIN();
         ssp_reg_t *ptREG = this.ptREG;
 
         //!  read CR0 register
-        uint32_t wTempCR0 = ptREG->CR0 &
-                            ~(  SPI_CR0_DSS_MSK     |
-                                SPI_CR0_FRF_MSK     |
-                                SPI_CR0_CPOL_MSK    |
-                                SPI_CR0_CPHA_MSK    |
-                                SPI_CR0_SCR_MSK);
+        uint32_t wTempCR0 = 0;
 
         //! set frame type
         if (ptSpiCfg->hwMode & SPI_MODE_FORMAT_TI) {
@@ -170,6 +174,7 @@ static bool ssp_config(spi_cfg_t *ptSpiCfg, __spi_t *ptThis)
         } else {
             //! use idle low type
         }
+        
         if (ptSpiCfg->hwMode & SPI_MODE_SAMP_SECOND_EDGE) {
         } else {
             //! samp at first edge
@@ -177,16 +182,16 @@ static bool ssp_config(spi_cfg_t *ptSpiCfg, __spi_t *ptThis)
         }
 
         //! set data size
-        wTempCR0 |= SPI_DATASIZE_SET(ptSpiCfg->chDataSize - 1);
+        wTempCR0 |= SPI_DATASIZE_SET(ptSpiCfg->chDataSize);
+        
+        //! set Serial Clock Rate.
+        wTempCR0 |= 1u << 8;
         
         //! update CR0
         ptREG->CR0 = wTempCR0;
 
         //! read CR1 register
-        uint32_t wTempCR1 = ptREG->CR1 &
-                            ~(  SPI_CR1_LBM_MSK     |
-                                SPI_CR1_MS_MSK      |
-                                SPI_CR1_SOD_MSK);
+        uint32_t wTempCR1 = 0;
 
         //! switch between master mode and slave mode
         if (ptSpiCfg->hwMode & SPI_MODE_SLAVE) {
@@ -213,13 +218,16 @@ static bool ssp_config(spi_cfg_t *ptSpiCfg, __spi_t *ptThis)
         //! update CR1
         ptREG->CR1 = wTempCR1;
         
-        uint32_t wTempCPSR = ptREG->CPSR & ~(SPI_CPSR_CPSDVSR_MSK);
+        uint32_t wTempCPSR = 0;
 
         //! set clock prescaler
-        wTempCPSR |= SPI_CPSR_SET(ptSpiCfg->chClockDiv & 0xFFFFFFFEul);
+        wTempCPSR = SPI_CPSR_SET(ptSpiCfg->chClockDiv & 0x000000FEu);
         
         //! update CPSR
         ptREG->CPSR = wTempCPSR;
+        
+        //! set spi enable bit
+        this.ptREG->CR1 |= SPI_CR1_SSE_MSK;
     __SAFE_CLK_CODE_END();
 
     return true;
@@ -232,28 +240,28 @@ static uint8_t ssp_calculate_pclk_prescaler(void)
     return wPrescaler;
 }
 
-/*! \brief enable spi
- *! \param void
- */
-static bool ssp_open(__spi_t *ptThis)
-{
-    //! enable AHBCLK
-    PM_POWER_ENABLE(ptThis->tPOWER);
-    //! set spi enable bit
-    this.ptREG->CR1 |= SPI_CR1_SSE_MSK;
 
-    return true;
+WEAK void spi_deinit_callback(const i_spi_t *interface)
+{
+    
 }
 
 /*! \brief disable spi
  *! \param void
  */
-static bool ssp_close(__spi_t *ptThis)
+static bool ssp_deinit(uint32_t index)
 {
+    const __spi_t *ptThis = &__SPI[index];
+    
+    __SAFE_CLK_CODE_BEGIN();
     //! disable spi module
     this.ptREG->CR1 &=~ SPI_CR1_SSE_MSK;
+    __SAFE_CLK_CODE_END();
+    
     //! Disable AHBCLK
     PM_POWER_DISABLE(ptThis->tPOWER);
+    
+    spi_deinit_callback(&SPI[index]);
     
     return true;
 }
@@ -263,8 +271,9 @@ static bool ssp_close(__spi_t *ptThis)
  *! \retval true spi is idle
  *! \retval false spi is busy
  */
-static bool ssp_is_idle(__spi_t *ptThis)
+static bool ssp_is_idle(uint32_t index)
 {
+    const __spi_t *ptThis = &__SPI[index];
     bool bResult = true;
 
     //! spi is busy, return false
@@ -281,8 +290,10 @@ static bool ssp_is_idle(__spi_t *ptThis)
  *! \retval true write access is success
  *! \retval false write access is failed or illegal input parameter
  */
-static bool ssp_write(uint16_t hwOut, __spi_t *ptThis)
+static bool ssp_write(uint16_t hwOut, uint32_t index)
 {
+    const __spi_t *ptThis = &__SPI[index];
+    
     //! if tx fifo is not full, write data
     if (this.ptREG->SR & SPI_SR_TNF_MSK) {            //!< tx fifo is not full
         this.ptREG->DR = hwOut;
@@ -297,8 +308,10 @@ static bool ssp_write(uint16_t hwOut, __spi_t *ptThis)
  *! \retval true read access is success
  *! \retval false read access is failed or illegal input parameter
  */
-static bool ssp_read(uint16_t *phwIn, __spi_t *ptThis)
+static bool ssp_read(uint16_t *phwIn, uint32_t index)
 {
+    const __spi_t *ptThis = &__SPI[index];
+    
     //! if rx fifo is not empty, read data
     if (this.ptREG->SR & SPI_SR_RNE_MSK) {            //!< rx fifo is not empty
         uint16_t hwRcv = this.ptREG->DR;

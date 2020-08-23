@@ -55,6 +55,10 @@
             &uart##__N##_baudrate_set,                                      \
             &uart##__N##_baudrate_get,                                      \
         },                                                                  \
+        {                                                                   \
+            &uart##__N##_int_enable,                                      \
+            &uart##__N##_int_disable,                                      \
+        },                                                                  \
     },
 
 
@@ -360,6 +364,11 @@ static bool uart_config(uint32_t wUsart, const uart_cfg_t *ptUsartCFG)
     return true;
 }
 
+WEAK void uart_enable_callback(const i_uart_t *interface)
+{
+    
+}
+
 /*! \brief enable uart
  *! \param void
  *! \retval true enable succeed
@@ -373,6 +382,8 @@ static bool uart_enable(uint32_t wUsart)
         return false;
     }
     
+    uart_enable_callback(&UART[wUsart]);
+    
     //! Enable Peripheral Clock
     peripheral_clock_enable(ptThis->tPCON);
     
@@ -381,6 +392,11 @@ static bool uart_enable(uint32_t wUsart)
 
     return true;
 }    
+
+WEAK void uart_disable_callback(const i_uart_t *interface)
+{
+    
+}
 
 /*! \brief disable uart
  *! \param void
@@ -400,6 +416,8 @@ static bool uart_disable(uint32_t wUsart)
 
     //! Disable Peripheral Clock
     peripheral_clock_disable(ptThis->tPCON);
+    
+    uart_disable_callback(&UART[wUsart]);
     
     return true;
 }    

@@ -1,5 +1,5 @@
 /*******************************************************************************
- *  Copyright(C)2018 by Dreistein<mcu_shilei@hotmail.com>                     *
+ *  Copyright(C)2018-2020 by Dreistein<mcu_shilei@hotmail.com>                *
  *                                                                            *
  *  This program is free software; you can redistribute it and/or modify it   *
  *  under the terms of the GNU Lesser General Public License as published     *
@@ -20,38 +20,19 @@
 #define __UCPF_COLUMNS_H__
 
 /*============================ INCLUDES ======================================*/
-#include ".\app_cfg.h"
-#include ".\calendar\calendar.h"
-#include ".\clock\clock.h"
-#include ".\debug\debug.h"
-#include ".\event_fsm\event_fsm.h"
-#include ".\fifo\fifo.h"
-#include ".\fsm\fsm.h"
-#include ".\geometry\geometry.h"
-#include ".\list\list.h"
-#include ".\pool\pool.h"
-#include ".\queue\queue.h"
-#include ".\scheduler\os.h"
-#include ".\string\string.h"
-#include ".\timer\timer.h"
-#include ".\ttp\ttp.h"
-#include "./heap_memory/heap_first_fit/heap_first_fit.h"
+#include "./app_cfg.h"
+#include "./debug/debug.h"
+#include "./string/string.h"
+#include "./runtime_fault/runtime_fault.h"
+#include "./cipher/mbedtls_error.h"
+#include "./cipher/platform.h"
 #include "./json_checker/json_checker.h"
 #include "./cJSON/cJSON.h"
-#include "./codec/base16_codec.h"
-#include "./runtime_fault/runtime_fault.h"
-#include "./hash/crc/crc.h"
-#include "./hash/sha256.h"
-#include "./hash/sha512.h"
-#include "./hash/md5.h"
-#include "./cipher/mbedtls_error.h"
-#include "./cipher/bignum.h"
-#include "./cipher/memory_buffer_alloc.h"
-#include "./cipher/platform.h"
-#include "./cipher/rsa.h"
-#include "./cipher/aes.h"
-#include "./cipher/aesni.h"
-#include "./codec/base64.h"
+#include "./fifo/fifo.h"
+#include "./list/list.h"
+#include "./pool/pool.h"
+#include "./queue/queue.h"
+#include "./scheduler/os.h"
 
 /*============================ MACROS ========================================*/
 /*============================ MACROFIED FUNCTIONS ===========================*/

@@ -102,9 +102,8 @@ typedef struct{
 //! \name class: i_spi_t
 //! @{
 DEF_INTERFACE(i_spi_t)
-    bool (*Config)(spi_cfg_t *ptCfg);           //!< Config spi
-    bool (*Open)(void);                         //!< open spi
-    bool (*Close)(void);                        //!< close spi
+    bool (*Init)(spi_cfg_t *ptCfg);           //!< init spi
+    bool (*DeInit)(void);                         //!< deinit spi
     bool (*Idle)(void);                         //!< get busy flag status
     bool (*Write)(uint16_t Data);              //!< write data to spi buffer
     bool (*Read)(uint16_t *pData);              //!< read data from spi buffer

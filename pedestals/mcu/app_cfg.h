@@ -21,8 +21,8 @@
 //! \note do not move this pre-processor statement to other places
 #include "..\app_cfg.h"
 
-#ifndef __DRIVER_APP_CFG_H__
-#define __DRIVER_APP_CFG_H__
+#ifndef __DRIVER_MCU_APP_CFG_H__
+#define __DRIVER_MCU_APP_CFG_H__
 
 /*============================ INCLUDES ======================================*/
 /*============================ MACROS ========================================*/

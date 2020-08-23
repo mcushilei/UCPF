@@ -20,10 +20,10 @@
 
 /*============================ INCLUDES ======================================*/
 /*============================ MACROS ========================================*/
-#define UART0_REG               (*(uart_reg_t      *) UART0_BASE_ADDRESS)
-#define UART1_REG               (*(uart1_reg_t     *) UART1_BASE_ADDRESS)
-#define UART2_REG               (*(uart_reg_t      *) UART2_BASE_ADDRESS)
-#define UART3_REG               (*(uart_reg_t      *) UART3_BASE_ADDRESS)
+#define UART0_REG               ((uart_reg_t      *) UART0_BASE_ADDRESS)
+#define UART1_REG               ((uart1_reg_t     *) UART1_BASE_ADDRESS)
+#define UART2_REG               ((uart_reg_t      *) UART2_BASE_ADDRESS)
+#define UART3_REG               ((uart_reg_t      *) UART3_BASE_ADDRESS)
 
 #define UART_RBR0                      0
 #define UART_RBR1                      1
