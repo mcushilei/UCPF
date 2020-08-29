@@ -19,9 +19,18 @@
 #define __APPLICATION_APP_CFG_H__
 
 /*============================ INCLUDES ======================================*/
-#include "..\pedestals\pedestals.h"
-#include "..\columns\columns.h"
-#include "..\beams\beams.h"
+
+#if     defined(__PRJ_TEMPLATE__)
+#   include "../beams/frameworks/template/framework.h"
+#elif   defined(__PRJ_TEMPLATE_WIN__)
+#	include "../beams/frameworks/template_win/framework.h"
+#elif   defined(__FRW_DTU_GATEWAY__)
+#   include "../beams/frameworks/dtu_gateway/framework.h"
+#elif   defined(__FRW_BOOTLOADER__)
+#   include "../beams/frameworks/bootloader/framework.h"
+#else
+#   error "Unknow Project"
+#endif
 
 
 /*============================ MACROS ========================================*/

@@ -24,8 +24,6 @@
 #include "./debug/debug.h"
 #include "./string/string.h"
 #include "./runtime_fault/runtime_fault.h"
-#include "./cipher/mbedtls_error.h"
-#include "./cipher/platform.h"
 #include "./json_checker/json_checker.h"
 #include "./cJSON/cJSON.h"
 #include "./fifo/fifo.h"

@@ -15,34 +15,16 @@
  *  along with this program; if not, see http://www.gnu.org/licenses/.        *
 *******************************************************************************/
 
-/*============================ INCLUDES ======================================*/
+//! Do not move this pre-processor statement to other places
 #include "../app_cfg.h"
-#include "heap_memory/heap_memory.h"
 
+#ifndef __DSP_FFT_APP_CFG_H__
+#define __DSP_FFT_APP_CFG_H__
+
+/*============================ INCLUDES ======================================*/
 /*============================ MACROS ========================================*/
 /*============================ MACROFIED FUNCTIONS ===========================*/
 /*============================ TYPES =========================================*/
-/*============================ GLOBAL VARIABLES ==============================*/
-/*============================ LOCAL VARIABLES ===============================*/
-/*============================ PROTOTYPES ====================================*/
-/*============================ IMPLEMENTATION ================================*/
 
-void *cjson_port_malloc(size_t size)
-{
-    void *pMem = heap_malloc(size);
-    if(NULL != pMem)
-    {
-        memset(pMem, 0, size);
-    }
-    return pMem;
-}
-
-void cjson_port_free(void *ptr)
-{
-    (void)heap_free(ptr);
-}
-
-void *cjson_port_realloc(void *ptr, size_t size)
-{
-    return heap_realloc(ptr, size);
-}
+#endif  //!< #ifndef __DSP_FFT_APP_CFG_H__
+/* EOF */

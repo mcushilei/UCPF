@@ -20,17 +20,19 @@
 
 /*============================ INCLUDES ======================================*/
 #include "./app_cfg.h"
-#include "../../windows/socket_api/socket_api.h"
-#include "../../windows/rtc_api/rtc_api.h"
-#include "../../windows/uart_api/uart_api.h"
-#include "../../windows/file_api/win_file.h"
-#include "../../parser_curly_bracket/parser_curly_bracket.h"
+#include "windows/socket_api/socket_api.h"
+#include "windows/rtc_api/rtc_api.h"
+#include "windows/uart_api/uart_api.h"
+#include "windows/file_api/win_file.h"
+#include "parser_curly_bracket/parser_curly_bracket.h"
 
-#include "../../mbedtls/ssl.h"
-#include "../../mbedtls/net_sockets.h"
-#include "../../mbedtls/entropy.h"
-#include "../../mbedtls/ctr_drbg.h"
-#include "../../mbedtls/mbedtls_debug.h"
+#include "mbedtls/ssl.h"
+#include "mbedtls/mbedtls_net_sockets.h"
+#include "mbedtls/entropy.h"
+#include "mbedtls/ctr_drbg.h"
+#include "mbedtls/mbedtls_debug.h"
+#include "cipher/memory_buffer_alloc.h"
+
 
 /*============================ MACROS ========================================*/
 /*============================ MACROFIED FUNCTIONS ===========================*/

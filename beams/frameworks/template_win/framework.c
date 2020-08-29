@@ -20,6 +20,7 @@
 /*============================ INCLUDES ======================================*/
 #include "./app_cfg.h"
 #include "./framework.h"
+#include "heap_memory/heap_memory.h"
 
 extern int app_main(void);
 
