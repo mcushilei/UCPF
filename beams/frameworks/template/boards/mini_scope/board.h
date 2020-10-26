@@ -1,5 +1,5 @@
 /*******************************************************************************
- *  Copyright(C)2017-2019 by Dreistein<mcu_shilei@hotmail.com>                *
+ *  Copyright(C)2020 by Dreistein<mcu_shilei@hotmail.com>                     *
  *                                                                            *
  *  This program is free software; you can redistribute it and/or modify it   *
  *  under the terms of the GNU Lesser General Public License as published     *
@@ -15,61 +15,47 @@
  *  along with this program; if not, see http://www.gnu.org/licenses/.        *
 *******************************************************************************/
 
-
-#ifndef __DSP_FFT_H__
-#define __DSP_FFT_H__
+#ifndef __BOARD_MINI_SCOPE_BOARD_H__
+#define __BOARD_MINI_SCOPE_BOARD_H__
 
 /*============================ INCLUDES ======================================*/
 #include ".\app_cfg.h"
 
 /*============================ MACROS ========================================*/
 /*============================ MACROFIED FUNCTIONS ===========================*/
+
+#define LED_PIN_MSK             PIN28_MSK
+
+#define BREATH_LED_ON()     GPIO0_REG.CLR = LED_PIN_MSK
+#define BREATH_LED_OFF()    GPIO0_REG.SET = LED_PIN_MSK
+    
+#define OLED_SPI_MOSI_PIN   PIN15
+#define OLED_SPI_CLK_PIN    PIN24
+#define OLED_RESET_PIN      PIN20
+#define OLED_CD_PIN         PIN19
+
+#define OLED_SPI_MOSI_PIN_MSK   PIN15_MSK
+#define OLED_SPI_CLK_PIN_MSK    PIN24_MSK
+#define OLED_RESET_PIN_MSK      PIN20_MSK
+#define OLED_CD_PIN_MSK         PIN19_MSK
+
+#define OLED_SPI_MOSI_CLR()   GPIO0_REG.CLR = OLED_SPI_MOSI_PIN_MSK
+#define OLED_SPI_MOSI_SET()   GPIO0_REG.SET = OLED_SPI_MOSI_PIN_MSK
+
+#define OLED_SPI_CLK_CLR()   GPIO0_REG.CLR = OLED_SPI_CLK_PIN_MSK
+#define OLED_SPI_CLK_SET()   GPIO0_REG.SET = OLED_SPI_CLK_PIN_MSK
+
+#define OLED_RES_CLR()   GPIO0_REG.CLR = OLED_RESET_PIN_MSK
+#define OLED_RES_SET()   GPIO0_REG.SET = OLED_RESET_PIN_MSK
+
+#define OLED_CD_CLR()   GPIO0_REG.CLR = OLED_CD_PIN_MSK
+#define OLED_CD_SET()   GPIO0_REG.SET = OLED_CD_PIN_MSK
+
+
 /*============================ TYPES =========================================*/
-typedef struct {
-    float Real;
-    float Imag;
-} float_complex_t;
-
-enum {
-    WINDOW_TYPE_NONE,
-    WINDOW_TYPE_KAISER,
-    WINDOW_TYPE_SINC,
-    WINDOW_TYPE_SINE,
-    WINDOW_TYPE_HANNING,
-    WINDOW_TYPE_HAMMING,
-    WINDOW_TYPE_BLACKMAN,
-    WINDOW_TYPE_FLATTOP,
-    WINDOW_TYPE_BLACKMAN_HARRIS,
-    WINDOW_TYPE_BLACKMAN_NUTTALL,
-    WINDOW_TYPE_NUTTALL,
-    WINDOW_TYPE_KAISER_BESSEL,
-    WINDOW_TYPE_TRAPEZOID,
-    WINDOW_TYPE_GAUSS,
-    WINDOW_TYPE_TEST
-};
-
-#define COMPLEX_MULTIPLY(__c, __a, __b) do {                    \
-        float_complex_t __d;                                    \
-        __d.Real = __a.Real * __b.Real - __a.Imag * __b.Imag;   \
-        __d.Imag = __a.Real * __b.Imag + __a.Imag * __b.Real;   \
-        __c = __d;                                              \
-    } while (0)
-
-#define COMPLEX_ADD(__c, __a, __b) do {     \
-        __c.Real = __a.Real + __b.Real;     \
-        __c.Imag = __a.Imag + __b.Imag;     \
-    } while (0)
-
-#define COMPLEX_SUB(__c, __a, __b) do {     \
-        __c.Real = __a.Real - __b.Real;     \
-        __c.Imag = __a.Imag - __b.Imag;     \
-    } while (0)
-
 /*============================ GLOBAL VARIABLES ==============================*/
 /*============================ PROTOTYPES ====================================*/
-extern void fft_init(void);
-extern void fft(float_complex_t xin[]);
-extern void window_coeff(float *pBuff, uint32_t buffSize, uint8_t windowType, float Alpha, float Beta, bool unityGain);
+extern bool board_init(void);
 
-#endif  //! #ifndef __DSP_FFT_H__
+#endif  //!< #ifndef __BOARD_MINI_SCOPE_BOARD_H__
 /* EOF */

@@ -22,8 +22,8 @@
 #include ".\fft.h"
 
 /*============================ MACROS ========================================*/
-#ifndef
-#define PI                  (3.14159265358979)
+#ifndef FFT_PI
+#define FFT_PI                  (3.14159265358979f)
 #endif
 
 #define FFT_SAMPLE_NUM      (1u << FFT_BIT_LEN)
@@ -55,12 +55,12 @@ void fft_init(void)
     }
 
     for (i = 0; i < FFT_BIT_LEN; i++) {
-        FFT_SIN_TBL[i] = sin(PI / (1u << i));
-        FFT_COS_TBL[i] = cos(PI / (1u << i));
+        FFT_SIN_TBL[i] = sin(FFT_PI / (1u << i));
+        FFT_COS_TBL[i] = cos(FFT_PI / (1u << i));
     }
 }
 
-void fft(float_complex_t xin[FFT_SAMPLE_NUM])
+void fft(float_complex_t xin[])
 {
     uint32_t    i, j, le, li, ip, in;
     float_complex_t   c, w, t;
@@ -85,8 +85,8 @@ void fft(float_complex_t xin[FFT_SAMPLE_NUM])
         c.Real = 1.0f;
         c.Imag = 0.0f;
         //!< w为旋转因子
-        w.Real =  FFT_COS_TBL[i];           //!< cos(PI/li) = cos(PI/(2^(i)));
-        w.Imag = -FFT_SIN_TBL[i];           //!< sin(PI/li) = sin(PI/(2^(i)));
+        w.Real =  FFT_COS_TBL[i];           //!< cos(FFT_PI/li) = cos(FFT_PI/(2^(i)));
+        w.Imag = -FFT_SIN_TBL[i];           //!< sin(FFT_PI/li) = sin(FFT_PI/(2^(i)));
 
         for (j = 0; j < li; j++) {                          //!< 同一蝶形中不同位置的蝶形结（系数c不同）
             for (ip = j; ip < FFT_SAMPLE_NUM; ip += le) {   //!< 不同蝶形中相同位置的蝶形结
@@ -237,81 +237,81 @@ void window_coeff(float *pBuff, uint32_t buffSize, uint8_t windowType, float Alp
 
         case WINDOW_TYPE_SINC:    // Lanczos
             for (j = 0; j < M; j++) {
-                pBuff[j] = sinc((2 * j + 1 - (float)M) * PI / dM);
+                pBuff[j] = sinc((2 * j + 1 - (float)M) * FFT_PI / dM);
                 pBuff[j] = pow(pBuff[j], Beta);
             }
             break;
 
         case WINDOW_TYPE_SINE:    // Hanning if Beta = 2
             for (j = 0; j < hM; j++) {
-                pBuff[j] = sin((j + 1) * PI / dM);
+                pBuff[j] = sin((j + 1) * FFT_PI / dM);
                 pBuff[j] = pow(pBuff[j], Beta);
             }
             break;
 
         case WINDOW_TYPE_HANNING:
             for (j = 0; j < hM; j++) {
-                pBuff[j] = 0.5f - 0.5f * (float)cos((j + 1) * 2 * PI / dM);
+                pBuff[j] = 0.5f - 0.5f * (float)cos((j + 1) * 2 * FFT_PI / dM);
             }
             break;
 
         case WINDOW_TYPE_HAMMING:
             for (j = 0; j < hM; j++) {
-                pBuff[j] = 0.54f - 0.46f * (float)cos((j + 1) * 2 * PI / dM);
+                pBuff[j] = 0.54f - 0.46f * (float)cos((j + 1) * 2 * FFT_PI / dM);
             }
             break;
 
         case WINDOW_TYPE_BLACKMAN:
             for (j = 0; j < hM; j++) {
                 pBuff[j] = 0.42f
-                    - 0.50f * (float)cos((j + 1) * 2 * PI / dM)
-                    + 0.08f * (float)cos((j + 1) * 2 * PI * 2.0f / dM);
+                    - 0.50f * (float)cos((j + 1) * 2 * FFT_PI / dM)
+                    + 0.08f * (float)cos((j + 1) * 2 * FFT_PI * 2.0f / dM);
             }
             break;
 
         case WINDOW_TYPE_FLATTOP:
             for (j = 0; j < hM; j++) {
                 pBuff[j] = 1.0f
-                    - 1.93293488969227f * (float)cos((j + 1) * 2 * PI / dM)
-                    + 1.28349769674027f * (float)cos((j + 1) * 2 * PI * 2.0f / dM)
-                    - 0.38130801681619f * (float)cos((j + 1) * 2 * PI * 3.0f / dM)
-                    + 0.02929730258511f * (float)cos((j + 1) * 2 * PI * 4.0f / dM);
+                    - 1.93293488969227f * (float)cos((j + 1) * 2 * FFT_PI / dM)
+                    + 1.28349769674027f * (float)cos((j + 1) * 2 * FFT_PI * 2.0f / dM)
+                    - 0.38130801681619f * (float)cos((j + 1) * 2 * FFT_PI * 3.0f / dM)
+                    + 0.02929730258511f * (float)cos((j + 1) * 2 * FFT_PI * 4.0f / dM);
             }
             break;
 
         case WINDOW_TYPE_BLACKMAN_HARRIS:
             for (j = 0; j < hM; j++) {
                 pBuff[j] = 0.35875f
-                    - 0.48829f * (float)cos((j + 1) * 2 * PI / dM)
-                    + 0.14128f * (float)cos((j + 1) * 2 * PI * 2.0f / dM)
-                    - 0.01168f * (float)cos((j + 1) * 2 * PI * 3.0f / dM);
+                    - 0.48829f * (float)cos((j + 1) * 2 * FFT_PI / dM)
+                    + 0.14128f * (float)cos((j + 1) * 2 * FFT_PI * 2.0f / dM)
+                    - 0.01168f * (float)cos((j + 1) * 2 * FFT_PI * 3.0f / dM);
             }
             break;
 
         case WINDOW_TYPE_BLACKMAN_NUTTALL:
             for (j = 0; j < hM; j++) {
                 pBuff[j] = 0.3535819f
-                    - 0.4891775f * (float)cos((j + 1) * 2 * PI / dM)
-                    + 0.1365995f * (float)cos((j + 1) * 2 * PI * 2.0 / dM)
-                    - 0.0106411f * (float)cos((j + 1) * 2 * PI * 3.0 / dM);
+                    - 0.4891775f * (float)cos((j + 1) * 2 * FFT_PI / dM)
+                    + 0.1365995f * (float)cos((j + 1) * 2 * FFT_PI * 2.0 / dM)
+                    - 0.0106411f * (float)cos((j + 1) * 2 * FFT_PI * 3.0 / dM);
             }
             break;
 
         case WINDOW_TYPE_NUTTALL:
             for (j = 0; j < hM; j++) {
                 pBuff[j] = 0.355768f
-                    - 0.487396f * (float)cos((j + 1) * 2 * PI / dM)
-                    + 0.144232f * (float)cos((j + 1) * 2 * PI * 2.0f / dM)
-                    - 0.012604f * (float)cos((j + 1) * 2 * PI * 3.0f / dM);
+                    - 0.487396f * (float)cos((j + 1) * 2 * FFT_PI / dM)
+                    + 0.144232f * (float)cos((j + 1) * 2 * FFT_PI * 2.0f / dM)
+                    - 0.012604f * (float)cos((j + 1) * 2 * FFT_PI * 3.0f / dM);
             }
             break;
 
         case WINDOW_TYPE_KAISER_BESSEL:
             for (j = 0; j < hM; j++) {
                 pBuff[j] = 0.402f
-                    - 0.498f * (float)cos(       2 * PI * (j + 1) / dM)
-                    + 0.098f * (float)cos(2.0f * 2 * PI * (j + 1) / dM)
-                    + 0.001f * (float)cos(3.0f * 2 * PI * (j + 1) / dM);
+                    - 0.498f * (float)cos(       2 * FFT_PI * (j + 1) / dM)
+                    + 0.098f * (float)cos(2.0f * 2 * FFT_PI * (j + 1) / dM)
+                    + 0.001f * (float)cos(3.0f * 2 * FFT_PI * (j + 1) / dM);
             }
             break;
 

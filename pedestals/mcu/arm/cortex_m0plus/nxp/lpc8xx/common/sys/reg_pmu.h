@@ -1,5 +1,5 @@
 /*******************************************************************************
- *  Copyright(C)2017-2019 by Dreistein<mcu_shilei@hotmail.com>                *
+ *  Copyright(C)2015 by Dreistein<mcu_shilei@hotmail.com>                     *
  *                                                                            *
  *  This program is free software; you can redistribute it and/or modify it   *
  *  under the terms of the GNU Lesser General Public License as published     *
@@ -16,60 +16,39 @@
 *******************************************************************************/
 
 
-#ifndef __DSP_FFT_H__
-#define __DSP_FFT_H__
+#ifndef __DRIVER_ARM_M0PLUS_NXP_LPC81X_REG_PMU_H__
+#define __DRIVER_ARM_M0PLUS_NXP_LPC81X_REG_PMU_H__
 
 /*============================ INCLUDES ======================================*/
-#include ".\app_cfg.h"
-
 /*============================ MACROS ========================================*/
+#define PMU_REG                     (*(pmu_reg_t *)PMU_BASE_ADDRESS)
+
+#define PMU_PCON_PM_BIAS            0
+#define PMU_PCON_PM_MASK            BITMASK(2, 0)
+
+#define PMU_PCON_NODPD_BIAS         3
+#define PMU_PCON_NODPD_MASK         BIT(3)
+
+#define PMU_PCON_SLEEPFLAG_BIAS     8
+#define PMU_PCON_SLEEPFLAG_MASK     BIT(8)
+
+#define PMU_PCON_DPDFLAG_BIAS       11
+#define PMU_PCON_DPDFLAG_MASK       BIT(11)
+
 /*============================ MACROFIED FUNCTIONS ===========================*/
 /*============================ TYPES =========================================*/
-typedef struct {
-    float Real;
-    float Imag;
-} float_complex_t;
-
-enum {
-    WINDOW_TYPE_NONE,
-    WINDOW_TYPE_KAISER,
-    WINDOW_TYPE_SINC,
-    WINDOW_TYPE_SINE,
-    WINDOW_TYPE_HANNING,
-    WINDOW_TYPE_HAMMING,
-    WINDOW_TYPE_BLACKMAN,
-    WINDOW_TYPE_FLATTOP,
-    WINDOW_TYPE_BLACKMAN_HARRIS,
-    WINDOW_TYPE_BLACKMAN_NUTTALL,
-    WINDOW_TYPE_NUTTALL,
-    WINDOW_TYPE_KAISER_BESSEL,
-    WINDOW_TYPE_TRAPEZOID,
-    WINDOW_TYPE_GAUSS,
-    WINDOW_TYPE_TEST
-};
-
-#define COMPLEX_MULTIPLY(__c, __a, __b) do {                    \
-        float_complex_t __d;                                    \
-        __d.Real = __a.Real * __b.Real - __a.Imag * __b.Imag;   \
-        __d.Imag = __a.Real * __b.Imag + __a.Imag * __b.Real;   \
-        __c = __d;                                              \
-    } while (0)
-
-#define COMPLEX_ADD(__c, __a, __b) do {     \
-        __c.Real = __a.Real + __b.Real;     \
-        __c.Imag = __a.Imag + __b.Imag;     \
-    } while (0)
-
-#define COMPLEX_SUB(__c, __a, __b) do {     \
-        __c.Real = __a.Real - __b.Real;     \
-        __c.Imag = __a.Imag - __b.Imag;     \
-    } while (0)
+//! \name register page type 
+//! @{
+typedef volatile struct {
+	reg32_t PCON;		/*!< Offset: 0x000 Power control Register (R/W) */
+	reg32_t GPREG[4];	/*!< Offset: 0x004 General purpose Registers 0..3 (R/W) */
+	reg32_t DPDCTRL;	/*!< Offset: 0x014 Deep power-down control register (R/W) */
+} pmu_reg_t;
+//! @}
 
 /*============================ GLOBAL VARIABLES ==============================*/
+/*============================ LOCAL VARIABLES ===============================*/
 /*============================ PROTOTYPES ====================================*/
-extern void fft_init(void);
-extern void fft(float_complex_t xin[]);
-extern void window_coeff(float *pBuff, uint32_t buffSize, uint8_t windowType, float Alpha, float Beta, bool unityGain);
+/*============================ IMPLEMENTATION ================================*/
 
-#endif  //! #ifndef __DSP_FFT_H__
-/* EOF */
+#endif
