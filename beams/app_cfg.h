@@ -20,7 +20,7 @@
 #define __UCPF_BEAMS_APP_CFG_H__
 
 /*============================ INCLUDES ======================================*/
-#include "../pedestals/pedestals.h"
+#include "../pedestals/utilities/utilities.h"
 #include "../columns/columns.h"
 
 /*============================ MACROS ========================================*/

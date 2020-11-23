@@ -33,6 +33,8 @@ typedef struct {
     list_node_t            *NextAlarmToTrigger; //! scanhand point to the next alarm to check.
     list_node_t             DateAlarm;          //! this alarm would be only triggered one time.
     clock_alarm_callback_t *AlarmCallback;
+    clock_engine_safe_atom_start_fn *SafeAtomStart;
+    clock_engine_safe_atom_end_fn   *SafeAtomEnd;
     date_t          OriginDate;
     uint32_t        TickTock;       //! the elapsed second from OriginDate.
     uint32_t        TimeOfDay;      //! Only used by Alarm.
@@ -128,7 +130,7 @@ void clock_tick_tock(void)
         return;
     }
 
-    CLOCK_CRITICAL_SECTION_BEGIN();
+    realClock.SafeAtomStart();
 
     realClock.TickTock++;
     //! process date-alarm here.
@@ -151,7 +153,7 @@ void clock_tick_tock(void)
         }
     }
 
-    CLOCK_CRITICAL_SECTION_END();
+    realClock.SafeAtomEnd();
 }
 
 bool clock_init(const date_time_t *originDate, const date_time_t *currentTime, clock_alarm_callback_t *callback)
@@ -178,7 +180,7 @@ bool clock_init(const date_time_t *originDate, const date_time_t *currentTime, c
         return false;
     }
 
-    CLOCK_CRITICAL_SECTION_BEGIN();
+    realClock.SafeAtomStart();
     list_init(&realClock.Alarm);
     list_init(&realClock.DateAlarm);
     realClock.NextAlarmToTrigger = &realClock.Alarm;
@@ -187,7 +189,7 @@ bool clock_init(const date_time_t *originDate, const date_time_t *currentTime, c
     realClock.TickTock      = days * SECONDS_OF_DAY + sec;
     realClock.TimeOfDay     = sec;
     realClock.IsRunning     = true;
-    CLOCK_CRITICAL_SECTION_END();
+    realClock.SafeAtomEnd();
 
     return true;
 }
@@ -198,7 +200,7 @@ bool clock_set_ticktock(uint32_t time)
     uint32_t sec;
     clock_alarm_t *pAlarm;
 
-    CLOCK_CRITICAL_SECTION_BEGIN();
+    realClock.SafeAtomStart();
     do {
         if (time > realClock.TickTock) {
             forward = true;
@@ -234,7 +236,7 @@ bool clock_set_ticktock(uint32_t time)
         }
 
     } while (0);
-    CLOCK_CRITICAL_SECTION_END();
+    realClock.SafeAtomEnd();
 
     return true;
 }
@@ -269,11 +271,11 @@ date_time_t clock_get_time(void)
     uint32_t sec = 0u;
     int32_t  days = 0;
 
-    CLOCK_CRITICAL_SECTION_BEGIN();
+    realClock.SafeAtomStart();
     dateTime.Date = realClock.OriginDate;
     days = realClock.TickTock / SECONDS_OF_DAY;
     sec  = realClock.TickTock - days * SECONDS_OF_DAY;
-    CLOCK_CRITICAL_SECTION_END();
+    realClock.SafeAtomEnd();
     date_plus_days(&dateTime.Date, days);
     seconds_to_time(&dateTime.Time, sec);
     return dateTime;
@@ -283,9 +285,9 @@ uint32_t clock_get_ticktock(void)
 {
     uint32_t value;
 
-    CLOCK_CRITICAL_SECTION_BEGIN();
+    realClock.SafeAtomStart();
     value = realClock.TickTock;
-    CLOCK_CRITICAL_SECTION_END();
+    realClock.SafeAtomEnd();
     return value;
 }
 
@@ -313,9 +315,9 @@ bool clock_add_alarm(clock_alarm_t *alarm, const time24_t *time)
     alarm->Time     = sec;
 
     //! insert it to running list.
-    CLOCK_CRITICAL_SECTION_BEGIN();
+    realClock.SafeAtomStart();
     clock_alarm_list_insert(alarm);
-    CLOCK_CRITICAL_SECTION_END();
+    realClock.SafeAtomEnd();
 
     return true;
 }
@@ -323,9 +325,9 @@ bool clock_add_alarm(clock_alarm_t *alarm, const time24_t *time)
 void clock_remove_alarm(clock_alarm_t *alarm)
 {
     //! remove it from running list.
-    CLOCK_CRITICAL_SECTION_BEGIN();
+    realClock.SafeAtomStart();
     clock_alarm_list_remove(alarm);
-    CLOCK_CRITICAL_SECTION_END();
+    realClock.SafeAtomEnd();
 }
 
 bool clock_add_timer(clock_alarm_t *alarm, const date_time_t *time)
@@ -354,13 +356,13 @@ bool clock_add_timer(clock_alarm_t *alarm, const date_time_t *time)
     alarm->Time     = sec;
 
     //! insert it to running list.
-    CLOCK_CRITICAL_SECTION_BEGIN();
+    realClock.SafeAtomStart();
     if (sec <= realClock.TickTock) {
-        CLOCK_CRITICAL_SECTION_END();
+        realClock.SafeAtomEnd();
         return false;
     }
     clock_date_alarm_list_insert(alarm);
-    CLOCK_CRITICAL_SECTION_END();
+    realClock.SafeAtomEnd();
 
     return true;
 }
@@ -368,9 +370,9 @@ bool clock_add_timer(clock_alarm_t *alarm, const date_time_t *time)
 void clock_remove_timer(clock_alarm_t *alarm)
 {
     //! remove it from running list.
-    CLOCK_CRITICAL_SECTION_BEGIN();
+    realClock.SafeAtomStart();
     clock_date_alarm_list_remove(alarm);
-    CLOCK_CRITICAL_SECTION_END();
+    realClock.SafeAtomEnd();
 }
 
 /* EOF */

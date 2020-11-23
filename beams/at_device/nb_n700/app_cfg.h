@@ -1,5 +1,5 @@
 /*******************************************************************************
- *  Copyright(C)2017-2020 by Dreistein<mcu_shilei@hotmail.com>                *
+ *  Copyright(C)2019-2020 by Dreistein<mcu_shilei@hotmail.com>                *
  *                                                                            *
  *  This program is free software; you can redistribute it and/or modify it   *
  *  under the terms of the GNU Lesser General Public License as published     *
@@ -15,22 +15,18 @@
  *  along with this program; if not, see http://www.gnu.org/licenses/.        *
 *******************************************************************************/
 
-#ifndef __FRAMEWORK_H__
-#define __FRAMEWORK_H__
+//! \note do not move this pre-processor statement to other places
+#include "..\app_cfg.h"
+
+#ifndef __AT_DEVICE_NB_N700_APP_CFG_H__
+#define __AT_DEVICE_NB_N700_APP_CFG_H__
 
 /*============================ INCLUDES ======================================*/
-#include "./app_cfg.h"
-#include "./boards/boards.h"
-#include "lcd/ssd1306/ssd1306.h"
-#include "deadline/deadline.h"
-#include "./adc_api/adc_api.h"
-
 /*============================ MACROS ========================================*/
 /*============================ MACROFIED FUNCTIONS ===========================*/
 /*============================ TYPES =========================================*/
 /*============================ GLOBAL VARIABLES ==============================*/
 /*============================ PROTOTYPES ====================================*/
-extern bool framework_init(void);
 
-#endif  //! #ifndef __FRAMEWORK_H__
+#endif  //! #ifndef __AT_DEVICE_NB_N700_APP_CFG_H__
 /* EOF */

@@ -1,5 +1,5 @@
 /*******************************************************************************
- *  Copyright(C)2015-2018 by Dreistein<mcu_shilei@hotmail.com>                *
+ *  Copyright(C)2015-2020 by Dreistein<mcu_shilei@hotmail.com>                *
  *                                                                            *
  *  This program is free software; you can redistribute it and/or modify it   *
  *  under the terms of the GNU Lesser General Public License as published     *
@@ -26,8 +26,8 @@
 #   include ".\klxx\driver.h"
 #elif   defined(__LPC11XXX__)
 #   include ".\lpc11xxx\driver.h"
-#elif   defined(__LPC81X__)
-#   include ".\lpc81x\driver.h"
+#elif   defined(__LPC8XX__)
+#   include ".\lpc8xx\driver.h"
 #else
 #   error "No supported arm device, please check your configuration."
 #endif

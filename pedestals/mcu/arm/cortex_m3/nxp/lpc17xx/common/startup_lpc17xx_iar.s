@@ -1,6 +1,6 @@
 
 ReWrite_CRP     EQU     0
-CRP_Value       EQU     0xFFFFFFFF
+CRP_Level       EQU     0xFFFFFFFF
 
 
     EXTERN  __iar_program_start
@@ -118,11 +118,11 @@ __vector_table_0x1c
         DCD		CANActivity_IRQHandler	  ; 50: CAN Activity interrupt to wakeup
 
 
-    IF      ReWrite_CRP != 0
-    SECTION .crp :CODE:ROOT(2)
-    DATA
-        DCD     CRP_Value
-    ENDIF
+        IF      ReWrite_CRP != 0
+        SECTION .crp :CODE:ROOT(2)
+        DATA
+        DCD     CRP_Level
+        ENDIF
     
 
     SECTION .text:CODE:NOROOT(2)

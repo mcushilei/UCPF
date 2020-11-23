@@ -17,15 +17,17 @@
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
 
-//! \note do not move this pre-processor statement to other places
-#include "..\app_cfg.h"
-
 // do not forget to change the definition here from TEMPLATE to you real project name
 #ifndef __TEMPLATE_APP_CFG_H__
 #define __TEMPLATE_APP_CFG_H__
 
 /*============================ INCLUDES ======================================*/
-#include ".\config\application_cfg.h"
+#include "./config/application_cfg.h"
+#if defined(__PRJ_TEMPLATE_WIN__)
+#include "frameworks/template_win/framework.h"
+#else
+#include "frameworks/template/framework.h"
+#endif
 
 /*============================ MACROS ========================================*/
 /*============================ MACROFIED FUNCTIONS ===========================*/

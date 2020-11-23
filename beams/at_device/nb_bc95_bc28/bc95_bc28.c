@@ -93,6 +93,19 @@ static int32_t bc95_reboot(void)
     return at_cmd(cmd, strlen(cmd), "OK", NULL,NULL);
 }
 
+static int32_t bc95_get_version(void)
+{
+    char *cmd = "ATI\r";
+    char buf[64] = {0};
+    uint32_t buf_len = UBOUND(buf);
+    
+    if(at_cmd(cmd, strlen(cmd), "OK", buf, &buf_len) < 0)
+        return AT_FAILED;
+
+    DBG_LOG("%s", buf);
+    return AT_OK;
+}
+
 static int32_t bc95_check_ue(void)
 {
     const char *cmd = "AT+CFUN?\r";
@@ -114,6 +127,12 @@ static int32_t bc95_enable_rf(void)
 static int32_t bc95_shutdown(void)
 {
     char *cmd = "AT+CFUN=0\r";
+    return at_cmd(cmd, strlen(cmd), "OK", NULL,NULL);
+}
+
+static int32_t bc95_ncsearfcn(void)
+{
+    char *cmd = "AT+NCSEARFCN\r";
     return at_cmd(cmd, strlen(cmd), "OK", NULL,NULL);
 }
 
@@ -207,6 +226,12 @@ static int32_t bc95_get_csq(void)
         return -1;
     sscanf(str,"+CSQ:%d,99",&csq);		
     return csq;
+}
+
+static int32_t bc95_set_creg(void)
+{
+    char *cmd = "AT+CEREG=2\r";
+    return at_cmd(cmd, strlen(cmd), "OK", NULL,NULL);
 }
 
 static int32_t bc95_get_regstat(void)
@@ -591,9 +616,20 @@ static int32_t nb_bc28_init(void)
         goto __err_exit;
 	}
     
+    for (timecnt = 5; timecnt != 0u; timecnt--) {
+        ret = bc95_set_creg();
+		if(ret != AT_FAILED) {
+			break;
+		}
+		OS_TASK_SLEEP(500);
+	}
+	if(timecnt == 0u) {
+        goto __err_exit;
+	}
     
     
     bc95_check_csq();
+    OS_TASK_SLEEP(3000);
     rssi = bc95_get_csq();
     RTT_LOG("rssi:%d", rssi);
     

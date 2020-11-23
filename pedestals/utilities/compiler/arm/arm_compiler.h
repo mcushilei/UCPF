@@ -59,6 +59,7 @@
 #   define ALIGN_OF(__V)    __ALIGNOF__(__V)
 #   define AT_ADDR(__ADDR)  _Pragma(STRINGZ(location=__ADDR))
 #   define SECTION(__SEC)   _Pragma(STRINGZ(location=__SEC))
+#   define INLINE           inline
 #elif   __IS_COMPILER_GCC__
 #   define NO_INIT          __attribute__((section("noinit"))
 #   define WEAK             __attribute__((weak))
@@ -69,6 +70,7 @@
 #   define ALIGN_OF(__V)    alignof(__V)
 #   define AT_ADDR(__ADDR)  __attribute__((at(__ADDR)))
 #   define SECTION(__SEC)   __attribute__((section(__SEC)))
+#   define INLINE           inline
 #elif   __IS_COMPILER_MDK__
 #   define NO_INIT          __attribute__((section("noinit"),zero_init))
 #   define WEAK             __attribute__((weak))
@@ -79,6 +81,7 @@
 #   define ALIGN_OF(__V)    __ALIGNOF__(__V)
 #   define AT_ADDR(__ADDR)  __attribute__((at(__ADDR)))
 #   define SECTION(__SEC)   __attribute__((section(__SEC)))
+#   define INLINE           __inline
 #endif
 
 #define ISR(__VECTOR)       ROOT void __VECTOR(void)

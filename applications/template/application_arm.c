@@ -22,343 +22,213 @@
 #include ".\app_cfg.h"
 
 /*============================ MACROS ========================================*/
+
+#define MAX_VOLT_SCALE (4)
+#define MAX_TIME_SCALE (9)
+
+#define SIZE_OF_GRADE  (12)     //!< in pixel
+
 /*============================ MACROFIED FUNCTIONS ===========================*/
-#ifdef __LPC17XX__
-#elif defined(__LPC12XX__)
-#define BREATH_LED_ON()     GPIO0_REG.OUTCLR = PIN12_MSK
-#define BREATH_LED_OFF()    GPIO0_REG.OUTSET = PIN12_MSK
-#elif defined(__LPC11E68__)
-#define BREATH_LED_ON()     GPIO1_REG.CLR = PIN13_MSK
-#define BREATH_LED_OFF()    GPIO1_REG.SET = PIN13_MSK
-#elif defined(__LPC812__)
-#define BREATH_LED_ON()     GPIO0_REG.CLR = PIN1_MSK
-#define BREATH_LED_OFF()    GPIO0_REG.SET = PIN1_MSK
-#endif
-    
 /*============================ TYPES =========================================*/
+typedef struct{
+    uint8_t runState;
+    uint8_t runStop;        //0:run 1:stop
+    uint8_t channelSelect;
+
+    uint8_t     YScaleIdx;
+    uint32_t    ADCValuePerGrad[MAX_VOLT_SCALE];
+    uint32_t    ADCValuePerPixel[MAX_VOLT_SCALE];
+    
+    uint8_t     XScaleIdx;
+    uint32_t    timeScale[MAX_TIME_SCALE];
+    char       *pTimeName[MAX_TIME_SCALE];
+    uint32_t    timeDivCoef[MAX_TIME_SCALE]; 
+    uint32_t    sampleRate;
+    
+    char        pFFTSampRate[8];
+    char        pFFTDiv[8];
+    char        pFFTMax[8];
+} SCOPE_CTRL, *PSCOPE_CTRL;
+
+
 /*============================ GLOBAL VARIABLES ==============================*/
 /*============================ LOCAL VARIABLES ===============================*/
-DEBUG_DEFINE_THIS_FILE("template");
+THIS_FILE_NAME("template");
+
+
+SCOPE_CTRL g_scopeCtrl;
+
+float g_pVolScale[MAX_VOLT_SCALE]      = {0.1, 0.4, 0.8, 1.0};
+char *g_pVolScaleName[MAX_VOLT_SCALE]  = {"0.1v", "0.4v", "0.8v", "1.0v"};
+
+uint32_t pTime[MAX_TIME_SCALE]         = {10, 20, 50, 100, 200, 500, 1000, 2000, 2500}; //单位:us
+char *g_pTimeScaleName[MAX_TIME_SCALE] = {"10us", "20us", "50us", "100u", "200u", "500u", "1.0m", "2.0m", "2.5m"};
 
 /*============================ PROTOTYPES ====================================*/
 /*============================ IMPLEMENTATION ================================*/
+extern volatile uint32_t sysTickCounter;
+uint8_t gram[128 * 8];
+
+uint32_t ADC_Buf[256];
 
 
-
-
-#define TOP         ((uint16_t)400)
-
-/*! \brief set the 16-level led gradation
- *! \param hwLevel gradation
- *! \return none
- */
-void breath_led(void)
+void OLED_DrawGraduate(uint8_t x, uint8_t y)
 {
-    static uint16_t shwCounter = 0;
-    static int16_t  snGray   = TOP >> 1;
-    static uint16_t shwLevel = 0;
+    GRAM_DrawPoint( gram, x, y,   1 );
     
-    if ((shwCounter >> 1) <= shwLevel) {
-        BREATH_LED_ON();
-    } else {
-        BREATH_LED_OFF();
-    }
-    shwCounter++;
-    if (shwCounter >= TOP) {
-       shwCounter = 0;
-        snGray++;
-        if (snGray >= TOP) {
-            snGray = 0;
+    GRAM_DrawPoint( gram, x - 1, y + 1, 1 );
+    GRAM_DrawPoint( gram, x,     y + 1, 1 );
+    GRAM_DrawPoint( gram, x + 1, y + 1, 1 );
+}
+
+void OLED_ShowGrid(uint32_t waveOrFFt)
+{
+    uint8_t i,j;    
+
+    //清除所有数据
+    GRAM_Clear(gram);
+
+    //wave
+    if( waveOrFFt == 0 ) {
+        //画竖刻度线, 12 pixel per grade.
+        for(i = 0; i <= 108; i += SIZE_OF_GRADE) {
+            for(j = 0; j <= 48; j += 3) {   // 0, 3, 6, ... 48
+                GRAM_DrawPoint( gram, i, j, 1 );
+            }
         }
-        shwLevel = ABS(snGray - (int16_t)(TOP >> 1));
+
+        //画横刻度线, 12 pixel per grade.
+        for(j = 0; j <= 48; j += SIZE_OF_GRADE) {
+            for(i = 0; i <= 108; i += 3) {   // 0, 3, 6, ... 108
+                GRAM_DrawPoint( gram, i, j, 1 );
+            }
+        }
+    }
+    //fft
+    else {
+        //画竖刻度线
+        for(i = 2; i <= 66; i += 64) {
+            for(j = 0; j <= 50; j += 2) {
+                GRAM_DrawPoint( gram, i, j, 1 );
+            }
+        }
+
+        //画横刻度线
+        for(j = 0; j <= 50; j += 50) {
+            for(i = 2; i <= 66; i += 2) {
+                GRAM_DrawPoint( gram, i, j, 1);
+            }
+        }
+
+        //画小三角形作为刻度标注
+        for(i = 2; i <= 66; i += 16) {
+            OLED_DrawGraduate(i, 52);
+        }
     }
 }
 
-
-
-
-
-
-
-
-
-static FSM_OBJ  ptTimeEvent;
-static FSM_OBJ  ptTestEvent0;
-static FSM_OBJ  testSem;
-
-static FSM_TASK_STACK   stRTCTaskStack[2];
-static PROTOTYPE_STATE(fsm_rtc_start);
-
-DEF_STATE(fsm_rtc_start)
+void SCOPE_InitVoltParam(void)
 {
-    uint8_t chError;
+    uint32_t i;
     
-    chError = fsm_flag_wait(ptTimeEvent, 100);
-    if (chError == FSM_ERR_OBJ_NOT_SINGLED) {
-        return;
+    for(i = 0; i < MAX_VOLT_SCALE; i++) {
+        //计算转换系数
+        g_scopeCtrl.ADCValuePerGrad[i]  = (uint32_t)(g_pVolScale[i] / 3.3 * (1u << 16));    // 1986, 7945, 15888, 19859
+        g_scopeCtrl.ADCValuePerPixel[i] = g_scopeCtrl.ADCValuePerGrad[i] / SIZE_OF_GRADE;
+        
+        DBG_LOG("g_scopeCtrl.ADCValuePerPixel[%u] = %u", i, g_scopeCtrl.ADCValuePerPixel[i]);
+        DBG_LOG("g_scopeCtrl.ADCValuePerGrad[%u] = %u", i, g_scopeCtrl.ADCValuePerGrad[i]);
     }
-    if (chError == FSM_ERR_TASK_PEND_TIMEOUT) {
-        DEBUG_MSG(TEMPLATE_DEBUG, STRING_PRINTF("%s", "RTC wait time out.");)
-        fsm_semaphore_release(testSem, 3);
-    } else if (chError == FSM_ERR_NONE) {
-        DEBUG_MSG(TEMPLATE_DEBUG, STRING_PRINTF("%s", "RTC wait time OK.");)
-        fsm_flag_set(ptTestEvent0);
-    }
-    //FSM_CALL(fsm_test0_start, NULL);
+
+    g_scopeCtrl.YScaleIdx = 0;
 }
 
-static FSM_TASK_STACK   stTestTaskStack0[1];
-static PROTOTYPE_STATE(fsm_test0_start);
-
-DEF_STATE(fsm_test0_start)
+void SCOPE_InitTimeParam(void)
 {
-    uint8_t chError;
+    uint32_t i;
     
-    chError = fsm_flag_wait(ptTestEvent0, 100);
-    if (chError == FSM_ERR_OBJ_NOT_SINGLED) {
-        return;
+    for(i = 0; i < MAX_TIME_SCALE; i++) {
+        g_scopeCtrl.timeDivCoef[i] =  pTime[i] / 10; //ADC采样频率设置的分频系数
     }
-    if (chError == FSM_ERR_TASK_PEND_TIMEOUT) {
-        DEBUG_MSG(TEMPLATE_DEBUG, STRING_PRINTF("%s", "ptTestEvent0 wait time out.");)
-    } else if (chError == FSM_ERR_NONE) {
-        DEBUG_MSG(TEMPLATE_DEBUG, STRING_PRINTF("%s", "ptTestEvent0 wait time OK.");)
-    }
+    g_scopeCtrl.XScaleIdx = 2;
+}
+
+void draw_wave(void)
+{
+    int32_t trigStartPos = 8;
+    int32_t trigEndPos = trigStartPos + 108;
+    uint16_t i, ii, j;
+    int32_t yPos, yPosLast;
+    uint32_t autoVMRoffset = 0;
+    uint32_t autoVMRoffsetIndex = 0;
+    static uint16_t lastIndex = 0;
+    static uint16_t ADC_TransBuf[128];
+    uint32_t vMax = 0;
+    uint32_t vMin = 0;
     
-    //FSM_COMPLETE();
-}
+    vMax = 0x00000000;
+    vMin = 0x7FFFFFFF;
+    for( i = 0; i < 128; i++ ) {
+        ADC_TransBuf[i] = ADC_Buf[i];
+        
+        if( ADC_TransBuf[i] > vMax ) {
+            vMax = ADC_TransBuf[i];
+        }
 
-
-
-static FSM_OBJ    ptTestEvent3;
-static FSM_OBJ    ptTestMutex;
-
-static FSM_TASK_STACK   stTestTaskStack1[1];
-static PROTOTYPE_STATE(fsm_test1_start);
-static PROTOTYPE_STATE(fsm_test1_a);
-static PROTOTYPE_STATE(fsm_test1_b);
-static PROTOTYPE_STATE(fsm_test1_c);
-static PROTOTYPE_STATE(fsm_test1_d);
-static PROTOTYPE_STATE(fsm_test1_delay);
-
-DEF_STATE(fsm_test1_start)
-{
-    uint8_t chError;
-    
-    chError = fsm_mutex_wait(ptTestMutex, 0);
-    if (chError == FSM_ERR_OBJ_NOT_SINGLED) {
-        return;
-    } else if (chError == FSM_ERR_TASK_PEND_TIMEOUT) {
-        return;
-    } else if (chError == FSM_ERR_NONE) {
-        STRING_PRINTF("\r\n", 0);
-        FSM_TRANSFER_TO(fsm_test1_a, NULL);
-    }
-}
-
-DEF_STATE(fsm_test1_a)
-{
-    STRING_PRINTF("a", 0);
-    FSM_TRANSFER_TO(fsm_test1_b, NULL);
-}
-
-DEF_STATE(fsm_test1_b)
-{
-    STRING_PRINTF("b", 0);
-    FSM_TRANSFER_TO(fsm_test1_c, NULL);
-}
-
-DEF_STATE(fsm_test1_c)
-{
-    STRING_PRINTF("c", 0);
-    FSM_TRANSFER_TO(fsm_test1_d, NULL);
-}
-
-DEF_STATE(fsm_test1_d)
-{
-    STRING_PRINTF("d", 0);
-    FSM_TRANSFER_TO(fsm_test1_delay, NULL);
-}
-
-DEF_STATE(fsm_test1_delay)
-{
-    fsm_err_t err;
-    
-    err = fsm_task_delay(100);
-    if (err == FSM_ERR_TASK_PEND_TIMEOUT) {
-        fsm_mutex_release(ptTestMutex);
-        FSM_TRANSFER_TO(fsm_test1_start, NULL);
-    }
-}
-
-
-
-
-
-static FSM_TASK_STACK   stTestTaskStack2[1];
-static PROTOTYPE_STATE(fsm_test2_start);
-static PROTOTYPE_STATE(fsm_test2_a);
-static PROTOTYPE_STATE(fsm_test2_b);
-static PROTOTYPE_STATE(fsm_test2_c);
-static PROTOTYPE_STATE(fsm_test2_d);
-static PROTOTYPE_STATE(fsm_test2_delay);
-
-DEF_STATE(fsm_test2_start)
-{
-    uint8_t chError;
-    
-    chError = fsm_mutex_wait(ptTestMutex, 0);
-    if (chError == FSM_ERR_OBJ_NOT_SINGLED) {
-        return;
-    } else if (chError == FSM_ERR_TASK_PEND_TIMEOUT) {
-        return;
-    } else if (chError == FSM_ERR_NONE) {
-        STRING_PRINTF("\r\n", 0);
-        FSM_TRANSFER_TO(fsm_test2_a, NULL);
-    }
-}
-
-DEF_STATE(fsm_test2_a)
-{
-    STRING_PRINTF("A", 0);
-    FSM_TRANSFER_TO(fsm_test2_b, NULL);
-}
-
-DEF_STATE(fsm_test2_b)
-{
-    STRING_PRINTF("B", 0);
-    FSM_TRANSFER_TO(fsm_test2_c, NULL);
-}
-
-DEF_STATE(fsm_test2_c)
-{
-    STRING_PRINTF("C", 0);
-    FSM_TRANSFER_TO(fsm_test2_d, NULL);
-}
-
-DEF_STATE(fsm_test2_d)
-{
-    STRING_PRINTF("D", 0);
-    fsm_mutex_release(ptTestMutex);
-    FSM_TRANSFER_TO(fsm_test2_delay, NULL);
-}
-
-DEF_STATE(fsm_test2_delay)
-{
-    fsm_err_t err;
-    
-    err = fsm_task_delay(530);
-    if (err == FSM_ERR_TASK_PEND_TIMEOUT) {
-        FSM_TRANSFER_TO(fsm_test2_start, NULL);
-    }
-}
-
-
-
-
-static FSM_TASK_STACK   stTestTaskStack3[1];
-static PROTOTYPE_STATE(fsm_test3_start);
-
-DEF_STATE(fsm_test3_start)
-{
-    uint8_t chError;
-    
-    chError = fsm_semaphore_wait(testSem, 0);
-    if (chError == FSM_ERR_OBJ_NOT_SINGLED) {
-        return;
-    } else if (chError == FSM_ERR_TASK_PEND_TIMEOUT) {
-        return;
-    } else if (chError == FSM_ERR_NONE) {
-        STRING_PRINTF("\r\nhahaha.", 0);
-    }
-}
-
-
-
-
-
-/*! \note initialize application
- *  \param none
- *  \retval true hal initialization succeeded.
- *  \retval false hal initialization failed
- */
-bool app_init(void)
-{
-//    STRING_PRINTF("\x1B[1;40;32m", 0);
-    STRING_PRINTF("%s", "\r\nHello World!");
-    DEBUG_PRINT("\r\n--------Test--------");
-    
-    
-    fsm_init();
-
-    if (FSM_ERR_NONE != fsm_flag_create(&ptTimeEvent, false, false)) {
-        DEBUG_MSG(TEMPLATE_DEBUG, STRING_PRINTF("%s", "Can not initialise event.");)
-    }
-    if (FSM_ERR_NONE != fsm_flag_create(&ptTestEvent0, false, true)) {
-        DEBUG_MSG(TEMPLATE_DEBUG, STRING_PRINTF("%s", "Can not initialise event.");)
-    }
-    if (FSM_ERR_NONE != fsm_flag_create(&ptTestEvent3, false, false)) {
-        DEBUG_MSG(TEMPLATE_DEBUG, STRING_PRINTF("%s", "Can not initialise event.");)
-    }
-    if (FSM_ERR_NONE != fsm_mutex_create(&ptTestMutex)) {
-        DEBUG_MSG(TEMPLATE_DEBUG, STRING_PRINTF("%s", "Can not initialise mutex.");)
-    }
-    if (FSM_ERR_NONE != fsm_semaphore_create(&testSem, 0)) {
-        DEBUG_MSG(TEMPLATE_DEBUG, STRING_PRINTF("%s", "Can not initialise sem.");)
-    }
-
-    if (FSM_ERR_NONE != fsm_task_create(
-                                        NULL,
-                                        REF_STATE(fsm_rtc_start),
-                                        NULL,
-                                        stRTCTaskStack,
-                                        ARRAY_LENGTH(stRTCTaskStack))) {
-        DEBUG_MSG(TEMPLATE_DEBUG, STRING_PRINTF("%s", "Can not creat task fsm_rtc_start.");)
-    }
-    if (FSM_ERR_NONE != fsm_task_create(
-                                        NULL,
-                                        REF_STATE(fsm_test0_start),
-                                        NULL,
-                                        stTestTaskStack0,
-                                        ARRAY_LENGTH(stTestTaskStack0))) {
-        DEBUG_MSG(TEMPLATE_DEBUG, STRING_PRINTF("%s", "Can not creat task fsm_test0_start.");)
-    }
-    if (FSM_ERR_NONE != fsm_task_create(
-                                        NULL,
-                                        REF_STATE(fsm_test1_start),
-                                        NULL,
-                                        stTestTaskStack1,
-                                        ARRAY_LENGTH(stTestTaskStack1))) {
-        DEBUG_MSG(TEMPLATE_DEBUG, STRING_PRINTF("%s", "Can not creat task 1.");)
-    }
-    if (FSM_ERR_NONE != fsm_task_create(
-                                        NULL,
-                                        REF_STATE(fsm_test2_start),
-                                        NULL,
-                                        stTestTaskStack2,
-                                        ARRAY_LENGTH(stTestTaskStack2))) {
-        DEBUG_MSG(TEMPLATE_DEBUG, STRING_PRINTF("%s", "Can not creat task 2.");)
-    }
-    if (FSM_ERR_NONE != fsm_task_create(
-                                        NULL,
-                                        REF_STATE(fsm_test3_start),
-                                        NULL,
-                                        stTestTaskStack3,
-                                        ARRAY_LENGTH(stTestTaskStack3))) {
-        DEBUG_MSG(TEMPLATE_DEBUG, STRING_PRINTF("%s", "Can not creat task 3.");)
+        if( ADC_TransBuf[i] < vMin ) {
+            vMin = ADC_TransBuf[i];
+        }
     }
     
-    
-    return true;
-}
+    DBG_LOG("vMax = %u", vMax);
+    DBG_LOG("vMin = %u", vMin);
 
-/*! \note deinitialize application
- *  \param none
- *  \retval true hal deinitialization succeeded.
- *  \retval false hal deinitialization failed
- */
-bool app_deinit(void)
-{
-    return true;
+    //自动量程
+    autoVMRoffsetIndex = vMin / g_scopeCtrl.ADCValuePerGrad[g_scopeCtrl.YScaleIdx];
+
+    //消除量程抖动
+    if( (autoVMRoffsetIndex < lastIndex) && (lastIndex - autoVMRoffsetIndex <= 1) ) {
+        autoVMRoffsetIndex = lastIndex;
+    }
+    
+    autoVMRoffset = autoVMRoffsetIndex *  g_scopeCtrl.ADCValuePerGrad[g_scopeCtrl.YScaleIdx];
+    
+    DBG_LOG("autoVMRoffset = %u", autoVMRoffset);
+    
+    OLED_ShowGrid(0);
+    for( i = 0, ii = trigStartPos; ii < trigEndPos; i++, ii++ ) {
+        
+        uint16_t tempVal = (ADC_TransBuf[ii] - autoVMRoffset) / g_scopeCtrl.ADCValuePerPixel[g_scopeCtrl.YScaleIdx];
+
+        if( tempVal > 48 ) {
+            tempVal = 48;
+        }
+
+        yPos = 48 - tempVal;
+
+        //tempVal为48时（即yPos为0）不显示，表示实际值超出显示范围
+        if( yPos > 0 ) {
+            GRAM_DrawPoint( gram, i, yPos, 1);
+        }
+
+        //y轴插值，使波形看起来是连续的(尤其当相邻两个点在Y方向上距离很远时)
+        if( i == 0 ) {
+            yPosLast = yPos;
+        }
+        else {
+            if(yPos > (yPosLast + 1)) {
+                for(j = yPosLast + 1; j < yPos; j++) {
+                    GRAM_DrawPoint( gram, i, j, 1 );
+                }
+            }
+            else if(yPosLast > (yPos + 1)) {
+                for(j = yPosLast - 1; j > yPos; j--) {
+                    GRAM_DrawPoint( gram, i, j, 1 );
+                }
+            }
+            yPosLast = yPos;
+        }
+    }
 }
 
 /*! \note deinitialize application
@@ -368,34 +238,69 @@ bool app_deinit(void)
  */
 int app_main(void)
 {
-    if (!app_init()) {
-        return -1;
-    }
+    deadline_t delay;
     
-    fsm_start();
+    deadline_init(&delay);
+    SSD1306_Init();
+    SSD1306_DisplayInit();
     
-    while (1) {
-        if (!fsm_scheduler()) {          //!< FSM scheduler
-            //! try to enter a max allowed sleep mode
-            //enter_lowpower_mode(SLEEP);
-        } else {
+    DBG_LOG("Core Clock: %u", core_clock_get());
+
+    memset(gram, 0xF0F0F0F0, sizeof(gram) / 2);
+    memset(gram + sizeof(gram) / 2, 0x0F0F0F0F, sizeof(gram) / 2);
+    
+    //while (1) {
+        deadline_set_ms(&delay, 2000);
+        SSD1306_Refresh(gram);
+        while( !deadline_is_expired(&delay) );
+    //}
+    
+        
+    SCOPE_InitVoltParam();
+    SCOPE_InitTimeParam();
+    SSD1306_Refresh(gram);
+    
+    
+    DMA_ADC_Setup(ADC_Buf, 128);
+    App_ADC_Init();
+    App_ADC_SetSampleRate(g_scopeCtrl.timeDivCoef[g_scopeCtrl.XScaleIdx]);
+
+    while( 1 ) {
+        if( DMA_IntA_Flag ) {
+            DMA_IntA_Flag = 0;
+            App_ADC_Start();
+            DBG_LOG("ADC DMA done.");
+            draw_wave();
+            SSD1306_Refresh(gram);
         }
-        breath_led();
     }
-
-    if (!app_deinit()) {
-        return -2;
-    }
-
+    
     return 0;
+}
+
+
+
+
+/**
+ * @brief	Handle interrupt from ADC sequencer A
+ * @return	Nothing
+ */
+ISR(ADC_SEQB_IRQHandler)
+{
+	uint32_t pending;
+
+	/* Get pending interrupts */
+	pending = Chip_ADC_GetFlags( &ADC0_REG );
+
+	/* Sequence B completion interrupt */
+	if (pending & REG_ADC_FLAGS_SEQB_INT_M) {
+        Chip_ADC_ClearFlags( &ADC0_REG, REG_ADC_FLAGS_SEQB_INT_M );
+		DBG_LOG( "ADC B done." );
+	}
 }
 
 static volatile uint32_t wCnt = 0;
 
-ISR(SysTick_Handler)
-{
-    fsm_tick();
-}
 
 ISR(WDT_IRQHandler)
 {
@@ -419,7 +324,7 @@ ISR(RTC_IRQHandler)
     if (reg & (1u << 1)) {      //!< alarm interrupt.
     }
     
-    STRING_PRINTF("\r\n%u", i);
+    DBG_LOG("\r\n%u", i);
     i++;
 #elif defined(__LPC12XX__)
 #elif defined(__LPC11XXX__)

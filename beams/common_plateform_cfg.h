@@ -92,8 +92,16 @@
 #   define __CPU_ARM__                      //!< arm series
 #   define __CORTEX_M0P__                   //!< cortex-m0+ core
 #   define __NXP__                          //!< NXP
-#   define __LPC81X__                       //!< LPC81x series
+#   define __LPC8XX__                       //!< LPC81x series
+#   define __LPC81X__
 #   define __LPC812__                       //!< LPC812
+#elif   defined(__NXP_LPC824__)
+#   define __CPU_ARM__                      //!< arm series
+#   define __CORTEX_M0P__                   //!< cortex-m0+ core
+#   define __NXP__                          //!< NXP
+#   define __LPC8XX__                       //!< LPC81x series
+#   define __LPC82X__
+#   define __LPC824__                       //!< LPC812
 #elif   defined(__AMBIQ_APOLLO2__)
 #   define __CPU_ARM__                      //!< arm series
 #   define __CORTEX_M4__                    //!< cortex-m4 core

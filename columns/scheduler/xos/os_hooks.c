@@ -123,7 +123,9 @@ void OSTaskStatHook(void)
 }
 #endif
 
-extern void task_switch_callback(void);
+WEAK void task_switch_callback(void)
+{
+}
 
 /*!
  *! \Brief       TASK SWITCH HOOK

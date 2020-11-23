@@ -495,6 +495,10 @@ static int32_t nl668_init(void)
         int8_t mnc = 0;
         mnc = (imsi[3] - '0') * 10 + (imsi[4] - '0');
         switch (mnc) {
+            case 11:
+                apn = "CTLTE";
+                break;
+                
             case 1:
             case 6:
             case 9:
@@ -513,6 +517,7 @@ static int32_t nl668_init(void)
     
     
     nl668_at_check_csq();
+    OS_TASK_SLEEP(3000);
     int32_t rssi = nl668_at_get_csq();
     RTT_LOG("rssi:%d", rssi);
     
@@ -547,6 +552,7 @@ static int32_t nl668_init(void)
 		if(ret != AT_FAILED) {
 			break;
 		}
+        OS_TASK_SLEEP(2000);
 	}
 	if(timecnt == 0u) {
         RTT_LOG("ERROR: PPP timeout!");

@@ -1,5 +1,5 @@
 /*******************************************************************************
- *  Copyright(C)2015-2018 by Dreistein<mcu_shilei@hotmail.com>                *
+ *  Copyright(C)2015-2020 by Dreistein<mcu_shilei@hotmail.com>                *
  *                                                                            *
  *  This program is free software; you can redistribute it and/or modify it   *
  *  under the terms of the GNU Lesser General Public License as published     *
@@ -19,11 +19,11 @@
 #define __ULTILITIES_H__
 
 /*============================ INCLUDES ======================================*/
+#include "..\beams\common_plateform_cfg.h"
 #include ".\compiler\compiler.h"
 #include ".\user_type.h"
 #include ".\preprocessor\preprocessor.h"
 #include ".\usebits.h"
-#include ".\ooc.h"
 
 /*============================ MACROS ========================================*/
 /*============================ MACROFIED FUNCTIONS ===========================*/
@@ -34,6 +34,13 @@
             struct __NAME {
 
 #define END_DEF_STRUCTURE(__NAME)           \
+            };
+
+#define DEF_INTERFACE(__NAME)               \
+            typedef struct __NAME __NAME;   \
+            struct __NAME {
+
+#define END_DEF_INTERFACE(__NAME)           \
             };
 //! @}
 

@@ -73,9 +73,6 @@ CPU_STK *OSTaskStkInit(CPU_STK *ptos, void *wrapper, void *task, void *parg)
 
 void OSEnterCriticalSection(void)
 {
-//	__set_BASEPRI( OS_CPU_CFG_HIGHEST_INTERRUPT_PRIORITY_USED );
-//	__DSB();
-//	__ISB();
     __disable_irq();
     OSCriticalNesting++;
 }
@@ -84,7 +81,6 @@ void OSExitCriticalSection(void)
 {
 	OSCriticalNesting--;
 	if ( OSCriticalNesting == 0u ) {
-//		__set_BASEPRI( 0 );
         __enable_irq();
 	}
 }

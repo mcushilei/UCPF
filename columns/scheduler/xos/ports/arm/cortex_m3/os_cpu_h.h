@@ -5,6 +5,7 @@
 /*============================ INCLUDES ======================================*/
 /*============================ MACROS ========================================*/
 #define OS_CPU_STK_GROWTH_DOWN     1       //!< Stack grows from HIGH to LOW memory on ARM.
+#define OS_CPU_STK_CANARY_VALUE     (0xCCCCCCCC)
 
 #define OS_CPU_CFG_HIGHEST_INTERRUPT_PRIORITY_USED          (0x01u)
 #define OS_CPU_CFG_HIGHEST_INTERRUPT_PRIORITY_CALLED_FROM   (0x01u)

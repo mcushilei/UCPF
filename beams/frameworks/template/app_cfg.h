@@ -1,5 +1,5 @@
 /*******************************************************************************
- *  Copyright(C)2017 by Dreistein<mcu_shilei@hotmail.com>                     *
+ *  Copyright(C)2017-2020 by Dreistein<mcu_shilei@hotmail.com>                *
  *                                                                            *
  *  This program is free software; you can redistribute it and/or modify it   *
  *  under the terms of the GNU Lesser General Public License as published     *
@@ -22,7 +22,7 @@
 #define __FRAMEWORK_APP_CFG_H__
 
 /*============================ INCLUDES ======================================*/
-#include "..\..\boards\boards.h"
+#include "mcu/driver.h"
 
 
 /*============================ MACROS ========================================*/

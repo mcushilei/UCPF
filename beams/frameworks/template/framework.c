@@ -1,5 +1,5 @@
 /*******************************************************************************
- *  Copyright(C)2018-2019 by Dreistein<mcu_shilei@hotmail.com>                *
+ *  Copyright(C)2018-2020 by Dreistein<mcu_shilei@hotmail.com>                *
  *                                                                            *
  *  This program is free software; you can redistribute it and/or modify it   *
  *  under the terms of the GNU Lesser General Public License as published     *
@@ -18,7 +18,9 @@
 
 
 /*============================ INCLUDES ======================================*/
-#include ".\app_cfg.h"
+#include "./app_cfg.h"
+#include "./boards/boards.h"
+#include "./deadline_type.h"
 
 /*============================ MACROS ========================================*/
 /*============================ MACROFIED FUNCTIONS ===========================*/
@@ -26,20 +28,79 @@
 /*============================ PRIVATE PROTOTYPES ============================*/
 /*============================ PRIVATE VARIABLES =============================*/
 /*============================ PUBLIC VARIABLES ==============================*/
+THIS_FILE_NAME("framework");
 
 uint32_t err_log[64];
 
+volatile uint32_t sysTickCounter;
+
 /*============================ IMPLEMENTATION ================================*/
 
-static uint32_t core_clock_get(void)
+static void dead_line_get_tick(uint32_t *value)
 {
-    return 1000000;
+    *value = sysTickCounter;
 }
 
-/*! \brief  hardware initialization
- *! \param  none
- *! \retval true run the default initialization
- *! \retval false ignore the default initialization
+static uint32_t dead_line_ms_to_tick(uint32_t timeMS)
+{
+    return timeMS / 10u;
+}
+
+static uint32_t dead_line_tick_to_ms(uint32_t ticks)
+{
+    return 10u * ticks;
+}
+
+void deadline_init(deadline_t *dlTimer)
+{
+	dlTimer->EndTime = 0;
+    dlTimer->StartTime = 0;
+}
+
+bool deadline_is_expired(deadline_t *dlTimer)
+{
+	uint32_t now, deltaExpire, deltaDeadline;
+
+	dead_line_get_tick(&now);
+    deltaExpire = now - dlTimer->StartTime;
+    deltaDeadline = dlTimer->EndTime - dlTimer->StartTime;
+    if (deltaExpire >= deltaDeadline) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
+void deadline_set_ms(deadline_t *dlTimer, uint32_t timeout)
+{
+	dead_line_get_tick(&dlTimer->StartTime);
+    dlTimer->EndTime = dlTimer->StartTime + dead_line_ms_to_tick(timeout);
+}
+
+void deadline_set(deadline_t *dlTimer, uint32_t timeout)
+{
+    deadline_set_ms(dlTimer, timeout * 1000);
+}
+
+int deadline_left_ms(deadline_t *dlTimer)
+{
+	uint32_t now, deltaExpire, deltaDeadline;
+
+	dead_line_get_tick(&now);
+    deltaExpire = now - dlTimer->StartTime;
+    deltaDeadline = dlTimer->EndTime - dlTimer->StartTime;
+    if (deltaExpire >= deltaDeadline) {
+        return 0;
+    } else {
+        return dead_line_tick_to_ms(deltaDeadline - deltaExpire);
+    }
+}
+
+
+/** \brief  hardware initialization
+ *  \param  none
+ *  \retval true run the default initialization
+ *  \retval false ignore the default initialization
  */
 ROOT bool ON_HW_INIT(void)
 {
@@ -47,11 +108,36 @@ ROOT bool ON_HW_INIT(void)
 
     /*! you can put your hardware initialization code here */
     
-    SysTick_Config(core_clock_get() / 100);
-    
     return true;
 }
 
+#define TOP         ((uint16_t)400)
+
+/** \brief set the 16-level led gradation
+ *  \param hwLevel gradation
+ *  \return none
+ */
+void breath_led(void)
+{
+    static uint16_t shwCounter = 0;
+    static int16_t  snGray   = TOP >> 1;
+    static uint16_t shwLevel = 0;
+    
+    if( (shwCounter >> 1) <= shwLevel ) {
+        BREATH_LED_ON();
+    } else {
+        BREATH_LED_OFF();
+    }
+    shwCounter++;
+    if( shwCounter >= TOP ) {
+        shwCounter = 0;
+        snGray++;
+        if (snGray >= TOP) {
+            snGray = 0;
+        }
+        shwLevel = ABS(snGray - (int16_t)(TOP >> 1));
+    }
+}
 
 bool framework_init(void)
 {
@@ -60,194 +146,78 @@ bool framework_init(void)
         return false;
     }
     
-#ifdef __LPC17XX__
+    DBG_LOG("Hello World!");
 
-    //! Debug uart init
-    PM.Clock.Peripheral.Config(PCLK_UART0, PCLK_DIV_1);
-    PM.Clock.Peripheral.Get(PCLK_UART0);
-    PM.Power.Enable(PCONP_UART0);
-    PIN_CFG(
-        {PORT0, PIN2,   DRIVER_PIN_FUNC(1), DRIVER_PIN_MODE_PULL_UP},
-        {PORT0, PIN3,   DRIVER_PIN_FUNC(1), DRIVER_PIN_MODE_PULL_UP},
-    );
-
-    static const uart_cfg_t uartCfg = {
-        .Baudrate = 9600,
-        .DataBits = DRIVER_UART_8_BITS_LENGTH,
-        .StopBits = DRIVER_UART_1_STOPBITS,
-        .Parity   = DRIVER_UART_NO_PARITY,
-    };
-    UART[0].Enable();
-    UART[0].Config(&uartCfg);
-    
-
-#elif defined(__LPC12XX__)
-    wdt_stop();
-
-    GPIO0_REG.DIR |= PIN12_MSK;
-    GPIO0_REG.OUTSET = PIN12_MSK;
-    
-    if (PMU_REG.PCON.DPDFLAG) {
-        //! system boot becase wakeup from deep power down
-        PMU_REG.PCON.DPDFLAG = 1;
-    }
-    
-    PM.Clock.PLL.SelectSource(PLL_CLKSRC_SYSOSC);
-# if PLL_ENABLED == ENABLED
-    PM.Clock.PLL.Enable();
-    PM.Clock.PLL.Config(PLL_MSEL, PLL_PSEL);
-    PM.Clock.Core.Config(MAIN_CLKSRC_PLLOUT, PLL_OUT_CLK / CORE_CLK);
-# else
-    PM.Clock.PLL.SelectSource(PLL_CLKSRC_SYSOSC);
-    PM.Clock.Core.Config(MAIN_CLKSRC_IRC, 1);
-# endif
-
-    //! wakeup pin
-    IO_CFG(
-        {PB3,  IO_WORKS_AS_FUNC0, IO_PULL_UP},
-    );
-    
-    //! Debug uart init
-    IO_CFG(
-        {PA1,  IO_WORKS_AS_FUNC2, IO_PULL_UP},
-        {PA2,  IO_WORKS_AS_FUNC2, IO_PULL_UP},
-    );
-    
-    uart_cfg_t tCFG = {
-        9600, 
-        UART_NO_PARITY | UART_1_STOPBIT | UART_8_BIT_LENGTH
-    };
-    
-    UART0.Enable();
-    if (!UART0.Init(&tCFG)) {
-    }
-    
-    //! RTC init
-    RTC_CFG(
-        RTC_START | RTC_SRC_RTC_PCLK | RTC_INTERRUPT_ENABLE,
-        0
-    );
-    rtc_enable();
-    rtc_set_match_value(rtc_get_match_value() + 0x10000);
-    
-    //! WDT init
-    WDT_CFG(
-#ifdef __DEBUG__
-        WDT_FEED_ANYTIME | WDT_CASE_INT,
-#else
-        WDT_FEED_ANYTIME | WDT_CASE_RESET,
-#endif
-        WDT_CLK_SEL_WDT_OSC, //WDT_CLK_SEL_IRC
-        1000000,    // 1s
-        0,
-        0xFFFFFF,
-    );
-    wdt_enable();
-    wdt_start();
-    
-#elif defined(__LPC11XXX__)
-    //! block deep power-down.
-    PMU_REG.PCON |= 1u << PMU_PCON_NODPD_BIAS;
-    
-    GPIO1_REG.DIR |= PIN13_MSK;
-    GPIO0_REG.DIR |= PIN7_MSK;
-    GPIO0_REG.SET = PIN7_MSK;
-    
-    if (PMU_REG.PCON) {
-        //! system boot becase wakeup from deep power down
-        PMU_REG.PCON = 1;
-    }
-    
-    pll_init(SYSPLL_CLKSRC_SYSOSC, 24MHz);
-    core_clock_config(MAIN_CLKSRC_PLLOUT, 1);
-    
-    //! Debug uart init
-    UART0.Enable();
-    IO_CFG(
-        {PORT0, PIN18,  IO_WORKS_AS_FUNC1, IO_PULL_UP},
-        {PORT0, PIN19,  IO_WORKS_AS_FUNC1, IO_PULL_UP},
-    );
-    uart_cfg_t tCFG = {
-        115200, 
-        UART_NO_PARITY | UART_1_STOPBIT | UART_8_BIT_LENGTH
-    };
-    if (!UART0.Init(&tCFG)) {
-    }
-    GPIO0_REG.DIR |= PIN23_MSK;
-    GPIO0_REG.CLR = PIN23_MSK;
-
-    rtc_enable();
-    rtc_start(0);
-    
-#elif defined(__LPC81X__)
-    GPIO0_REG.DIR |= PIN1_MSK;
-    
-    if (PMU_REG.PCON) {
-        //! system boot becase wakeup from deep power down
-        PMU_REG.PCON = 1;
-    }
-    
-    //! OSC pin allocating
-    IO_CFG(
-        {PORT0, PIN8,  PIN_FN_XTALIN,  PIN_MODE_PULL_UP},
-        {PORT0, PIN9,  PIN_FN_XTALOUT, PIN_MODE_PULL_UP},
-    );
-    
-    //! Debug uart pin
-    IO_CFG(
-        {PORT0, PIN0,  PIN_FN_U0_RXD, PIN_MODE_PULL_UP},
-        {PORT0, PIN4,  PIN_FN_U0_TXD, PIN_MODE_PULL_UP},
-    );
-    
-    //! 485 uart pin
-    IO_CFG(
-        {PORT0, PIN7,  PIN_FN_U1_RXD, PIN_MODE_PULL_UP},
-        {PORT0, PIN6,  PIN_FN_U1_TXD, PIN_MODE_PULL_UP},
-    );
-    
-    pll_init(SYSPLL_CKLSRC_IRC, 12MHz);//SYSPLL_CLKSRC_SYSOSC 
-    core_clock_config(MAIN_CLKSRC_PLLIN, 1);
-    uart_clock_config(1, 21);
-    wdtosc_enable();
-    
-    UART0.Enable();
-    uart_cfg_t tCFG = {
-        9600, 
-        UART_NO_PARITY | UART_1_STOPBIT | UART_8_BIT_LENGTH
-    };
-    if (!UART0.Config(&tCFG)) {
-    }
-    
-#endif
-
-//    NVIC_SetPriority(UART0_IRQn, 9);
-//    NVIC_EnableIRQ(UART0_IRQn);
-//    UART_INT_ENABLE(UART0, UART_IER_RBRIE_MSK);
-    
-//    NVIC_SetPriority(RTC_IRQn, 9);
-//    NVIC_EnableIRQ(RTC_IRQn);
-
-//    NVIC_SetPriority(WDT_IRQn, 9);
-//    NVIC_EnableIRQ(WDT_IRQn);
-    
     SysTick_Config(core_clock_get() / 100);
     
-    ENABLE_GLOBAL_INTERRUPT();
-
+    app_main();
+    
+    // should not run here.
+    while (1) {
+        breath_led();
+    }
+    
     return true;
 }
 
-
-void debug_output_char(char cChar)
+//! lowl level fault handler, called from hardfault interrupt.
+void framework_fault_handle(void)
 {
-    while (false == UART[0].WriteByte(cChar));
+#ifdef __DEBUG__
+    
+    uint32_t cpuclock = core_clock_get();
+    
+    while (1) {
+        printf("\r\n********************* error *************************");
+        for (uint32_t i = 0; i < UBOUND(err_log); i++) {
+            printf("\r\n%08X", err_log[i]);
+        }
+
+        
+        for (uint32_t i = cpuclock * 3; i; i--) {
+            i = i;
+        }        
+    }
+#else
+    NVIC_SystemReset();
+#endif
 }
 
-int user_printf_output_char(char cChar)
+void debug_output_char(char ch)
 {
-    while (false == UART[0].WriteByte(cChar));
-    return cChar;
+    while (!UART0.WriteByte(ch));
 }
 
+int user_printf_output_char(char ch)
+{
+    while (!UART0.WriteByte(ch));
+    return ch;
+}
+
+#if   defined ( __ICCARM__ )
+int putchar(int ch)
+{
+    while (!UART0.WriteByte(ch));
+    return ch;
+}
+#elif defined ( __CC_ARM )
+int fputc(int ch, FILE *f)
+{
+    while (!UART0.WriteByte(ch));
+    return ch;
+}
+#elif defined ( __GNUC__ )
+__attribute__((used)) int _write(int fd, char *ptr, int len)
+{
+    while (!UART0.WriteByte(*ptr));
+    return len;
+}
+#endif
+
+
+ISR(SysTick_Handler)
+{
+    sysTickCounter++;
+}
 
 /* EOF */

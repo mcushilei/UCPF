@@ -293,6 +293,8 @@ bool i2c_bus_get_status(i2c_reg_t *instance, uint8_t *pchStatus)
     if (pchStatus != NULL) {
         *pchStatus = wStatus;
     }
+    
+    return true;
 }
 
 bool i2c_bus_poll_status(i2c_reg_t *instance, uint8_t *pchStatus)

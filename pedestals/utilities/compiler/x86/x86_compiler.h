@@ -1,5 +1,5 @@
 /*******************************************************************************
- *  Copyright(C)2015 by Dreistein<mcu_shilei@hotmail.com>                     *
+ *  Copyright(C)2015-2020 by Dreistein<mcu_shilei@hotmail.com>                *
  *                                                                            *
  *  This program is free software; you can redistribute it and/or modify it   *
  *  under the terms of the GNU Lesser General Public License as published     *
@@ -25,19 +25,18 @@
 //! @{
 //! \note for GCC
 #if defined(__GNUC__)
-    #define __IS_COMPILER_GCC__     1
+#   define __IS_COMPILER_GCC__     1
 //! \note for VS
 #elif defined(_MSC_VER)
-    #define __IS_COMPILER_VS__      1
+#   define __IS_COMPILER_VS__      1
+#	include <vcruntime.h>	//!< for NULL.
 #else
-    #error "Not supported compiler."
+#   error "Not supported compiler."
 #endif
 //! @}
 
 //! \brief none standard memory types
 #if     __IS_COMPILER_VS__
-#	include <vcruntime.h>	//!< for NULL.
-
 #   define NO_INIT          
 #   define INLINE           inline
 #   define WEAK

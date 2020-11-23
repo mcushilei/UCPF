@@ -28,6 +28,8 @@
 /*============================ TYPES =========================================*/
 typedef struct clock_alarm_t    clock_alarm_t;
 typedef void clock_alarm_callback_t(clock_alarm_t *alarm, bool isTimeout);
+typedef void clock_engine_safe_atom_start_fn(void);
+typedef void clock_engine_safe_atom_end_fn(void);
 
 struct clock_alarm_t {
 	list_node_t             ListNode;

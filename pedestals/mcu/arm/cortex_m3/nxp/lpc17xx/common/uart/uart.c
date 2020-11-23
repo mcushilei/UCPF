@@ -138,12 +138,12 @@
 
 //! \name internal class
 //! @{
-DEF_CLASS(__uart_t)
+typedef struct {
     uart_reg_t *const   ptREG;
     const uint32_t      tPCON;
     const uint32_t      tPCLK;
     uint32_t            wBaundRate;
-END_DEF_CLASS(__uart_t)
+} __uart_t;
 //! @}
 
 /*============================ PROTOTYPES ====================================*/
@@ -168,7 +168,7 @@ const i_uart_t UART[] = {
 
 /*============================ LOCAL VARIABLES ===============================*/
 //! \brief internal uart object
-static CLASS(__uart_t) __UART[] = {
+static __uart_t __UART[] = {
     MREPEAT(UART_COUNT, __UART_OBJ, 0)
 };
 
@@ -180,7 +180,7 @@ static CLASS(__uart_t) __UART[] = {
  */
 static bool uart_idle(uint32_t wUsart)
 {
-    CLASS(__uart_t) *ptThis = (CLASS(__uart_t) *)&__UART[wUsart];
+    __uart_t *ptThis = (__uart_t *)&__UART[wUsart];
     uint32_t wTempLCR;
     bool bResult = false;
     
@@ -200,7 +200,7 @@ static bool uart_idle(uint32_t wUsart)
 
 static bool uart_int_enable(uint32_t wUsart, uint32_t wMask)
 {
-    CLASS(__uart_t) *ptThis = (CLASS(__uart_t) *)&__UART[wUsart];
+    __uart_t *ptThis = (__uart_t *)&__UART[wUsart];
     
     if (wUsart >= UART_COUNT) {
         return false;
@@ -220,7 +220,7 @@ static bool uart_int_enable(uint32_t wUsart, uint32_t wMask)
 
 static bool uart_int_disable(uint32_t wUsart, uint32_t wMask)
 {
-    CLASS(__uart_t) *ptThis = (CLASS(__uart_t) *)&__UART[wUsart];
+    __uart_t *ptThis = (__uart_t *)&__UART[wUsart];
     
     if (wUsart >= UART_COUNT) {
         return false;
@@ -246,7 +246,7 @@ static bool uart_int_disable(uint32_t wUsart, uint32_t wMask)
  */
 static bool uart_baudrate_set(uint32_t wUsart, uint32_t wBaudrate)
 {    
-    CLASS(__uart_t) *ptThis = (CLASS(__uart_t) *)&__UART[wUsart];
+    __uart_t *ptThis = (__uart_t *)&__UART[wUsart];
 
     if (wUsart >= UART_COUNT) {
         return false;
@@ -285,7 +285,7 @@ static bool uart_baudrate_set(uint32_t wUsart, uint32_t wBaudrate)
  */
 static uint32_t uart_baudrate_get(uint32_t wUsart)
 {
-    CLASS(__uart_t) *ptThis = (CLASS(__uart_t) *)&__UART[wUsart];
+    __uart_t *ptThis = (__uart_t *)&__UART[wUsart];
      
     if (wUsart >= UART_COUNT) {
         return 0;
@@ -301,7 +301,7 @@ static uint32_t uart_baudrate_get(uint32_t wUsart)
  */
 static bool uart_config(uint32_t wUsart, const uart_cfg_t *ptUsartCFG)
 {
-    CLASS(__uart_t) *ptThis = (CLASS(__uart_t) *)&__UART[wUsart];
+    __uart_t *ptThis = (__uart_t *)&__UART[wUsart];
 
     if ((wUsart >= UART_COUNT) || (NULL == ptUsartCFG)) {
         return false;
@@ -376,7 +376,7 @@ WEAK void uart_enable_callback(const i_uart_t *interface)
  */
 static bool uart_enable(uint32_t wUsart)
 {
-    CLASS(__uart_t) *ptThis = (CLASS(__uart_t) *)&__UART[wUsart];
+    __uart_t *ptThis = (__uart_t *)&__UART[wUsart];
 
     if (wUsart >= UART_COUNT) {
         return false;
@@ -405,7 +405,7 @@ WEAK void uart_disable_callback(const i_uart_t *interface)
  */
 static bool uart_disable(uint32_t wUsart)
 {
-    CLASS(__uart_t) *ptThis = (CLASS(__uart_t) *)&__UART[wUsart];
+    __uart_t *ptThis = (__uart_t *)&__UART[wUsart];
 
     if (wUsart >= UART_COUNT) {
         return false;
@@ -429,7 +429,7 @@ static bool uart_disable(uint32_t wUsart)
  */
 static bool uart_write_byte(uint32_t wUsart, uint8_t chByte)
 {
-    CLASS(__uart_t) *ptThis = (CLASS(__uart_t) *)&__UART[wUsart]; 
+    __uart_t *ptThis = (__uart_t *)&__UART[wUsart]; 
     
     if (wUsart >= UART_COUNT) {
         return false;
@@ -457,7 +457,7 @@ static bool uart_write_byte(uint32_t wUsart, uint8_t chByte)
  */
 static bool uart_read_byte(uint32_t wUsart, uint8_t *pchByte)
 {
-    CLASS(__uart_t) *ptThis = (CLASS(__uart_t) *)&__UART[wUsart];
+    __uart_t *ptThis = (__uart_t *)&__UART[wUsart];
     
     if ((wUsart >= UART_COUNT) || (NULL == pchByte)) {
         return false;
