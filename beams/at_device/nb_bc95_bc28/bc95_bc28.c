@@ -6,8 +6,6 @@
 
 THIS_FILE_NAME("bc95");
 
-#define AT_NB_get_auto_connect  "AT+NCONFIG?\r"
-
 
 #define AT_SOCKET_UDP       (17u)
 #define AT_SOCKET_TCP       (6u)
@@ -17,10 +15,10 @@ THIS_FILE_NAME("bc95");
 #define MAX_SOCK_NUM        (4)
 
 
-static char wbuf[AT_DATA_LEN];
-static char rbuf[AT_DATA_LEN];
+static char *wbuf = NULL;
+static char *rbuf = NULL;
 
-static int32_t  nb_bc28_init    (void);
+static int32_t  nb_bc28_init    (uint32_t opt);
 static int32_t  nb_bc28_deinit  (void);
 static int32_t  nb_get_imsi(char *buf, uint32_t len);
 static int32_t  nb_get_imei(char *buf, uint32_t len);
@@ -29,6 +27,7 @@ static int32_t  nb_connect (int32_t *id, const char *host, uint32_t port);
 static int32_t  nb_sendto  (int32_t id, const char *buf, uint32_t len, const char* ip, int port);
 static int32_t  nb_send    (int32_t id, const char *buf, uint32_t len);
 static int32_t  nb_close   (int32_t id);
+static int32_t  bc95_resolve_domain_name(const char *name, char *ip);
 
 const at_adaptor_api_t bc95_bc28_interface =
 {
@@ -45,6 +44,8 @@ const at_adaptor_api_t bc95_bc28_interface =
     .sendto     = nb_sendto,
 
     .close      = nb_close,
+    
+    .resolve_domain_name = bc95_resolve_domain_name,
 
     .link_num   = MAX_SOCK_NUM,
 };
@@ -53,98 +54,76 @@ static char imsi[16];
 static char imei[16];
 
 
-
-#if defined ( __CC_ARM ) || defined ( __ICCARM__ )  /* KEIL and IAR */
-static char *strnstr(const char *s1, const char *s2, size_t len)
-{
-    size_t l2;
-
-    l2 = strlen(s2);
-    if (!l2)
-        return (char *)s1;
-    while (len >= l2) {
-        len--;
-        if (!memcmp(s1, s2, l2))
-            return (char *)s1;
-        s1++;
-    }
-    return NULL;
-}
-#endif
-
-
-
-
 static int32_t bc95_check_connection(void)
 {
-    char *cmd = "AT\r";
+    char *cmd = "AT";
     return at_cmd(cmd, strlen(cmd), "OK\r\n", NULL,NULL);
 }
 
 static int32_t bc95_echo_off(void)
 {
-    char *cmd = "ATE0\r";
+    char *cmd = "ATE0";
     return at_cmd(cmd, strlen(cmd), "OK\r\n", NULL,NULL);
-}
-
-static int32_t bc95_reboot(void)
-{
-    char *cmd = "AT+NRB\r";
-    return at_cmd(cmd, strlen(cmd), "OK", NULL,NULL);
 }
 
 static int32_t bc95_get_version(void)
 {
-    char *cmd = "ATI\r";
+    char *cmd = "ATI";
     char buf[64] = {0};
     uint32_t buf_len = UBOUND(buf);
     
     if(at_cmd(cmd, strlen(cmd), "OK", buf, &buf_len) < 0)
         return AT_FAILED;
 
-    DBG_LOG("%s", buf);
+    //DBG_LOG("%s", buf);
     return AT_OK;
+}
+
+static int32_t bc95_reboot(void)
+{
+    char *cmd = "AT+NRB";
+    return at_cmd(cmd, strlen(cmd), "OK", NULL,NULL);
 }
 
 static int32_t bc95_check_ue(void)
 {
-    const char *cmd = "AT+CFUN?\r";
+    const char *cmd = "AT+CFUN?";
     return at_cmd(cmd, strlen(cmd), "+CFUN:1", NULL,NULL);
 }
 
 static int32_t bc95_disable_rf(void)
 {
-    char *cmd = "AT+CFUN=4,1\r";
+    char *cmd = "AT+CFUN=4,1";
     return at_cmd(cmd, strlen(cmd), "OK", NULL,NULL);
 }
 
 static int32_t bc95_enable_rf(void)
 {
-    char *cmd = "AT+CFUN=1\r";
+    char *cmd = "AT+CFUN=1";
     return at_cmd(cmd, strlen(cmd), "OK", NULL,NULL);
 }
 
 static int32_t bc95_shutdown(void)
 {
-    char *cmd = "AT+CFUN=0\r";
+    char *cmd = "AT+CFUN=0";
     return at_cmd(cmd, strlen(cmd), "OK", NULL,NULL);
 }
 
 static int32_t bc95_ncsearfcn(void)
 {
-    char *cmd = "AT+NCSEARFCN\r";
+    char *cmd = "AT+NCSEARFCN";
     return at_cmd(cmd, strlen(cmd), "OK", NULL,NULL);
 }
 
 static int32_t bc95_disable_huawei_iot(void)
 {
-    char *cmd = "AT+QREGSWT=2\r";
+    char *cmd = "AT+QREGSWT=2";
     return at_cmd(cmd, strlen(cmd), "OK", NULL,NULL);
 }
 
 static char *bc95_get_imsi(void)
 {
-    char *cmd = "AT+CIMI\r";
+    char *cmd = "AT+CIMI";
     char buf[32] = {0};
     uint32_t buf_len = UBOUND(buf);
     
@@ -158,7 +137,7 @@ static char *bc95_get_imsi(void)
 
 static char *bc95_get_imei(void)
 {
-    char *cmd = "AT+CGSN=1\r";
+    char *cmd = "AT+CGSN=1";
     char buf[32] = {0};
     uint32_t buf_len = UBOUND(buf);
     
@@ -172,13 +151,13 @@ static char *bc95_get_imei(void)
 
 static int32_t bc95_disable_edrx(void)
 {
-    char *cmd = "AT+CEDRXS=0,5\r";
+    char *cmd = "AT+CEDRXS=0,5";
     return at_cmd(cmd, strlen(cmd), "OK", NULL,NULL);
 }
 
 static int32_t bc95_disable_psm(void)
 {
-    char *cmd = "AT+CPSMS=0\r";
+    char *cmd = "AT+CPSMS=0";
     return at_cmd(cmd, strlen(cmd), "OK", NULL,NULL);
 }
 
@@ -188,7 +167,6 @@ static int32_t bc95_set_pdp(void)
     int cmd_len = 0;
     char cmd[128] = {0};
     uint32_t buf_len = UBOUND(cmd);
-    int match;
     
     if (strlen(apn_info.name)) {
         DBG_LOG("%s", apn_info.name);
@@ -201,49 +179,47 @@ static int32_t bc95_set_pdp(void)
 
 static int32_t bc95_cfg_data_rcv(void)
 {
-    char *cmd = "AT+NSONMI=3\r";
+    char *cmd = "AT+NSONMI=3";
     return at_cmd(cmd, strlen(cmd), "OK", NULL,NULL);
 }
 
 static int32_t bc95_check_csq(void)
 {
-    char *cmd = "AT+CSQ\r";
+    char *cmd = "AT+CSQ";
     return at_cmd(cmd, strlen(cmd), "+CSQ:", NULL,NULL);
 }
 
 static int32_t bc95_get_csq(void)
 {
-    char *cmd = "AT+CSQ\r";
-    char *str = NULL;	
-    int csq = 0;
+    char *cmd = "AT+CSQ";
+    int rssi = -1;
     char buf[32] = {0};
     uint32_t buf_len = UBOUND(buf);
     
-    if(at_cmd(cmd, strlen(cmd), "+CSQ:", buf, &buf_len) < 0)
+    if(at_cmd(cmd, strlen(cmd), "+CSQ:", buf, &buf_len) < 0) {
         return -1;
-    str = strstr(buf,"+CSQ:");
-    if(str == NULL)
-        return -1;
-    sscanf(str,"+CSQ:%d,99",&csq);		
-    return csq;
+    }
+    sscanf(buf, "%*[^+]+CSQ:%d,", &rssi);		
+    return rssi;
 }
 
 static int32_t bc95_set_creg(void)
 {
-    char *cmd = "AT+CEREG=2\r";
+    char *cmd = "AT+CEREG=2";
     return at_cmd(cmd, strlen(cmd), "OK", NULL,NULL);
 }
 
 static int32_t bc95_get_regstat(void)
 {
-	char *cmd = "AT+CEREG?\r";
-    char buf[32] = {0};
+	char *cmd = "AT+CEREG?";
+    char buf[64] = {0};
     uint32_t buf_len = UBOUND(buf);
     uint32_t n = 0, stat = 0;
     
     if (at_cmd(cmd, strlen(cmd), "+CEREG:", buf, &buf_len) != AT_OK) {
         return AT_FAILED;
     }
+    //DBG_LOG("%s", buf);
     if (sscanf(buf, "\r\n+CEREG:%u,%u", &n, &stat) < 2) {
         return AT_FAILED;
     }
@@ -256,13 +232,13 @@ static int32_t bc95_get_regstat(void)
 
 static int32_t bc95_get_netstat(void)
 {
-	char *cmd = "AT+CGATT?\r";
+	char *cmd = "AT+CGATT?";
     return at_cmd(cmd, strlen(cmd), "+CGATT:1", NULL,NULL);
 }
 
 static int32_t bc95_query_ip(char *ip)
 {
-	char *cmd = "AT+CGPADDR=0\r";
+	char *cmd = "AT+CGPADDR=0";
     char buf[40] = {0};
     uint32_t buf_len = UBOUND(buf);
     
@@ -276,6 +252,24 @@ static int32_t bc95_query_ip(char *ip)
     return AT_FAILED;
 }
 
+static int32_t bc95_resolve_domain_name(const char *name, char *ip)
+{
+    char cmd[164] = {0};
+    int cmd_len;
+    uint32_t buf_len = UBOUND(cmd);
+    char *str = NULL;
+    
+	cmd_len = snprintf(cmd, UBOUND(cmd), "AT+QDNS=0,\"%s\"", name);
+    if (0 != at_cmd_with_2_suffix(cmd, cmd_len, "+QDNS:", "ERROR", cmd, &buf_len, 5000)) {
+        return AT_FAILED;
+    }
+    
+    str = find_string_by_n(cmd, "+QDNS:", buf_len);
+    sscanf(str, "+QDNS:%s", ip);
+
+    return AT_OK;
+}
+
 static int32_t bc95_create_sock(int port,int proto)
 {
 	int socket;
@@ -287,15 +281,16 @@ static int32_t bc95_create_sock(int port,int proto)
 
 
     if (proto == AT_SOCKET_UDP) {
-        cmd_len = snprintf(tmpbuf, sizeof(tmpbuf), "AT+NSOCR=DGRAM,17,%d,1,AF_INET\r", port);
+        cmd_len = snprintf(tmpbuf, sizeof(tmpbuf), "AT+NSOCR=DGRAM,17,%d,1,AF_INET", port);
     } else {
-        cmd_len = snprintf(tmpbuf, sizeof(tmpbuf), "AT+NSOCR=STREAM,6,%d,1,AF_INET\r", port);
+        cmd_len = snprintf(tmpbuf, sizeof(tmpbuf), "AT+NSOCR=STREAM,6,%d,1,AF_INET", port);
     }
 
 	ret = at_cmd_with_2_suffix(tmpbuf, cmd_len, "OK", "ERROR", buf, &buf_len, 1000);
     if (ret == 0) {
-        ret = sscanf(buf, "%d",&socket);
+        ret = sscanf(buf, "%d", &socket);
         if ((ret == 1) && (socket >= 0)) {
+            DBG_LOG("create socket ok: %u", socket);
             return socket;
         }
     }
@@ -303,23 +298,26 @@ static int32_t bc95_create_sock(int port,int proto)
     return AT_FAILED;
 }
 
-static void bc95_close_sock(int sock)
+static int32_t bc95_close_sock(int socket)
 {
-    const char *cmd = "AT+NSOCL=";
     char tmpbuf[64];
-    int cmd_len;
+    uint32_t cmd_len;
+    uint32_t ret;
 
-	cmd_len = snprintf(tmpbuf, sizeof(tmpbuf), "%s%d\r", cmd, sock);
-	at_cmd_with_2_suffix(tmpbuf, cmd_len, "OK", "ERROR", NULL,NULL, 1000);
+	cmd_len = snprintf(tmpbuf, sizeof(tmpbuf), "AT+NSOCL=%d", socket);
+    ret = at_cmd_with_2_suffix(tmpbuf, cmd_len, "OK", "ERROR", tmpbuf, &cmd_len, 10000);
+	if (ret != 0) {
+        return AT_FAILED;
+    }
+    return AT_OK;
 }
 
 static int32_t bc95_connect(int32_t id, const char *ip, int port)
 {
-	char *cmd = "AT+NSOCO=";
     int cmd_len;
     char tmpbuf[64];
 
-	cmd_len = snprintf(tmpbuf, sizeof(tmpbuf), "%s%d,%s,%d\r", cmd, id, ip, port);
+	cmd_len = snprintf(tmpbuf, sizeof(tmpbuf), "AT+NSOCO=%d,%s,%d", id, ip, port);
 
 	if (at_cmd_with_2_suffix(tmpbuf, cmd_len, "OK", "ERROR", NULL, NULL, 10000) != 0) {
         return AT_FAILED;
@@ -330,7 +328,6 @@ static int32_t bc95_connect(int32_t id, const char *ip, int port)
 
 static int32_t bc95_sendto(int32_t id , const char *buf, uint32_t len, const char *ip, int port)
 {
-	char *cmd = "AT+NSOST=";
     int cmd_len;
 
     if ((len * 2) > AT_MAX_PAYLOADLEN) {
@@ -338,11 +335,10 @@ static int32_t bc95_sendto(int32_t id , const char *buf, uint32_t len, const cha
         return AT_FAILED;
     }
 
-	cmd_len = snprintf(wbuf, AT_DATA_LEN, "%s%d,%s,%d,%d,", cmd, id,
+	cmd_len = snprintf(wbuf, AT_DATA_LEN, "AT+NSOST=%d,%s,%d,%d,", id,
         ip, port, len);
 	encode_hex_str(buf, len, wbuf + cmd_len);
     cmd_len += len * 2;
-    wbuf[cmd_len++] = '\r';
     wbuf[cmd_len]   = '\0';
 
 	if (at_cmd_with_2_suffix(wbuf, cmd_len, "OK", "ERROR", NULL, NULL, 10000) != 0) {
@@ -354,7 +350,6 @@ static int32_t bc95_sendto(int32_t id , const char *buf, uint32_t len, const cha
 
 static int32_t bc95_send(int32_t id , const char *buf, uint32_t len)
 {
-	char *cmd = "AT+NSOSD=";
     int cmd_len;
 
     if ((len * 2) > AT_MAX_PAYLOADLEN) {
@@ -362,10 +357,9 @@ static int32_t bc95_send(int32_t id , const char *buf, uint32_t len)
         return AT_FAILED;
     }
 
-	cmd_len = snprintf(wbuf, AT_DATA_LEN, "%s%d,%d,", cmd, id, len);
+	cmd_len = snprintf(wbuf, AT_DATA_LEN, "AT+NSOSD=%d,%d,", id, len);
 	encode_hex_str(buf, len, wbuf + cmd_len);
     cmd_len += len * 2;
-    wbuf[cmd_len++] = '\r';
     wbuf[cmd_len]   = '\0';
 
 	if (at_cmd_with_2_suffix(wbuf, cmd_len, "OK", "ERROR", NULL, NULL, 10000) != 0) {
@@ -419,43 +413,54 @@ static int32_t bc95_cmd_match(const char *buf, const char *featurestr, uint32_t 
 
 
 
+
+
+
 static int32_t nb_bind(int32_t *id, const char *host, uint32_t port)
 {
-    int sock;
+    int socket;
 
     (void)host;
     
-    sock = bc95_create_sock(0, AT_SOCKET_UDP);
-	if (sock < 0) {
+    socket = bc95_create_sock(0, AT_SOCKET_UDP);
+	if (socket < 0) {
 		return AT_FAILED;
 	}
-    *id = sock;
+    *id = socket;
     return AT_OK;
 }
 
 static int32_t nb_connect(int32_t *id, const char *host, uint32_t port)
 {
-    int sock;
+    int socket = -1;
 
-    sock = bc95_create_sock(0, AT_SOCKET_TCP);
-	if (sock < 0) {
+    socket = bc95_create_sock(0, AT_SOCKET_TCP);
+	if (socket < 0) {
+        DBG_LOG("create socket fail!");
 		return AT_FAILED;
 	}
     
-    if (bc95_connect(sock, host, port) != AT_OK) {
-        goto exit;
+    if (bc95_connect(socket, host, port) != AT_OK) {
+        DBG_LOG("connect fail!");
+        bc95_close_sock(socket);
+        *id = -1;
+        return AT_FAILED;
     }
     
-    *id = sock;
+    *id = socket;
     return AT_OK;
-exit:
-    bc95_close_sock(sock);
-    return AT_FAILED;
 }
 
 static int32_t nb_close(int32_t id)
 {
-    bc95_close_sock(id);
+    if (id < 0) {
+        DBG_LOG("invalid link id: %d", id);
+        return AT_FAILED;
+    }
+
+    if (bc95_close_sock(id) != AT_OK) {
+        DBG_LOG("close socket %i fail!", id);
+    }
 
     return AT_OK;
 }
@@ -470,7 +475,7 @@ static int32_t nb_sendto(int32_t id, const char *buf, uint32_t len, const char *
     return bc95_sendto(id, buf, len, ip, port);
 }
 
-static int32_t nb_bc28_init(void)
+static int32_t nb_bc28_init(uint32_t opt)
 {
     int ret;
     int timecnt = 0;
@@ -491,6 +496,12 @@ static int32_t nb_bc28_init(void)
     char ip[20] = {'\0'};
 
     at_init(&atCfg);
+    
+    wbuf = at_malloc(AT_DATA_LEN);
+    rbuf = at_malloc(AT_DATA_LEN);
+    if (NULL == wbuf || NULL == rbuf) {
+        goto __err_exit;
+    }
 
     bc95_bc28_power_on();
     OS_TASK_SLEEP(6000);
@@ -515,6 +526,47 @@ static int32_t nb_bc28_init(void)
 		OS_TASK_SLEEP(1000);
 	}
 	if(timecnt == 0u) {
+        goto __err_exit;
+	}
+    
+    bc95_get_version();
+    
+    if (0 != opt) {
+        
+        for (timecnt = 5; timecnt != 0u; timecnt--) {
+            ret = bc95_shutdown();
+            if(ret != AT_FAILED) {
+                break;
+            }
+            OS_TASK_SLEEP(1000);
+        }
+        if(timecnt == 0u) {
+            goto __err_exit;
+        }
+        
+        for (timecnt = 5; timecnt != 0u; timecnt--) {
+            ret = bc95_ncsearfcn();
+            if(ret != AT_FAILED) {
+                break;
+            }
+            OS_TASK_SLEEP(1000);
+        }
+        if(timecnt == 0u) {
+            goto __err_exit;
+        }
+        
+        RTT_LOG("bc95 NB reset.");
+    }
+    
+	for (timecnt = 5; timecnt != 0u; timecnt--) {
+        ret = bc95_enable_rf();
+		if(ret != AT_FAILED) {
+			break;
+		}
+		OS_TASK_SLEEP(1000);
+	}
+	if(timecnt == 0u) {
+        RTT_LOG("bc95 NB net poweron fail.");
         goto __err_exit;
 	}
     
@@ -634,7 +686,7 @@ static int32_t nb_bc28_init(void)
     RTT_LOG("rssi:%d", rssi);
     
     
-	for (timecnt = 60; timecnt != 0u; timecnt--) {
+	for (timecnt = 100; timecnt != 0u; timecnt--) {
         ret = bc95_get_regstat();
 		if (ret == AT_OK) {
 			break;
@@ -677,6 +729,12 @@ static int32_t nb_bc28_init(void)
     return AT_OK;
 
 __err_exit:
+    if (NULL != wbuf) {
+        at_free(wbuf);
+    }
+    if (NULL != rbuf) {
+        at_free(rbuf);
+    }
     RTT_LOG("init at device error.");
     bc95_bc28_power_off();
     at_deinit();
@@ -687,7 +745,7 @@ __err_exit:
 static int32_t nb_bc28_deinit(void)
 {
     bc95_shutdown();
-    OS_TASK_SLEEP(6000);
+    OS_TASK_SLEEP(6000);        //!< refer to Quectel_BC35-G&BC28&BC95 R2.0_应用设计指导_V1.2.pdf, 2.1.2
     bc95_enable_rf();
     bc95_bc28_power_off();
     at_deinit();

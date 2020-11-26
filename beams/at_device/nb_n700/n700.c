@@ -16,10 +16,15 @@ static const char * const AT_RCV_UDP_PREFIX = "\r\n+MIPRUDP:";
 #define IP_LEN              16
 #define MAX_SOCK_NUM        (4)
 
+#define AT_DATA_LEN         (2048)
+#define AT_MAX_PAYLOADLEN   (1024 + 512)
+
 #define N700_TCP_PROTO      (0)
 #define N700_UDP_PROTO      (1)
 #define N700_SSL_PROTO      (2)
 
+static char *wbuf = NULL;
+static char *rbuf = NULL;
 
 static int32_t n700_init(uint32_t opt);
 static int32_t n700_deinit(void);
@@ -30,6 +35,7 @@ static int32_t n700_connect (int32_t *id, const char *host, uint32_t port);
 static int32_t n700_sendto  (int32_t id, const char *buf, uint32_t len, const char *ip, int port);
 static int32_t n700_send    (int32_t id, const char *buf, uint32_t len);
 static int32_t n700_close   (int32_t id);
+static int32_t n700_resolve_domain_name(const char *name, char *ip);
 
 at_adaptor_api_t n700_interface =
 {
@@ -47,7 +53,7 @@ at_adaptor_api_t n700_interface =
 
     .close          = n700_close,
     
-    .resolve_domain_name = NULL,
+    .resolve_domain_name = n700_resolve_domain_name,
 
     .link_num       = MAX_SOCK_NUM,
 };
@@ -60,25 +66,19 @@ static char imei[16];
 
 static int32_t n700_at_echo_off(void)
 {
-    char *cmd = "ATE0\r";
+    char *cmd = "ATE0";
     return at_cmd(cmd, strlen(cmd), "OK\r\n", NULL,NULL);
 }
 
 static int32_t n700_at_check_connection(void)
 {
-    char *cmd = "AT\r";
+    char *cmd = "AT";
     return at_cmd(cmd, strlen(cmd), "OK\r\n", NULL,NULL);
-}
-
-static int32_t n700_at_check_sim(void)
-{
-    char *cmd = "AT+CPIN?\r";
-    return at_cmd(cmd, strlen(cmd), "+CPIN:", NULL,NULL);
 }
 
 static char *n700_at_get_imsi(void)
 {
-    char *cmd = "AT+CIMI?\r";
+    char *cmd = "AT+CIMI?";
     char tmpbuf[32] = {0};
     uint32_t buf_len = UBOUND(tmpbuf);
     
@@ -92,7 +92,7 @@ static char *n700_at_get_imsi(void)
 
 static char *n700_at_get_imei(void)
 {
-    char *cmd = "AT+CGSN=1\r";
+    char *cmd = "AT+CGSN=1";
     char tmpbuf[32] = {0};
     uint32_t buf_len = UBOUND(tmpbuf);
     
@@ -106,33 +106,33 @@ static char *n700_at_get_imei(void)
 
 static int32_t n700_at_check_csq(void)
 {
-    char *cmd = "AT+CSQ?\r";
+    char *cmd = "AT+CSQ?";
     return at_cmd(cmd, strlen(cmd), "+CSQ:", NULL,NULL);
 }
 
 static int32_t n700_at_get_csq(void)
 {
-    char *cmd = "AT+CSQ?\r";
-    int csq = 0;
+    char *cmd = "AT+CSQ?";
+    int rssi = -1;
     char tmpbuf[32] = {0};
     uint32_t buf_len = UBOUND(tmpbuf);
     
-    if(at_cmd(cmd, strlen(cmd), "+CSQ:", tmpbuf, &buf_len) < 0)
+    if(at_cmd(cmd, strlen(cmd), "+CSQ:", tmpbuf, &buf_len) < 0) {
         return -1;
-    
-    sscanf(tmpbuf,"+CSQ:%d,99",&csq);
-    return csq;
+    }
+    sscanf(tmpbuf, "%*s%d,", &rssi);
+    return rssi;
 }
 
 static int32_t n700_at_cgatt_attach(void)
 {
-	char *cmd = "AT+CGATT=1\r";
+	char *cmd = "AT+CGATT=1";
     return at_cmd(cmd, strlen(cmd), "OK", NULL, NULL);
 }
 
 static int32_t n700_at_get_netstat(void)
 {
-	char *cmd = "AT+CGATT?\r";
+	char *cmd = "AT+CGATT?";
     return at_cmd(cmd, strlen(cmd), "+CGATT: 1", NULL, NULL);
 }
 
@@ -158,7 +158,7 @@ static int32_t n700_at_ppp(void)
 
 static int32_t n700_at_query_ip(int *pstatus, char *ip)
 {
-	char *cmd = "AT+MIPCALL?\r";
+	char *cmd = "AT+MIPCALL?";
     char tmpbuf[40] = {0};
     uint32_t buf_len = UBOUND(tmpbuf);
     int status = 0;
@@ -214,13 +214,18 @@ static int32_t n700_at_create_sock_and_bind(int socket, int local_port, const ch
     return AT_FAILED;
 }
 
-static void n700_at_close(int32_t id)
+static int32_t n700_at_close(int32_t id)
 {
     char cmd[64] = {0};
     int cmd_len;
+    uint32_t ret;
 
 	cmd_len = snprintf(cmd, UBOUND(cmd), "AT+MIPCLOSE=%d,1", id);
-	at_cmd_with_2_suffix(cmd, cmd_len, "+MIPCLOSE:", "ERROR", NULL, NULL, 0);
+	ret = at_cmd_with_2_suffix(cmd, cmd_len, "+MIPCLOSE:", "ERROR", NULL, NULL, 0);
+	if (ret != 0) {
+        return AT_FAILED;
+    }
+    return AT_OK;
 }
 
 
@@ -228,6 +233,23 @@ static void n700_at_close(int32_t id)
 
 
 
+static int32_t n700_resolve_domain_name(const char *name, char *ip)
+{
+    char cmd[164] = {0};
+    int cmd_len;
+    uint32_t buf_len = UBOUND(cmd);
+    char *str = NULL;
+    
+	cmd_len = snprintf(cmd, UBOUND(cmd), "AT+MIPDNS=\"%s\"", name);
+    if (0 != at_cmd_with_2_suffix(cmd, cmd_len, "+MIPDNS:", "ERROR", cmd, &buf_len, 5000)) {
+        return AT_FAILED;
+    }
+    
+    str = find_string_by_n(cmd, ",", buf_len);
+    sscanf(str, ",%s", ip);
+
+    return AT_OK;
+}
 
 static int32_t n700_bind(int32_t *id, const char *host, uint32_t port)
 {
@@ -236,7 +258,14 @@ static int32_t n700_bind(int32_t *id, const char *host, uint32_t port)
 
 static int32_t n700_connect(int32_t *id, const char *host, uint32_t port)
 {
-    return n700_at_create_sock_and_connect((*id) + 1, host, port);
+    int socket = (*id) + 1;
+    if (n700_at_create_sock_and_connect(socket, host, port) != AT_OK) {
+        DBG_LOG("connect fail!");
+        n700_at_close(socket);
+        return AT_FAILED;
+    }
+
+    return AT_OK;
 }
 
 static int32_t n700_close(int32_t id)
@@ -246,7 +275,9 @@ static int32_t n700_close(int32_t id)
         return AT_FAILED;
     }
 
-    n700_at_close(id + 1);
+    if (n700_at_close(id + 1) != AT_OK) {
+        DBG_LOG("close socket %i fail!", id + 1);
+    }
 
     return AT_OK;
 }
@@ -264,9 +295,8 @@ static int32_t n700_send(int32_t id , const char *buf, uint32_t len)
     }
     id++;
     
-    char *cmd = at_malloc(len * 2 + 64);
+    char *cmd = wbuf;
     if (cmd == NULL) {
-        DBG_LOG("Not enough memory, need %u", len * 2 + 64);
         return AT_FAILED;
     }
 
@@ -293,7 +323,6 @@ static int32_t n700_send(int32_t id , const char *buf, uint32_t len)
     
     ret = AT_OK;
 __end:
-    at_free(cmd);
     return ret;
 }
 
@@ -301,9 +330,6 @@ static int32_t n700_sendto(int32_t id, const char *buf, uint32_t len, const char
 {
     return n700_send(id, buf, len);
 }
-
-
-static char dataBuf[1024 + 512];
 
 static int32_t n700_tcp_data_handler(void *arg, const char *buf, uint32_t len)
 {
@@ -336,12 +362,12 @@ static int32_t n700_tcp_data_handler(void *arg, const char *buf, uint32_t len)
     data_len = len - ((size_t)p1 - (size_t)buf) - 1u;
     data_len &= ~(uint32_t)0x01;
 
-    if ((data_len / 2u) > sizeof(dataBuf)) {
+    if ((data_len / 2u) > AT_MAX_PAYLOADLEN) {
         DBG_LOG("data too large!");
         goto END;
     }
-    decode_hex_str(p1, data_len, dataBuf);
-    at_api_handle_data(linkid, dataBuf, data_len / 2u);
+    decode_hex_str(p1, data_len, rbuf);
+    at_api_handle_data(linkid, rbuf, data_len / 2u);
     
     return data_len;
     
@@ -383,12 +409,12 @@ static int32_t n700_udp_data_handler(void *arg, const char *buf, uint32_t len)
     data_len = len - ((size_t)p1 - (size_t)buf) - 1u;
     data_len &= ~(uint32_t)0x01;
 
-    if ((data_len / 2u) > sizeof(dataBuf)) {
+    if ((data_len / 2u) > AT_MAX_PAYLOADLEN) {
         DBG_LOG("data too large!");
         goto END;
     }
-    decode_hex_str(p1, data_len, dataBuf);
-    at_api_handle_data(linkid, dataBuf, data_len / 2u);
+    decode_hex_str(p1, data_len, rbuf);
+    at_api_handle_data(linkid, rbuf, data_len / 2u);
 
     return data_len;
     
@@ -410,7 +436,7 @@ static int32_t n700_init(uint32_t opt)
     
     /* config AT engine. */
     static const at_config_t atCfg = {
-        .name           = "lte_n700",
+        .name           = "nb_n700",
         .usart_port     = 2,
         .buardrate      = 115200,
         .linkid_num     = MAX_SOCK_NUM,
@@ -421,6 +447,11 @@ static int32_t n700_init(uint32_t opt)
     };
     at_init(&atCfg);
 
+    wbuf = at_malloc(AT_DATA_LEN);
+    rbuf = at_malloc(AT_DATA_LEN);
+    if (NULL == wbuf || NULL == rbuf) {
+        goto __err_exit;
+    }
     
     // refer to <FIBOCOM N 700 应用指南_TCP_V1.0.0.pdf>
     
@@ -504,9 +535,14 @@ static int32_t n700_init(uint32_t opt)
     }
     
     n700_at_check_csq();
-    OS_TASK_SLEEP(3000);
-    int32_t rssi = n700_at_get_csq();
-    RTT_LOG("rssi:%d", rssi);
+    for (uint32_t i = 0; i < 3; i++) {
+        OS_TASK_SLEEP(3000);
+        int32_t rssi = n700_at_get_csq();
+        RTT_LOG("rssi:%d", rssi);
+        if (rssi >= 0 && rssi <= 31) {
+            break;
+        }
+    }
     
 	for (timecnt = 20; timecnt != 0u; timecnt--) {
         ret = n700_at_cgatt_attach();
@@ -519,7 +555,6 @@ static int32_t n700_init(uint32_t opt)
         RTT_LOG("ERROR: net error!");
         goto __err_exit;
 	}
-    DBG_LOG("cgatt ok");
 
     //! wait for net to be ok.
 	for (timecnt = 40; timecnt != 0u; timecnt--) {
@@ -533,7 +568,6 @@ static int32_t n700_init(uint32_t opt)
         RTT_LOG("ERROR: connect net timeout!");
         goto __err_exit;
 	}
-    DBG_LOG("netstat ok");
     
 	for (timecnt = 3; timecnt != 0u; timecnt--) {
         ret = n700_at_ppp();
@@ -569,14 +603,20 @@ static int32_t n700_init(uint32_t opt)
     at_oob_register(AT_RCV_TCP_PREFIX, n700_tcp_data_handler, n700_cmd_match);
     at_oob_register(AT_RCV_UDP_PREFIX, n700_udp_data_handler, n700_cmd_match);
 
-    DBG_LOG("\r\n n700 init ok.");
+    DBG_LOG("n700 init ok.");
     return AT_OK;
 
 __err_exit:
-    DBG_LOG("\r\n n700 init err.");
+    if (NULL != wbuf) {
+        at_free(wbuf);
+    }
+    if (NULL != rbuf) {
+        at_free(rbuf);
+    }
+    DBG_LOG("n700 init err.");
     at_deinit();
     n700_power_off();
-    DBG_LOG("\r\n n700 power off.");
+    DBG_LOG("n700 power off.");
     return AT_FAILED;
 }
 
@@ -584,7 +624,7 @@ static int32_t n700_deinit(void)
 {
     at_deinit();
     n700_power_off();
-    DBG_LOG("\r\n n700 power off.");
+    DBG_LOG("n700 power off.");
     
     return AT_OK;
 }

@@ -21,7 +21,7 @@ static const char * const AT_RCV_UDP_PREFIX = "\r\n+MIPRUDP:";
 #define NL668_SSL_PROTO     (2)
 
 
-static int32_t nl668_init   (void);
+static int32_t nl668_init   (uint32_t opt);
 static int32_t nl668_deinit (void);
 static int     nl668_get_imsi(char *buf, uint32_t len);
 static int     nl668_get_imei(char *buf, uint32_t len);
@@ -30,6 +30,7 @@ static int32_t nl668_connect(int32_t *id, const char *host, uint32_t port);
 static int32_t nl668_sendto (int32_t id, const char *buf, uint32_t len, const char *ip, int port);
 static int32_t nl668_send   (int32_t id, const char *buf, uint32_t len);
 static int32_t nl668_close  (int32_t id);
+static int32_t nl668_resolve_domain_name(const char *name, char *ip);
 
 const at_adaptor_api_t nl668_interface =
 {
@@ -47,35 +48,37 @@ const at_adaptor_api_t nl668_interface =
 
     .close          = nl668_close,
     
+    .resolve_domain_name = nl668_resolve_domain_name,
+    
     .link_num       = MAX_SOCK_NUM,
 };
 
-static const char *apn = "cmnet";
+static const char *apn = "ctlte";
 static char imsi[16];
 static char imei[16];
 
 
 static int32_t nl668_at_echo_off(void)
 {
-    char *cmd = "ATE0\r";
+    char *cmd = "ATE0";
     return at_cmd(cmd, strlen(cmd), "OK\r\n", NULL,NULL);
 }
 
 static int32_t nl668_at_check_connection(void)
 {
-    char *cmd = "AT\r";
+    char *cmd = "AT";
     return at_cmd(cmd, strlen(cmd), "OK\r\n", NULL,NULL);
 }
 
 static int32_t nl668_at_check_sim(void)
 {
-    char *cmd = "AT+CPIN?\r";
+    char *cmd = "AT+CPIN?";
     return at_cmd(cmd, strlen(cmd), "+CPIN:", NULL,NULL);
 }
 
 static char *nl668_at_get_imsi(void)
 {
-    char *cmd = "AT+CIMI?\r";
+    char *cmd = "AT+CIMI?";
     char tmpbuf[32] = {0};
     uint32_t buf_len = UBOUND(tmpbuf);
     
@@ -94,7 +97,7 @@ static char *nl668_at_get_imsi(void)
 
 static char *nl668_at_get_imei(void)
 {
-    char *cmd = "AT+CGSN=1\r";
+    char *cmd = "AT+CGSN=1";
     char tmpbuf[32] = {0};
     uint32_t buf_len = UBOUND(tmpbuf);
     
@@ -113,34 +116,33 @@ static char *nl668_at_get_imei(void)
 
 static int32_t nl668_at_check_csq(void)
 {
-    char *cmd = "AT+CSQ?\r";
+    char *cmd = "AT+CSQ?";
     return at_cmd(cmd, strlen(cmd), "+CSQ:", NULL,NULL);
 }
 
 static int32_t nl668_at_get_csq(void)
 {
-    char *cmd = "AT+CSQ?\r";
-    int rssi = 0;
-    int ber = 0;
+    char *cmd = "AT+CSQ?";
+    int rssi = -1;
     char tmpbuf[32] = {0};
     uint32_t buf_len = UBOUND(tmpbuf);
     
-    if(at_cmd(cmd, strlen(cmd), "+CSQ:", tmpbuf, &buf_len) < 0)
+    if(at_cmd(cmd, strlen(cmd), "+CSQ:", tmpbuf, &buf_len) < 0) {
         return -1;
-    
-    sscanf(tmpbuf,"\r\n+CSQ:%u,%u",&rssi, &ber);
+    }
+    sscanf(tmpbuf, "%*[^+]+CSQ:%u,", &rssi);
     return rssi;
 }
 
 static int32_t nl668_at_cgatt_attach(void)
 {
-	char *cmd = "AT+CGATT=1\r";
+	char *cmd = "AT+CGATT=1";
     return at_cmd(cmd, strlen(cmd), "OK", NULL, NULL);
 }
 
 static int32_t nl668_at_get_netstat(void)
 {
-	char *cmd = "AT+CGATT?\r";
+	char *cmd = "AT+CGATT?";
     return at_cmd(cmd, strlen(cmd), "+CGATT: 1", NULL, NULL);
 }
 
@@ -168,7 +170,7 @@ static int32_t nl668_at_ppp(void)
 
 static int32_t nl668_at_query_ip(int *pstatus, char *ip)
 {
-	char *cmd = "AT+MIPCALL?\r";
+	char *cmd = "AT+MIPCALL?";
     char tmpbuf[40] = {0};
     uint32_t buf_len = UBOUND(tmpbuf);
     int status = 0;
@@ -224,13 +226,18 @@ static int32_t nl668_at_create_sock_and_bind(int socket, int proto, int local_po
     return AT_FAILED;
 }
 
-static void nl668_at_close(int32_t id)
+static int32_t nl668_at_close(int32_t id)
 {
     char cmd[64] = {0};
     int cmd_len;
+    uint32_t ret;
 
 	cmd_len = snprintf(cmd, UBOUND(cmd), "AT+MIPCLOSE=%d,1", id);
-	at_cmd_with_2_suffix(cmd, cmd_len, "+MIPCLOSE:", "ERROR", NULL, NULL, 0);
+	ret = at_cmd_with_2_suffix(cmd, cmd_len, "+MIPCLOSE:", "ERROR", NULL, NULL, 0);
+	if (ret != 0) {
+        return AT_FAILED;
+    }
+    return AT_OK;
 }
 
 static int32_t nl668_at_data_format_cfg(void)
@@ -273,6 +280,23 @@ static int32_t nl668_at_send(int32_t id, const char *buf, uint32_t len)
 
 
 
+static int32_t nl668_resolve_domain_name(const char *name, char *ip)
+{
+    char cmd[164] = {0};
+    int cmd_len;
+    uint32_t buf_len = UBOUND(cmd);
+    char *str = NULL;
+    
+	cmd_len = snprintf(cmd, UBOUND(cmd), "AT+MIPDNS=\"%s\"", name);
+    if (0 != at_cmd_with_2_suffix(cmd, cmd_len, "+MIPDNS:", "ERROR", cmd, &buf_len, 5000)) {
+        return AT_FAILED;
+    }
+    
+    str = find_string_by_n(cmd, ",", buf_len);
+    sscanf(str, ",%s", ip);
+
+    return AT_OK;
+}
 
 static int32_t nl668_bind(int32_t *id, const char *host, uint32_t port)
 {
@@ -291,13 +315,15 @@ static int32_t nl668_connect(int32_t *id, const char *host, uint32_t port)
 
 static int32_t nl668_close(int32_t id)
 {
-    if (id >= MAX_SOCK_NUM) {
+    if (id < 0 || id >= MAX_SOCK_NUM) {
         DBG_LOG("invalid link id: %d", id);
         return AT_FAILED;
     }
 
-    nl668_at_close(id + 1);
-
+    if (AT_OK != nl668_at_close(id + 1)) {
+        DBG_LOG("close socket %i fail!", id + 1);
+    }
+    
     return AT_OK;
 }
 
@@ -410,7 +436,7 @@ static int32_t nl668_cmd_match(const char *buf, const char *featurestr, uint32_t
 
 
 
-static int32_t nl668_init(void)
+static int32_t nl668_init(uint32_t opt)
 {
     int ret;
     int timecnt = 0;
@@ -480,11 +506,12 @@ static int32_t nl668_init(void)
     }
     
     pstring = NULL;
-	for (timecnt = 5; timecnt != 0u; timecnt--) {
+	for (timecnt = 8; timecnt != 0u; timecnt--) {
         pstring = nl668_at_get_imsi();
 		if(pstring != NULL) {
 			break;
 		}
+        OS_TASK_SLEEP(1000);
 	}
 	if(timecnt == 0u) {
         RTT_LOG("ERROR: cannot read SIM card!");
