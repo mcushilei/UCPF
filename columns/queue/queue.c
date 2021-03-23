@@ -1,5 +1,5 @@
 /*******************************************************************************
- *  Copyright(C)2015-2019 by Dreistein<mcu_shilei@hotmail.com>                *
+ *  Copyright(C)2015-2021 by Dreistein<mcu_shilei@hotmail.com>                *
  *                                                                            *
  *  This program is free software; you can redistribute it and/or modify it   *
  *  under the terms of the GNU Lesser General Public License as published     *
@@ -25,181 +25,198 @@
 
 /*============================ MACROS ========================================*/
 /*============================ MACROFIED FUNCTIONS ===========================*/
-#ifndef QUEUE_CRITICAL_SECTION_BEGIN
-#define QUEUE_CRITICAL_SECTION_BEGIN()
-#endif
-
-#ifndef QUEUE_CRITICAL_SECTION_END
-#define QUEUE_CRITICAL_SECTION_END()
-#endif
-
-
 /*============================ TYPES =========================================*/
 /*============================ PROTOTYPES ====================================*/
+static void lock_set( queue_lock_t *lock );
+static void lock_reset( queue_lock_t *lock );
+
 /*============================ LOCAL VARIABLES ===============================*/
+
+static const queue_lock_t defaultLock = {
+    NULL,
+    lock_set,
+    lock_reset,
+};
+
 /*============================ GLOBAL VARIABLES ==============================*/
 /*============================ IMPLEMENTATION ================================*/
-bool queue_init(queue_t *queue, void *buffer, queue_uint_t bufferLength, size_t itemSize)
+
+static void lock_set( queue_lock_t *lock )
 {
-    if (NULL == queue || NULL == buffer || 0u == bufferLength) {
+}
+
+static void lock_reset( queue_lock_t *lock )
+{
+}
+
+bool queue_init( queue_t *obj,
+                 void *buffer,
+                 size_t bufferLength,
+                 size_t itemSize,
+                 const queue_lock_t *lock )
+{
+    if( NULL == obj || NULL == buffer || 0u == bufferLength ) {
         return false;
     }
 
-    queue->Buffer       = buffer;
-    queue->ItemSize     = itemSize;
-    queue->Size         = bufferLength;
-    queue->Head         = 0;
-    queue->Tail         = 0;
-    queue->Peek         = 0;
-    queue->Length       = 0;
-    queue->PeekLength   = 0;
+    obj->Buffer = buffer;
+    obj->ItemSize = itemSize;
+    obj->Size = bufferLength;
+    obj->Head = 0;
+    obj->Tail = 0;
+    obj->Peek = 0;
+    obj->Length = 0;
+    obj->PeekLength = 0;
+    if( NULL == lock ) {
+        obj->Lock = defaultLock;
+    } else {
+        obj->Lock = *lock;
+    }
 
     return true;
 }
 
-bool queue_enqueue(queue_t *queue, void *data)
+bool queue_enqueue( queue_t *obj, void *data )
 {
-    bool bResult = false;
+    bool rc = false;
 
-    if (NULL == queue) {
+    if( NULL == obj ) {
         return false;
     }
 
-    if (NULL == queue->Buffer) {
+    if( NULL == data ) {
         return false;
     }
 
-    QUEUE_CRITICAL_SECTION_BEGIN();
+    obj->Lock.Set( &obj->Lock );
     do {
-        if ((queue->Head ==  queue->Tail) &&  (0 != queue->Length)) {
+        if( (obj->Head == obj->Tail) && (0 != obj->Length) ) {
             break;
         }
 
-        memcpy( (void *)((uintptr_t)queue->Buffer + queue->Tail * queue->ItemSize),
+        memcpy( (void *)((uintptr_t)obj->Buffer + obj->Tail * obj->ItemSize),
                 data,
-                queue->ItemSize);
-        queue->Tail++;
-        if (queue->Tail >= queue->Size) {
-            queue->Tail = 0;
+                obj->ItemSize );
+        obj->Tail++;
+        if( obj->Tail >= obj->Size ) {
+            obj->Tail = 0;
         }
-        queue->Length++;
-        queue->PeekLength++;
-        bResult = true;
-    } while (false);
-    QUEUE_CRITICAL_SECTION_END();
+        obj->Length++;
+        obj->PeekLength++;
+        rc = true;
+    } while( false );
+    obj->Lock.Reset( &obj->Lock );
 
-    return bResult;
+    return rc;
 }
 
-bool queue_dequeue(queue_t *queue, void *data)
+bool queue_dequeue( queue_t *obj, void *data )
 {
-    bool bResult = false;
+    bool rc = false;
 
-    if (NULL == queue) {
+    if( NULL == obj ) {
         return false;
     }
 
-    if (NULL == queue->Buffer) {
+    if( NULL == data ) {
         return false;
     }
 
-    QUEUE_CRITICAL_SECTION_BEGIN();
+    obj->Lock.Set( &obj->Lock );
     do {
-        if ((queue->Head ==  queue->Tail)
-        &&  (0u == queue->Length)) {
+        if( (obj->Head == obj->Tail) && (0u == obj->Length) ) {
             break;
         }
 
-        if (NULL != data) {
+        if( NULL != data ) {
             memcpy( data,
-                    (void *)((uintptr_t)queue->Buffer + queue->Head * queue->ItemSize),
-                    queue->ItemSize);
+                    (void *)((uintptr_t)obj->Buffer + obj->Head * obj->ItemSize),
+                    obj->ItemSize );
         }
-        queue->Head++;
-        if (queue->Head >= queue->Size) {
-            queue->Head = 0;
+        obj->Head++;
+        if( obj->Head >= obj->Size ) {
+            obj->Head = 0;
         }
-        queue->Length--;
-        queue->Peek = queue->Head;
-        queue->PeekLength = queue->Length;
-        bResult = true;
-    } while (false);
-    QUEUE_CRITICAL_SECTION_END();
+        obj->Length--;
+        obj->Peek = obj->Head;
+        obj->PeekLength = obj->Length;
+        rc = true;
+    } while( false );
+    obj->Lock.Reset( &obj->Lock );
 
-    return bResult;
+    return rc;
 }
 
-bool queue_peek(queue_t *queue, void *data)
+bool queue_peek( queue_t *obj, void *data )
 {
-    bool bResult = false;
+    bool rc = false;
 
-    if (NULL == queue) {
+    if( NULL == obj ) {
         return false;
     }
 
-    if (NULL == queue->Buffer) {
+    if( NULL == data ) {
         return false;
     }
 
-    QUEUE_CRITICAL_SECTION_BEGIN();
+    obj->Lock.Set( &obj->Lock );
     do {
-        if ((queue->Peek == queue->Tail)
-        &&  (0u == queue->PeekLength)) {
+        if( (obj->Peek == obj->Tail) && (0u == obj->PeekLength) ) {
             break;
         }
-        if (NULL != data) {
+        if( NULL != data ) {
             memcpy( data,
-                    (void *)((uintptr_t)queue->Buffer + queue->Peek * queue->ItemSize),
-                    queue->ItemSize);
+                    (void *)((uintptr_t)obj->Buffer + obj->Peek * obj->ItemSize),
+                    obj->ItemSize );
         }
-        queue->Peek++;
-        queue->PeekLength--;
-        if (queue->Peek >= queue->Size) {
-            queue->Peek = 0;
+        obj->Peek++;
+        obj->PeekLength--;
+        if( obj->Peek >= obj->Size ) {
+            obj->Peek = 0;
         }
-        bResult = true;
-    } while (false);
-    QUEUE_CRITICAL_SECTION_END();
+        rc = true;
+    } while( false );
+    obj->Lock.Reset( &obj->Lock );
 
-    return bResult;
+    return rc;
 }
 
-void queue_get_all_peeked(queue_t *queue)
+void queue_flush_peeked( queue_t *obj )
 {
-    if (NULL == queue) {
-        return ;
-    }
-
-    QUEUE_CRITICAL_SECTION_BEGIN();
-    queue->Head     = queue->Peek;
-    queue->Length   = queue->PeekLength;
-    QUEUE_CRITICAL_SECTION_END();
-}
-
-void queue_reset_peek(queue_t *queue)
-{
-    if (NULL == queue) {
+    if( NULL == obj ) {
         return;
     }
 
-    QUEUE_CRITICAL_SECTION_BEGIN();
-    queue->Peek         = queue->Head;
-    queue->PeekLength   = queue->Length;
-    QUEUE_CRITICAL_SECTION_END();
+    obj->Lock.Set( &obj->Lock );
+    obj->Head = obj->Peek;
+    obj->Length = obj->PeekLength;
+    obj->Lock.Reset( &obj->Lock );
 }
 
-queue_uint_t queue_get_length(queue_t *queue)
+void queue_reset_peek( queue_t *obj )
 {
-    queue_uint_t Length;
+    if( NULL == obj ) {
+        return;
+    }
 
-    if (NULL == queue) {
+    obj->Lock.Set( &obj->Lock );
+    obj->Peek = obj->Head;
+    obj->PeekLength = obj->Length;
+    obj->Lock.Reset( &obj->Lock );
+}
+
+size_t queue_get_length( queue_t *obj )
+{
+    size_t len;
+
+    if( NULL == obj ) {
         return 0;
     }
 
-    QUEUE_CRITICAL_SECTION_BEGIN();
-    Length = queue->Length;
-    QUEUE_CRITICAL_SECTION_END();
+    obj->Lock.Set( &obj->Lock );
+    len = obj->Length;
+    obj->Lock.Reset( &obj->Lock );
 
-    return Length;
+    return len;
 }
 

@@ -1,5 +1,5 @@
 /*******************************************************************************
- *  Copyright(C)2015-2019 by Dreistein<mcu_shilei@hotmail.com>                *
+ *  Copyright(C)2015-2021 by Dreistein<mcu_shilei@hotmail.com>                *
  *                                                                            *
  *  This program is free software; you can redistribute it and/or modify it   *
  *  under the terms of the GNU Lesser General Public License as published     *
@@ -26,8 +26,6 @@
 /*============================ MACROS ========================================*/
 /*============================ MACROFIED FUNCTIONS ===========================*/
 /*============================ TYPES =========================================*/
-typedef uint32_t queue_uint_t;
-
 /*============================ GLOBAL VARIABLES ==============================*/
 /*============================ PROTOTYPES ====================================*/
 
