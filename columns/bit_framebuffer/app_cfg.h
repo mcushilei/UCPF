@@ -1,5 +1,5 @@
 /*******************************************************************************
- *  Copyright(C)2019-2021 by Dreistein<mcu_shilei@hotmail.com>                *
+ *  Copyright(C)2020 by Dreistein<mcu_shilei@hotmail.com>                     *
  *                                                                            *
  *  This program is free software; you can redistribute it and/or modify it   *
  *  under the terms of the GNU Lesser General Public License as published     *
@@ -15,17 +15,18 @@
  *  along with this program; if not, see http://www.gnu.org/licenses/.        *
 *******************************************************************************/
 
-#ifndef __COLUMNS_CLOCK_PLUG_H__
-#define __COLUMNS_CLOCK_PLUG_H__
+//! \note do not move this pre-processor statement to other places
+#include "..\app_cfg.h"
+
+#ifndef __BIT_FRAMEBUFFER_APP_CFG_H__
+#define __BIT_FRAMEBUFFER_APP_CFG_H__
 
 /*============================ INCLUDES ======================================*/
-#include "./app_cfg.h"
-
 /*============================ MACROS ========================================*/
 /*============================ MACROFIED FUNCTIONS ===========================*/
 /*============================ TYPES =========================================*/
-/*============================ PUBLIC VARIABLES ==============================*/
-/*============================ PUBLIC PROTOTYPES =============================*/
+/*============================ GLOBAL VARIABLES ==============================*/
+/*============================ PROTOTYPES ====================================*/
 
-#endif  //!< #ifndef __COLUMNS_CLOCK_PLUG_H__
+#endif  //! #ifndef __BIT_FRAMEBUFFER_APP_CFG_H__
 /* EOF */

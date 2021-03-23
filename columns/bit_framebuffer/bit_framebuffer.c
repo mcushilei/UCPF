@@ -1,5 +1,5 @@
 /*******************************************************************************
- *  Copyright(C)2018-2021 by Dreistein<mcu_shilei@hotmail.com>                *
+ *  Copyright(C)2020 by Dreistein<mcu_shilei@hotmail.com>                     *
  *                                                                            *
  *  This program is free software; you can redistribute it and/or modify it   *
  *  under the terms of the GNU Lesser General Public License as published     *
@@ -15,44 +15,19 @@
  *  along with this program; if not, see http://www.gnu.org/licenses/.        *
 *******************************************************************************/
 
-#ifndef __COLUMNS_CLOCK_H__
-#define __COLUMNS_CLOCK_H__
+
+
 
 /*============================ INCLUDES ======================================*/
 #include "./app_cfg.h"
-#include "../list/list.h"
-#include "../calendar/calendar.h"
+
 
 /*============================ MACROS ========================================*/
 /*============================ MACROFIED FUNCTIONS ===========================*/
 /*============================ TYPES =========================================*/
-typedef struct clock_alarm_t    clock_alarm_t;
-typedef void clock_alarm_callback_t(clock_alarm_t *alarm, bool isTimeout);
-typedef void clock_engine_atom_lock_set_t(void);
-typedef void clock_engine_atom_lock_reset_t(void);
-
-struct clock_alarm_t {
-	list_node_t             ListNode;
-    uint32_t                Time;       //! second of day for day-alarm; absolute value in second for date-alarm.
-};
-
+/*============================ PRIVATE PROTOTYPES ============================*/
+/*============================ PRIVATE VARIABLES =============================*/
 /*============================ PUBLIC VARIABLES ==============================*/
-/*============================ PUBLIC PROTOTYPES =============================*/
-extern void clock_tick_tock(void);
-extern bool clock_init(
-                const date_time_t *originDate,
-                const date_time_t *currentTime,
-                clock_alarm_callback_t *callback,
-                clock_engine_atom_lock_set_t lockSet,
-                clock_engine_atom_lock_reset_t lockReset);
-extern bool         clock_set_time(const date_time_t *newTime);
-extern date_time_t  clock_get_time(void);
-extern uint32_t     clock_get_ticktock(void);
-extern bool clock_init_alarm(clock_alarm_t *alarm);
-extern bool clock_add_alarm(clock_alarm_t *alarm, const time24_t *time);
-extern void clock_remove_alarm(clock_alarm_t *alarm);
-extern bool clock_add_timer(clock_alarm_t *alarm, const date_time_t *time);
-extern void clock_remove_timer(clock_alarm_t *alarm);
+/*============================ IMPLEMENTATION ================================*/
 
-#endif  //! #ifndef __COLUMNS_CLOCK_H__
 /* EOF */

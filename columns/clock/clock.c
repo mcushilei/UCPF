@@ -1,5 +1,5 @@
 /*******************************************************************************
- *  Copyright(C)2018-2019 by Dreistein<mcu_shilei@hotmail.com>                *
+ *  Copyright(C)2018-2021 by Dreistein<mcu_shilei@hotmail.com>                *
  *                                                                            *
  *  This program is free software; you can redistribute it and/or modify it   *
  *  under the terms of the GNU Lesser General Public License as published     *
@@ -33,8 +33,8 @@ typedef struct {
     list_node_t            *NextAlarmToTrigger; //! scanhand point to the next alarm to check.
     list_node_t             DateAlarm;          //! this alarm would be only triggered one time.
     clock_alarm_callback_t *AlarmCallback;
-    clock_engine_safe_atom_start_fn *SafeAtomStart;
-    clock_engine_safe_atom_end_fn   *SafeAtomEnd;
+    clock_engine_atom_lock_set_t    *SafeAtomStart;
+    clock_engine_atom_lock_reset_t  *SafeAtomEnd;
     date_t          OriginDate;
     uint32_t        TickTock;       //! the elapsed second from OriginDate.
     uint32_t        TimeOfDay;      //! Only used by Alarm.
@@ -156,7 +156,12 @@ void clock_tick_tock(void)
     realClock.SafeAtomEnd();
 }
 
-bool clock_init(const date_time_t *originDate, const date_time_t *currentTime, clock_alarm_callback_t *callback)
+bool clock_init(
+                const date_time_t *originDate,
+                const date_time_t *currentTime,
+                clock_alarm_callback_t *callback,
+                clock_engine_atom_lock_set_t lockSet,
+                clock_engine_atom_lock_reset_t lockReset)
 {
     uint32_t sec = 0u;
     int32_t  days = 0;
@@ -180,7 +185,8 @@ bool clock_init(const date_time_t *originDate, const date_time_t *currentTime, c
         return false;
     }
 
-    realClock.SafeAtomStart();
+    realClock.SafeAtomStart = lockSet;
+    realClock.SafeAtomEnd   = lockReset;
     list_init(&realClock.Alarm);
     list_init(&realClock.DateAlarm);
     realClock.NextAlarmToTrigger = &realClock.Alarm;
@@ -189,7 +195,6 @@ bool clock_init(const date_time_t *originDate, const date_time_t *currentTime, c
     realClock.TickTock      = days * SECONDS_OF_DAY + sec;
     realClock.TimeOfDay     = sec;
     realClock.IsRunning     = true;
-    realClock.SafeAtomEnd();
 
     return true;
 }
