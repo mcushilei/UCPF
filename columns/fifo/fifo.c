@@ -1,5 +1,5 @@
 /*******************************************************************************
- *  Copyright(C)2015-2020 by Dreistein<mcu_shilei@hotmail.com>                *
+ *  Copyright(C)2015-2021 by Dreistein<mcu_shilei@hotmail.com>                *
  *                                                                            *
  *  This program is free software; you can redistribute it and/or modify it   *
  *  under the terms of the GNU Lesser General Public License as published     *
@@ -17,10 +17,11 @@
 
 
 
+
 /*============================ INCLUDES ======================================*/
 #include ".\app_cfg.h"
 #include ".\fifo.h"
-#include "..\string\string.h"
+#include <string.h>
 
 /*============================ MACROS ========================================*/
 /*============================ MACROFIED FUNCTIONS ===========================*/
@@ -30,7 +31,7 @@
 /*============================ GLOBAL VARIABLES ==============================*/
 /*============================ IMPLEMENTATION ================================*/
 
-bool fifo_init(fifo_t *obj, void *buffer, size_t size)
+bool fifo_init(fifo_t *obj, char *buffer, int size)
 {
     if (NULL == obj || NULL == buffer || (!IS_POWER_OF_2(size))) {
         return false;
@@ -38,22 +39,68 @@ bool fifo_init(fifo_t *obj, void *buffer, size_t size)
 
     obj->Buffer    = buffer;
     obj->Size      = size;
-    obj->Out       = 0u;
-    obj->In        = 0u;
+    obj->Out       = 0;
+    obj->In        = 0;
+    obj->Drip      = 0;
 
     return true;
 }
 
-size_t fifo_burst_in(fifo_t *obj, const char *buf, size_t len)
+int fifo_drip_byte(fifo_t *obj, char byte)
 {
-    size_t L1, L2;
+    int L1, L2;
+
+    if (NULL == obj) {
+        return 0;
+    }
+
+    L1 = obj->Size - (obj->Drip - obj->Out);       //! calculate the free space
+    L2 = obj->Size - (obj->Drip & (obj->Size - 1));
+    if (L1 < 1) {     //!< no enough space.
+        return 0;
+    }
+
+    L1 = 1;
+    L2 = MIN(1,  L2);
+    
+    if (L2) {
+        obj->Buffer[obj->Drip & (obj->Size - 1)] = byte;
+    } else {
+        obj->Buffer[0] = byte;
+    }
+    obj->Drip += L1;
+
+    return L1;
+}
+
+int fifo_length_dripped(fifo_t *obj)
+{
+    if (NULL == obj) {
+        return 0;
+    }
+
+    return obj->Drip - obj->In;
+}
+
+void fifo_flush_dripped(fifo_t *obj)
+{
+    obj->In = obj->Drip;
+}
+
+int fifo_burst_in(fifo_t *obj, const char *buf, int len)
+{
+    int L1, L2;
 
     if (NULL == obj || NULL == buf) {
         return 0;
     }
+    
+    if (obj->In != obj->Drip) {
+        return 0;
+    }
 
     L1 = obj->Size - (obj->In - obj->Out);       //! calculate the free space
-    L2 = obj->Size - (obj->In & (obj->Size - 1u));
+    L2 = obj->Size - (obj->In & (obj->Size - 1));
     if (L1 < len) {     //!< no enough space.
         return 0;
     }
@@ -61,23 +108,24 @@ size_t fifo_burst_in(fifo_t *obj, const char *buf, size_t len)
     L1 = len;
     L2 = MIN(L1,  L2);
 
-    memcpy((char *)obj->Buffer + (obj->In & (obj->Size - 1u)), buf, L2);
+    memcpy((char *)obj->Buffer + (obj->In & (obj->Size - 1)), buf, L2);
     memcpy(obj->Buffer, buf + L2, L1 - L2);
     obj->In += L1;
+    obj->Drip = obj->In;
 
     return L1;
 }
 
-size_t fifo_burst_out(fifo_t *obj, char *buf, size_t len)
+int fifo_burst_out(fifo_t *obj, char *buf, int len)
 {
-    size_t L1, L2;
+    int L1, L2;
 
     if (NULL == obj) {
         return 0;
     }
 
     L1 = obj->In - obj->Out;      //! calculate the length of data in the fifo.
-    L2 = obj->Size - (obj->Out & (obj->Size - 1u));
+    L2 = obj->Size - (obj->Out & (obj->Size - 1));
     if (0 == L1) {     //!< no data.
         return 0;
     }
@@ -86,7 +134,7 @@ size_t fifo_burst_out(fifo_t *obj, char *buf, size_t len)
     L2 = MIN(L1,  L2);
 
     if (NULL != buf) {
-        memcpy(buf, (char *)obj->Buffer + (obj->Out & (obj->Size - 1u)), L2);
+        memcpy(buf, (char *)obj->Buffer + (obj->Out & (obj->Size - 1)), L2);
         memcpy(buf + L2, obj->Buffer, L1 - L2);
     }
     obj->Out += L1;
@@ -94,17 +142,13 @@ size_t fifo_burst_out(fifo_t *obj, char *buf, size_t len)
     return L1;
 }
 
-size_t fifo_length(fifo_t *obj)
+int fifo_length(fifo_t *obj)
 {
-    size_t L1 = 0;
-
     if (NULL == obj) {
         return 0;
     }
 
-    L1 = obj->In - obj->Out;      //! calculate the length of data in the fifo.
-
-    return L1;
+    return obj->In - obj->Out;      //! calculate the length of data in the fifo.
 }
 
 void fifo_flush(fifo_t *obj)
