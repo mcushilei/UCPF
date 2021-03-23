@@ -81,9 +81,8 @@ void decode_hex_str(const char *str, int strlen, char *bufout)
 
 void encode_hex_str(const char *data, int datalen, char *str)
 {
-    uint8_t *p = (uint8_t *)data;
     for (int i = 0; i < datalen; i++) {
-        sprintf(str + i * 2, "%02X", p[i]);
+        sprintf(str + i * 2, "%02X", data[i]);
     }
 }
 
