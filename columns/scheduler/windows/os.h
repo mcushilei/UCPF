@@ -50,7 +50,7 @@
 
 #define OS_QUEUE_TYPE                       OS_HANDLE
 #define OS_QUEUE_CREATE(__Q, __L, __SIZE)   osQueueCreate(&(__Q), __L, __SIZE)
-#define OS_QUEUE_DELETE(__Q)                osSemDelete(__Q)
+#define OS_QUEUE_DELETE(__Q)                osQueueDelete(__Q)
 #define OS_QUEUE_WRITE(__Q, __BUF, __TIME)  osQueueWrite(__Q, __BUF, __TIME)
 #define OS_QUEUE_READ(__Q, __BUF, __TIME)   osQueueRead(__Q, __BUF, __TIME)
 
