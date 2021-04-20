@@ -48,6 +48,16 @@ void utc_to_beijing(date_time_t *pDateTime)
     date_plus_days(&pDateTime->Date, d);
 }
 
+static void clock_engine_atom_lock_set(void)
+{
+    OS_CRITICAL_SECTION_BEGIN();
+}
+
+static void clock_engine_atom_lock_reset(void)
+{
+    OS_CRITICAL_SECTION_END();
+}
+
 bool rtc_api_init(void)
 {
     //! init real-time-clock: load time from hardware RTC.
@@ -66,7 +76,7 @@ bool rtc_api_init(void)
     nowTime.Second   = ptm->tm_sec;
     utc_to_beijing(&nowTime);
 
-    if (!clock_init(&startTime, &nowTime, &clock_alarm_callback)) {
+    if (!clock_init(&startTime, &nowTime, &clock_alarm_callback, clock_engine_atom_lock_set, clock_engine_atom_lock_reset)) {
         return false;
     }
 
