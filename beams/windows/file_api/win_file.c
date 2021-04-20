@@ -222,14 +222,14 @@ bool file_api_erase_all(file_t fileHandle)
 {
     LARGE_INTEGER fileSize;
     if (!GetFileSizeEx(fileHandle, &fileSize)) {
-        DBG_LOG("GetFileSizeEx error: %u", GetLastError());
+        DBG_LOG("GetFileSizeEx error: %lu", GetLastError());
         return false;
     } else {
     }
 
     SetFilePointer(fileHandle, 0, NULL, FILE_BEGIN);
     if (!SetEndOfFile(fileHandle)) {
-        DBG_LOG("SetEndOfFile error: %u", GetLastError());
+        DBG_LOG("SetEndOfFile error: %lu", GetLastError());
         return false;
     }
 
