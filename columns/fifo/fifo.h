@@ -26,23 +26,24 @@
 /*============================ TYPES =========================================*/
 typedef struct {
     char       *Buffer;
-    int         Size;           //!< buffer size: the number of item it can store. 
+    size_t      Size;           //!< buffer size: the number of item it can store. 
                                 //   It must be the value of 2 to he power n.
-    int         Out;            //!< point to space filled.
-    int         In;             //!< point to space empty.
-    int         Drip;
+    size_t      Out;            //!< point to filled space.
+    size_t      In;             //!< point to empty space.
+    size_t      Drip;
 } fifo_t;
 
 /*============================ GLOBAL VARIABLES ==============================*/
 /*============================ PROTOTYPES ====================================*/
-extern bool fifo_init       (fifo_t *obj, char *buffer, int size);
-extern void fifo_flush      (fifo_t *obj);
-extern int  fifo_length     (fifo_t *obj);
-extern int  fifo_burst_in   (fifo_t *obj, const char *buf, int len);
-extern int  fifo_burst_out  (fifo_t *obj, char *buf, int len);
-extern int  fifo_drip_byte  (fifo_t *obj, char byte);
-extern int  fifo_length_dripped(fifo_t *obj);
-extern void fifo_flush_dripped(fifo_t *obj);
+extern bool     fifo_init       (fifo_t *obj, char *buffer, size_t size);
+extern size_t   fifo_burst_in   (fifo_t *obj, const char *buf, size_t len);
+extern size_t   fifo_burst_out  (fifo_t *obj, char *buf, size_t len);
+extern size_t   fifo_length     (fifo_t *obj);
+extern void     fifo_flush      (fifo_t *obj);
+extern size_t   fifo_drip_byte  (fifo_t *obj, char byte);
+extern size_t   fifo_burst_drip (fifo_t *obj, const char *buf, size_t len);
+extern size_t   fifo_length_dripped(fifo_t *obj);
+extern void     fifo_flush_dripped(fifo_t *obj);
 
 #endif
 /* EOF */
