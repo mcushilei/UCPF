@@ -10,8 +10,8 @@ THIS_FILE_NAME("bc26");
 #define AT_SOCKET_UDP       (17u)
 #define AT_SOCKET_TCP       (6u)
 
-#define AT_DATA_LEN         (2048)
-#define AT_MAX_PAYLOADLEN   (1024 + 512)
+#define AT_MAX_DATA_LEN     (512)
+#define AT_STRING_MAX_LEN   (2 * AT_MAX_DATA_LEN + 64)
 #define MAX_SOCK_NUM        (4)
 
 
@@ -54,27 +54,6 @@ static char imei[16];
 
 
 
-#if defined ( __CC_ARM ) || defined ( __ICCARM__ )  /* KEIL and IAR */
-static char *strnstr(const char *s1, const char *s2, size_t len)
-{
-    size_t l2;
-
-    l2 = strlen(s2);
-    if (!l2)
-        return (char *)s1;
-    while (len >= l2) {
-        len--;
-        if (!memcmp(s1, s2, l2))
-            return (char *)s1;
-        s1++;
-    }
-    return NULL;
-}
-#endif
-
-
-
-
 static int32_t bc26_check_connection(void)
 {
     char *cmd = "AT";
@@ -96,8 +75,14 @@ static int32_t bc26_get_version(void)
     if(at_cmd(cmd, strlen(cmd), "OK", buf, &buf_len) < 0)
         return AT_FAILED;
 
-    //DBG_LOG("%s", buf);
+    DBG_LOG("%s", buf);
     return AT_OK;
+}
+
+static int32_t bc26_reboot(void)
+{
+    char *cmd = "AT+QRST=1";
+    return at_cmd(cmd, strlen(cmd), "OK", NULL,NULL);
 }
 
 static int32_t bc26_check_ue(void)
@@ -118,16 +103,22 @@ static int32_t bc26_shutdown(void)
     return at_cmd(cmd, strlen(cmd), "OK", NULL,NULL);
 }
 
+static int32_t bc26_qcsearfcn(void)
+{
+    char *cmd = "AT+QCSEARFCN";
+    return at_cmd(cmd, strlen(cmd), "OK", NULL,NULL);
+}
+
 static char *bc26_get_imei(void)
 {
-    char *cmd = "AT+CGSN=1";
+    char *cmd = "AT+CGSN=2";
     char buf[32] = {0};
     uint32_t buf_len = UBOUND(buf);
     
     if(at_cmd(cmd, strlen(cmd), "+CGSN:", buf, &buf_len) < 0)
         return NULL;
     
-    strncpy(imei, &buf[strlen("\r\n+CGSN:")], UBOUND(imei));
+    strncpy(imei, &buf[strlen("\r\n+CGSN: ")], UBOUND(imei));
     imei[15] = '\0';
     return imei;
 }
@@ -299,12 +290,12 @@ static int32_t bc26_send(int32_t id , const char *buf, uint32_t len)
 {
     int cmd_len;
 
-    if ((len * 2) > AT_MAX_PAYLOADLEN) {
+    if (len > AT_MAX_DATA_LEN) {
         DBG_LOG("data length too long: %u", len);
         return AT_FAILED;
     }
 
-	cmd_len = snprintf(wbuf, AT_DATA_LEN, "AT+QISENDEX=%d,%d,", id, len);
+	cmd_len = snprintf(wbuf, AT_STRING_MAX_LEN, "AT+QISENDEX=%d,%d,", id, len);
 	encode_hex_str(buf, len, wbuf + cmd_len);
     cmd_len += len * 2;
     wbuf[cmd_len]   = '\0';
@@ -321,7 +312,7 @@ static int32_t bc26_data_handler(void *arg, const char *buf, uint32_t len)
     int32_t socket = 0, data_len = 0;
     char *p1;
     p1 = (char *)buf;
-    char str[16] = 0;
+    char str[16] = {0};
     
     //! parser data frame ,\r\n+QIURC: "recv",socket,length,data
     if (sscanf((char *)buf, "%*s%*[^\"]%16[^,]", str) < 1) {
@@ -350,7 +341,7 @@ static int32_t bc26_data_handler(void *arg, const char *buf, uint32_t len)
         DBG_LOG("at cmd incomplete!");
         goto END;
     }
-    if ((data_len * 2) > AT_MAX_PAYLOADLEN) {
+    if (data_len > AT_MAX_DATA_LEN) {
         DBG_LOG("data length too long: %u", data_len);
         goto END;
     }
@@ -435,8 +426,8 @@ static int32_t nb_init(uint32_t opt)
 
     at_init(&atCfg);
     
-    wbuf = at_malloc(AT_DATA_LEN);
-    rbuf = at_malloc(AT_DATA_LEN);
+    wbuf = at_malloc(AT_STRING_MAX_LEN);
+    rbuf = at_malloc(AT_STRING_MAX_LEN);
     if (NULL == wbuf || NULL == rbuf) {
         goto __err_exit;
     }
@@ -467,6 +458,34 @@ static int32_t nb_init(uint32_t opt)
         goto __err_exit;
 	}
     
+    bc26_get_version();
+    
+    if (0 != opt) {
+        
+        for (timecnt = 5; timecnt != 0u; timecnt--) {
+            ret = bc26_shutdown();
+            if(ret != AT_FAILED) {
+                break;
+            }
+            OS_TASK_SLEEP(1000);
+        }
+        if(timecnt == 0u) {
+            goto __err_exit;
+        }
+        
+        for (timecnt = 5; timecnt != 0u; timecnt--) {
+            ret = bc26_qcsearfcn();
+            if(ret != AT_FAILED) {
+                break;
+            }
+            OS_TASK_SLEEP(1000);
+        }
+        if(timecnt == 0u) {
+            goto __err_exit;
+        }
+        
+        RTT_LOG("bc26 NB reset.");
+    }
 
 	for (timecnt = 5; timecnt != 0u; timecnt--) {
         pstring = bc26_get_imei();
@@ -612,6 +631,12 @@ static int32_t nb_deinit(void)
     OS_TASK_SLEEP(6000);
     bc26_enable_rf();
     bc26_power_off();
+    if (NULL != wbuf) {
+        at_free(wbuf);
+    }
+    if (NULL != rbuf) {
+        at_free(rbuf);
+    }
     at_deinit();
     DBG_LOG("at device power off.");
     

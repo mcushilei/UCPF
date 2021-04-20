@@ -681,9 +681,14 @@ static int32_t nb_bc28_init(uint32_t opt)
     
     
     bc95_check_csq();
-    OS_TASK_SLEEP(3000);
-    rssi = bc95_get_csq();
-    RTT_LOG("rssi:%d", rssi);
+    for (uint32_t i = 0; i < 3; i++) {
+        OS_TASK_SLEEP(3000);
+        int32_t rssi = bc95_get_csq();
+        RTT_LOG("rssi:%d", rssi);
+        if (rssi >= 0 && rssi <= 31) {
+            break;
+        }
+    }
     
     
 	for (timecnt = 100; timecnt != 0u; timecnt--) {
@@ -748,6 +753,12 @@ static int32_t nb_bc28_deinit(void)
     OS_TASK_SLEEP(6000);        //!< refer to Quectel_BC35-G&BC28&BC95 R2.0_应用设计指导_V1.2.pdf, 2.1.2
     bc95_enable_rf();
     bc95_bc28_power_off();
+    if (NULL != wbuf) {
+        at_free(wbuf);
+    }
+    if (NULL != rbuf) {
+        at_free(rbuf);
+    }
     at_deinit();
     DBG_LOG("at device power off.");
     

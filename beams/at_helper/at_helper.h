@@ -99,7 +99,7 @@ extern void         at_init             (const at_config_t *config);
 extern void         at_deinit           (void);
 extern at_config_t *at_get_config       (void);
 extern int32_t      at_oob_register     (const char *suffix, oob_callback_t *callback, oob_cmp_callback_t *oob_cmd_cmp);
-extern int32_t      at_write            (const char *cmd, const char *suffix, const char *buf, uint32_t len);
+extern int32_t      at_write            (const char *cmd, uint32_t cmd_len, const char *suffix, const char *buf, uint32_t len);
 extern int32_t      at_cmd_multi_suffix (const char *cmd, uint32_t cmd_len, at_cmd_info_t *cmd_info, uint32_t timeout);
 extern int32_t      at_cmd              (const char *cmd, uint32_t cmd_len, const char *suffix, char *resp_buf, uint32_t *resp_len);
 extern int32_t      at_cmd_with_2_suffix(const char *cmd, uint32_t cmd_len, const char *resp_match_1,

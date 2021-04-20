@@ -22,7 +22,7 @@
 #include "./framework.h"
 #include "heap_memory/heap_memory.h"
 
-extern int app_main(void);
+extern int app_init(void);
 
 /*============================ MACROS ========================================*/
 /*============================ MACROFIED FUNCTIONS ===========================*/
@@ -72,7 +72,7 @@ bool framework_init(void)
     //}
 
 
-    app_main();
+    app_init();
 
     while (1) {
         OS_TASK_SLEEP(1000);
@@ -91,6 +91,14 @@ int user_printf_output_char(char ch)
 {
     putchar(ch);
     return ch;
+}
+
+
+void mbedtls_param_failed ( const char *failure_condition,
+							const char *file,
+							int line )
+{
+	printf(" \r\n %s:%04d: %s", file, line, failure_condition );
 }
 
 

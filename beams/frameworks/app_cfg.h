@@ -1,5 +1,5 @@
 /*******************************************************************************
- *  Copyright(C)2018-2019 by Dreistein<mcu_shilei@hotmail.com>                *
+ *  Copyright(C)2018-2021 by Dreistein<mcu_shilei@hotmail.com>                *
  *                                                                            *
  *  This program is free software; you can redistribute it and/or modify it   *
  *  under the terms of the GNU Lesser General Public License as published     *
@@ -15,19 +15,18 @@
  *  along with this program; if not, see http://www.gnu.org/licenses/.        *
 *******************************************************************************/
 
+#ifndef __BEAMS_FRAMEWLRKS_APP_CFG_H__
+#define __BEAMS_FRAMEWLRKS_APP_CFG_H__
+
+/*============================ INCLUDES ======================================*/
 //! \note do not move this pre-processor statement to other places
 #include "..\app_cfg.h"
 
-#ifndef __BEAMS_FRAMEWORKS_APP_CFG_H__
-#define __BEAMS_FRAMEWORKS_APP_CFG_H__
-
-/*============================ INCLUDES ======================================*/
 /*============================ MACROS ========================================*/
 /*============================ MACROFIED FUNCTIONS ===========================*/
 /*============================ TYPES =========================================*/
 /*============================ GLOBAL VARIABLES ==============================*/
 /*============================ PROTOTYPES ====================================*/
 
-
-#endif  //!< __BEAMS_FRAMEWORKS_APP_CFG_H__
+#endif  //!< #ifndef __BEAMS_FRAMEWLRKS_APP_CFG_H__
 /* EOF */

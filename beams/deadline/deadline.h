@@ -36,7 +36,7 @@ extern void deadline_init(deadline_t *dlTimer);
 extern bool deadline_is_expired(deadline_t *dlTimer);
 extern void deadline_set_ms(deadline_t *dlTimer, uint32_t timeout);
 extern void deadline_set(deadline_t *dlTimer, uint32_t timeout);
-extern int deadline_left_ms(deadline_t *dlTimer);
+extern int  deadline_left_ms(deadline_t *dlTimer);
 
 #endif  //!< #ifndef __DEADLINE_H__
 /* EOF */

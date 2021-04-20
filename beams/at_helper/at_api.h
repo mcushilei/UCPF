@@ -9,11 +9,11 @@
 
 enum {
     SOCKET_ERR_NONE         = 0,
-    SOCKET_ERR_TIMEOUT,
-    SOCKET_ERR_FAIL,
-    SOCKET_ERR_BUFFER_SIZE,
-    SOCKET_ERR_NULL_BUFFER,
-    SOCKET_ERR_INVALID_SOCKET,
+    SOCKET_ERR_TIMEOUT      = -1,
+    SOCKET_ERR_FAIL         = -2,
+    SOCKET_ERR_BUFFER_SIZE  = -3,
+    SOCKET_ERR_NULL_BUFFER  = -4,
+    SOCKET_ERR_INVALID_SOCKET = -5,
 };
 
 #define AT_API_RECV_FIFO_SIZE   (2u * 1024u)
@@ -35,7 +35,7 @@ typedef struct {
     
     fifo_t      RecvFIFO;       //! this fifo is only used by TCP socket.
     uint32_t    RecvLength;     //! the packet size of received UDP.
-} at_socket_t;
+} socket_t;
 
 typedef struct at_option_t {
 	const char     *apn;
@@ -44,7 +44,7 @@ typedef struct at_option_t {
 } at_option_t;
 
 typedef struct {
-	int32_t  (*init)    (void);
+	int32_t  (*init)    (uint32_t opt);
 	int32_t  (*deinit)  (void);
     
     int32_t  (*get_imsi)(char *buf, uint32_t len);
@@ -57,6 +57,8 @@ typedef struct {
     int32_t  (*sendto)  (int32_t id, const char *buf, uint32_t len, const char *ipaddr, int port);
 
 	int32_t  (*close)   (int32_t id);
+    
+    int32_t  (*resolve_domain_name)(const char *name, char *ip);
     
     uint32_t link_num;
 } at_adaptor_api_t;
@@ -71,20 +73,21 @@ extern bool at_api_deinit(void);
 
 extern bool at_api_register_adaptor(const at_adaptor_api_t *api);
 extern bool at_api_deregister_adaptor(void);
-extern bool at_api_init_adaptor(void);
+extern bool at_api_init_adaptor(uint32_t opt);
 extern bool at_api_deinit_adaptor(void);
 extern int  at_api_get_imsi(char *buf, uint32_t len);
 extern int  at_api_get_imei(char *buf, uint32_t len);
+extern int  at_api_resolve_domain_name(const char *name, char *ip);
 
-extern int  socket_api_create(void);
-extern int  socket_api_delete(int so);
-extern int  socket_api_connect(int so, const char* host, uint32_t port);
-extern int  socket_api_bind(int so, const char *host, uint32_t port);
-extern int  socket_api_send(int so, const char *buf, uint32_t *len);
-extern int  socket_api_sendto(int so, const char *buf, uint32_t *len, const char *ipaddr, int port);
-extern int  socket_api_recv(int so, char *buf, uint32_t *len, uint32_t timeout);
-extern int  socket_api_recvfrom(int so, char *buf, uint32_t *len, char *senderIP, int *senderPort, uint32_t timeout);
-extern int  socket_api_shutdown(int so);
+extern socket_t *socket_api_create(void);
+extern int       socket_api_delete(socket_t *pSocket);
+extern int  socket_api_connect(socket_t *pSocket, const char *host, uint32_t port);
+extern int  socket_api_bind(socket_t *pSocket, const char *host, uint32_t port);
+extern int  socket_api_send(socket_t *pSocket, const char *buf, uint32_t *len);
+extern int  socket_api_sendto(socket_t *pSocket, const char *buf, uint32_t *len, const char *ipaddr, int port);
+extern int  socket_api_recv(socket_t *pSocket, char *buf, uint32_t *len, uint32_t timeout);
+extern int  socket_api_recvfrom(socket_t *pSocket, char *buf, uint32_t *len, char *senderIP, int *senderPort, uint32_t timeout);
+extern int  socket_api_shutdown(socket_t *pSocket);
 
 extern void at_api_handle_data(uint32_t id, char *buf, uint32_t len);
 

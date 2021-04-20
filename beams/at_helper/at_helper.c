@@ -77,20 +77,22 @@ int32_t at_cmd_multi_suffix(const char *cmd, uint32_t cmd_len, at_cmd_info_t *cm
 {
     OS_ERR ret;
     at_listener_t listener = {0};
-    uint32_t print_len;
 
     if ((cmd_info == NULL) || (cmd == NULL)) {
         return AT_FAILED;
     }
 
     listener.cmd_info = *cmd_info;
-    print_len = ((cmd_info->resp_buf != NULL && cmd_info->resp_len != NULL) ? *(cmd_info->resp_len) : -1);
     
     if (timeout < at.timeout) {
         timeout = at.timeout;
     }
     
-    AT_LOG("cmd:%s resp_len: %d resp_buf: 0x%08p timeout: %u", cmd, print_len, cmd_info->resp_buf, timeout);
+    AT_LOG("cmd:%s resp_len: %d resp_buf: 0x%08p timeout: %u",
+           cmd,
+           ((cmd_info->resp_buf != NULL && cmd_info->resp_len != NULL) ? *(cmd_info->resp_len) : -1),
+           cmd_info->resp_buf,
+           timeout);
 
     OS_MUTEX_WAIT(at.trx_mux, OS_INFINITE);
     {
@@ -118,9 +120,12 @@ int32_t at_cmd_multi_suffix(const char *cmd, uint32_t cmd_len, at_cmd_info_t *cm
 
 /*
  *  \brief  to send TCP or UDP data.
+ *  \param  cmd         the comannd string.
+ *  \param  cmd_len     the length of the command string.
+ *  \param  suffix      the desired response string.
  *  \return AT_OK       if write successfully
  */
-int32_t at_write(const char *cmd, const char *suffix, const char *buf, uint32_t len)
+int32_t at_write(const char *cmd, uint32_t cmd_len, const char *suffix, const char *buf, uint32_t len)
 {
     at_listener_t   listener = {0};
     const char     *suffix_array[1];
@@ -134,7 +139,7 @@ int32_t at_write(const char *cmd, const char *suffix, const char *buf, uint32_t 
         OS_MUTEX_WAIT(at.cmd_mux, OS_INFINITE);
         suffix_array[0] = ">";
         at_add_listener(&listener);
-        at_transmit(cmd, strlen(cmd), true);
+        at_transmit(cmd, cmd_len, true);
         OS_MUTEX_RELEASE(at.cmd_mux);
 
         ret = OS_SEMAPHORE_WAIT(at.resp_sem, at.timeout);

@@ -622,8 +622,14 @@ __err_exit:
 
 static int32_t n700_deinit(void)
 {
-    at_deinit();
     n700_power_off();
+    if (NULL != wbuf) {
+        at_free(wbuf);
+    }
+    if (NULL != rbuf) {
+        at_free(rbuf);
+    }
+    at_deinit();
     DBG_LOG("n700 power off.");
     
     return AT_OK;
