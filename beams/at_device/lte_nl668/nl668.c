@@ -78,14 +78,14 @@ static int32_t nl668_at_check_sim(void)
 
 static char *nl668_at_get_imsi(void)
 {
-    char *cmd = "AT+CIMI?";
+    char *cmd = "AT+CIMI";
     char tmpbuf[32] = {0};
     uint32_t buf_len = UBOUND(tmpbuf);
     
-    if(at_cmd(cmd, strlen(cmd), "+CIMI:", tmpbuf, &buf_len) < 0)
+    if(at_cmd(cmd, strlen(cmd), "OK", tmpbuf, &buf_len) < 0)
         return NULL;
     
-    strncpy(imsi, &tmpbuf[strlen("\r\n+CIMI: ")], UBOUND(imsi));
+    sscanf(tmpbuf, "%*[^0-9]%15[0-9]", &imsi);
     imsi[15] = '\0';
     
     if (15 != int_str_len(imsi)) {
@@ -97,14 +97,14 @@ static char *nl668_at_get_imsi(void)
 
 static char *nl668_at_get_imei(void)
 {
-    char *cmd = "AT+CGSN=1";
+    char *cmd = "AT+CGSN=0";
     char tmpbuf[32] = {0};
     uint32_t buf_len = UBOUND(tmpbuf);
     
-    if(at_cmd(cmd, strlen(cmd), "+CGSN:", tmpbuf, &buf_len) < 0)
+    if(at_cmd(cmd, strlen(cmd), "OK", tmpbuf, &buf_len) < 0)
         return NULL;
     
-    strncpy(imei, &tmpbuf[strlen("\r\n+CGSN: ")], UBOUND(imei));
+    sscanf(tmpbuf, "%*[^0-9]%15[0-9]", &imei);
     imei[15] = '\0';
     
     if (15 != int_str_len(imei)) {
@@ -146,7 +146,7 @@ static int32_t nl668_at_get_netstat(void)
     return at_cmd(cmd, strlen(cmd), "+CGATT: 1", NULL, NULL);
 }
 
-static int32_t nl668_at_ppp(void)
+static int32_t nl668_at_ppp(char *ip)
 {
     int cmd_len = 0;
     char tmpbuf[128 + 64] = {0};
@@ -160,10 +160,11 @@ static int32_t nl668_at_ppp(void)
     } else {
         cmd_len = snprintf(tmpbuf, buf_len, "AT+MIPCALL=1,\"%s\"", apn);
     }
-	match = at_cmd_with_2_suffix(tmpbuf, cmd_len, "+MIPCALL:", "ERROR", tmpbuf, &buf_len, 35000);
+	match = at_cmd_with_2_suffix(tmpbuf, cmd_len, "+MIPCALL:", "ERROR", tmpbuf, &buf_len, 10000);
     if (match != 0) {
         return AT_FAILED;
     }
+    sscanf(tmpbuf, "%*[^+]+MIPCALL:%s\r\n", ip);
 
     return AT_OK;
 }
@@ -171,20 +172,19 @@ static int32_t nl668_at_ppp(void)
 static int32_t nl668_at_query_ip(int *pstatus, char *ip)
 {
 	char *cmd = "AT+MIPCALL?";
-    char tmpbuf[40] = {0};
+    char tmpbuf[64] = {0};
     uint32_t buf_len = UBOUND(tmpbuf);
     int status = 0;
-    char *str = NULL;
+    int match;
     
-    if(at_cmd(cmd, strlen(cmd), "+MIPCALL:", tmpbuf, &buf_len) < 0) {
+	match = at_cmd_with_2_suffix(cmd, strlen(cmd), "OK", "ERROR", tmpbuf, &buf_len, 35000);
+    if (match != 0) {
         return AT_FAILED;
     }
     
-    str = find_string_by_n(tmpbuf, "+MIPCALL:", buf_len);
-    sscanf(str,"+MIPCALL:%d",&status);
-    *pstatus = status;
+    sscanf(tmpbuf,"%*[^+]+MIPCALL:%d",&status);
     if (status == 1) {
-        sscanf(str, "+MIPCALL:%d,%s\r\n", &status, ip);
+        sscanf(tmpbuf, "%*[^+]+MIPCALL:%d,%s\r\n", pstatus, ip);
     } else {
         ip[0] = '\0';
     }
@@ -264,7 +264,7 @@ static int32_t nl668_at_send(int32_t id, const char *buf, uint32_t len)
     int cmd_len;
     
     cmd_len = snprintf(cmd, 64, "AT+MIPSEND=%d,%d", id, len);
-    if (AT_OK != at_write(cmd, "OK", buf, len)) {
+    if (AT_OK != at_write(cmd, cmd_len, "OK", buf, len)) {
         return AT_FAILED;
     }
     
@@ -462,7 +462,7 @@ static int32_t nl668_init(uint32_t opt)
 		if(ret != AT_FAILED) {
 			break;
 		}
-		OS_TASK_SLEEP(100);
+		OS_TASK_SLEEP(1000);
 	}
 	if(timecnt == 0u) {
         RTT_LOG("ERROR: cannot connect to AT device!");
@@ -474,7 +474,7 @@ static int32_t nl668_init(uint32_t opt)
 		if(ret != AT_FAILED) {
 			break;
 		}
-		OS_TASK_SLEEP(100);
+		OS_TASK_SLEEP(1000);
 	}
 	if(timecnt == 0u) {
         goto __err_exit;
@@ -485,18 +485,19 @@ static int32_t nl668_init(uint32_t opt)
 		if(ret != AT_FAILED) {
 			break;
 		}
-		OS_TASK_SLEEP(100);
+		OS_TASK_SLEEP(1000);
 	}
 	if(timecnt == 0u) {
         goto __err_exit;
 	}
     
     char *pstring = NULL;
-	for (timecnt = 5; timecnt != 0u; timecnt--) {
+	for (timecnt = 10; timecnt != 0u; timecnt--) {
         pstring = nl668_at_get_imei();
 		if(pstring != NULL) {
 			break;
 		}
+        OS_TASK_SLEEP(1000);
 	}
 	if(timecnt == 0u) {
         RTT_LOG("ERROR: cannot read IMEI!");
@@ -506,7 +507,7 @@ static int32_t nl668_init(uint32_t opt)
     }
     
     pstring = NULL;
-	for (timecnt = 8; timecnt != 0u; timecnt--) {
+	for (timecnt = 10; timecnt != 0u; timecnt--) {
         pstring = nl668_at_get_imsi();
 		if(pstring != NULL) {
 			break;
@@ -544,9 +545,14 @@ static int32_t nl668_init(uint32_t opt)
     
     
     nl668_at_check_csq();
-    OS_TASK_SLEEP(3000);
-    int32_t rssi = nl668_at_get_csq();
-    RTT_LOG("rssi:%d", rssi);
+    for (uint32_t i = 0; i < 3; i++) {
+        OS_TASK_SLEEP(3000);
+        int32_t rssi = nl668_at_get_csq();
+        RTT_LOG("rssi:%d", rssi);
+        if (rssi >= 0 && rssi <= 31) {
+            break;
+        }
+    }
     
 	for (timecnt = 20; timecnt != 0u; timecnt--) {
         ret = nl668_at_cgatt_attach();
@@ -573,37 +579,38 @@ static int32_t nl668_init(uint32_t opt)
         goto __err_exit;
 	}
     
-    
-	for (timecnt = 3; timecnt != 0u; timecnt--) {
-        ret = nl668_at_ppp();
+    char ip[20] = {0};
+	for (timecnt = 2; timecnt != 0u; timecnt--) {
+        ret = nl668_at_ppp(ip);
 		if(ret != AT_FAILED) {
 			break;
 		}
-        OS_TASK_SLEEP(2000);
 	}
 	if(timecnt == 0u) {
         RTT_LOG("ERROR: PPP timeout!");
         goto __err_exit;
 	}
+    RTT_LOG("ip:%s", ip);
     
-	for (timecnt = 15; timecnt != 0u; timecnt--) {
-        int status = 0;
-        char ip[20] = {0};
-        ret = nl668_at_query_ip(&status, ip);
-		if(ret == AT_FAILED) {
-			continue;
-		}
-        if (status == 1) {
-            RTT_LOG("ip:%s", ip);
-            break;
-        } else {
-            OS_TASK_SLEEP(2000);
-        }
-	}
-	if(timecnt == 0u) {
-        RTT_LOG("ERROR: cannot get IP!");
-        goto __err_exit;
-	}
+//	for (timecnt = 15; timecnt != 0u; timecnt--) {
+//        int status = 0;
+//        char ip[20] = {0};
+//        ret = nl668_at_query_ip(&status, ip);
+//		if(ret == AT_FAILED) {
+//            OS_TASK_SLEEP(2000);
+//			continue;
+//		}
+//        if (status == 1) {
+//            RTT_LOG("ip:%s", ip);
+//            break;
+//        } else {
+//            OS_TASK_SLEEP(2000);
+//        }
+//	}
+//	if(timecnt == 0u) {
+//        RTT_LOG("ERROR: cannot get IP!");
+//        goto __err_exit;
+//	}
 
     at_oob_register(AT_RCV_TCP_PREFIX, nl668_tcp_data_handler, nl668_cmd_match);
     at_oob_register(AT_RCV_UDP_PREFIX, nl668_udp_data_handler, nl668_cmd_match);
