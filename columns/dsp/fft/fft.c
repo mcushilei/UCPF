@@ -1,5 +1,5 @@
 /*******************************************************************************
- *  Copyright(C)2017-2018 by Dreistein<mcu_shilei@hotmail.com>                *
+ *  Copyright(C)2017-2020 by Dreistein<mcu_shilei@hotmail.com>                *
  *                                                                            *
  *  This program is free software; you can redistribute it and/or modify it   *
  *  under the terms of the GNU Lesser General Public License as published     *
@@ -23,10 +23,10 @@
 
 /*============================ MACROS ========================================*/
 #ifndef FFT_PI
-#define FFT_PI                  (3.14159265358979f)
+#define FFT_PI              (3.14159265358979f)
 #endif
 
-#define FFT_SAMPLE_NUM      (1u << FFT_BIT_LEN)
+#define FFT_SAMPLE_NUM      (1u << FFT_BIT_LEN)     //!< number_of_sample = 2 ^ FFT_BIT_LEN
 
 /*============================ MACROFIED FUNCTIONS ===========================*/
 /*============================ TYPES =========================================*/
@@ -38,7 +38,7 @@
 
 float    FFT_SIN_TBL[FFT_BIT_LEN];
 float    FFT_COS_TBL[FFT_BIT_LEN];
-uint16_t FFT_BIT_TBL[FFT_SAMPLE_NUM];
+uint16_t FFT_BIT_REV_TBL[FFT_SAMPLE_NUM];   //!< table for bit reversal
 
 void fft_init(void)
 {
@@ -46,16 +46,16 @@ void fft_init(void)
 
     for (i = 0; i < FFT_SAMPLE_NUM; i++) {
         x = i;
-        x = ((x & 0x55555555u) << 1) | (((0x55555555u << 1) & x) >> 1);
-        x = ((x & 0x33333333u) << 2) | (((0x33333333u << 2) & x) >> 2);
-        x = ((x & 0x0F0F0F0Fu) << 4) | (((0x0F0F0F0Fu << 4) & x) >> 4);
-        x = ((x & 0x00FF00FFu) << 8) | (((0x00FF00FFu << 8) & x) >> 8);
+        x = ((x & 0x55555555u) <<  1) | (((0x55555555u <<  1) & x) >>  1);
+        x = ((x & 0x33333333u) <<  2) | (((0x33333333u <<  2) & x) >>  2);
+        x = ((x & 0x0F0F0F0Fu) <<  4) | (((0x0F0F0F0Fu <<  4) & x) >>  4);
+        x = ((x & 0x00FF00FFu) <<  8) | (((0x00FF00FFu <<  8) & x) >>  8);
         x = ((x & 0x0000FFFFu) << 16) | (((0x0000FFFFu << 16) & x) >> 16);
-        FFT_BIT_TBL[i] = x >> (32u - FFT_BIT_LEN);
+        FFT_BIT_REV_TBL[i] = x >> (32u - FFT_BIT_LEN);
     }
 
     for (i = 0; i < FFT_BIT_LEN; i++) {
-        FFT_SIN_TBL[i] = sin(FFT_PI / (1u << i));
+        FFT_SIN_TBL[i] = sin(FFT_PI / (1u << i));   //!< FFT_SIN_TBL[i] = sin( pi / (2 ^ i) )
         FFT_COS_TBL[i] = cos(FFT_PI / (1u << i));
     }
 }
@@ -67,7 +67,7 @@ void fft(float_complex_t xin[])
 
     //! 变址运算，即把自然顺序变成倒位序
     for (i = 0; i < FFT_SAMPLE_NUM; i++) {
-        j = FFT_BIT_TBL[i];
+        j = FFT_BIT_REV_TBL[i];
         if (i < j) {
             t.Real = xin[j].Real;
             xin[j].Real = xin[i].Real;
@@ -76,27 +76,27 @@ void fft(float_complex_t xin[])
         xin[j].Imag = 0.0f;
     }
 
-    //! 蝶形级数: FFT_BIT_LEN = log(2)FFT_SAMPLE_NUM
+    //! 蝶形的级数 = FFT_BIT_LEN
     for (i = 0; i < FFT_BIT_LEN; i++) {
-        le = 1u << (i + 1);                 //!< le表示蝶形大小: 2^(i+1)个点
-        li = le >> 1;                       //!< li表示同一蝶形中参加运算的两点的距离(蝶形结个数): le/2 = 2^(i)个点
+        le = 1u << (i + 1);                 //!< le表示蝶形大小: le = 2 ^ (i + 1) 个点
+        li = le >> 1;                       //!< li表示同一蝶形中参加运算的两点的距离(蝶形结个数): li = le / 2 个点
 
-        //!< c为蝶形结运算系数，初始值为1.0
+        //! c为蝶形结运算系数，初始值为 1 + 0i
         c.Real = 1.0f;
         c.Imag = 0.0f;
-        //!< w为旋转因子
-        w.Real =  FFT_COS_TBL[i];           //!< cos(FFT_PI/li) = cos(FFT_PI/(2^(i)));
-        w.Imag = -FFT_SIN_TBL[i];           //!< sin(FFT_PI/li) = sin(FFT_PI/(2^(i)));
+        //! w为旋转因子
+        w.Real =  FFT_COS_TBL[i];           //!< w.Real = cos(pi / li) = cos( pi / (2 ^ i) )
+        w.Imag = -FFT_SIN_TBL[i];           //!< w.Imag = sin(pi / li) = sin( pi / (2 ^ i) )
 
         for (j = 0; j < li; j++) {                          //!< 同一蝶形中不同位置的蝶形结（系数c不同）
             for (ip = j; ip < FFT_SAMPLE_NUM; ip += le) {   //!< 不同蝶形中相同位置的蝶形结
                 in = ip + li;                               //!< ip，in分别表示蝶形结中参加运算的的两个点
                 //!< 蝶形运算
-                COMPLEX_MULTIPLY(t,       xin[in], c);      //!  t       = xin[in] * c;
-                COMPLEX_SUB     (xin[in], xin[ip], t);      //!  xin[in] = xin[ip] - t;
-                COMPLEX_ADD     (xin[ip], xin[ip], t);      //!  xin[ip] = xin[ip] + t;
+                COMPLEX_MULTIPLY(t,       xin[in], c);      //!< t       = xin[in] * c
+                COMPLEX_SUB     (xin[in], xin[ip], t);      //!< xin[in] = xin[ip] - t
+                COMPLEX_ADD     (xin[ip], xin[ip], t);      //!< xin[ip] = xin[ip] + t
             }
-            COMPLEX_MULTIPLY(c, c, w);                      //!< c = c * w;
+            COMPLEX_MULTIPLY(c, c, w);                      //!< c = c * w
         }
     }
 }

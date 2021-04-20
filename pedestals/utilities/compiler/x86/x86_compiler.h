@@ -23,13 +23,13 @@
 /*============================ MACROS ========================================*/
 //! \name The macros to identify the compiler
 //! @{
-//! \note for GCC
-#if defined(__GNUC__)
-#   define __IS_COMPILER_GCC__     1
 //! \note for VS
-#elif defined(_MSC_VER)
+#if defined(_MSC_VER)
 #   define __IS_COMPILER_VS__      1
 #	include <vcruntime.h>	//!< for NULL.
+//! \note for GCC
+#elif defined(__GNUC__)
+#   define __IS_COMPILER_GCC__     1
 #else
 #   error "Not supported compiler."
 #endif

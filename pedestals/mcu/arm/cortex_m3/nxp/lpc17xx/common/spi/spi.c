@@ -241,7 +241,7 @@ static uint8_t ssp_calculate_pclk_prescaler(void)
 }
 
 
-WEAK void spi_deinit_callback(const i_spi_t *interface)
+WEAK void ssp_deinit_callback(const i_spi_t *interface)
 {
     
 }
@@ -261,7 +261,7 @@ static bool ssp_deinit(uint32_t index)
     //! Disable AHBCLK
     PM_POWER_DISABLE(ptThis->tPOWER);
     
-    spi_deinit_callback(&SPI[index]);
+    ssp_deinit_callback(&SPI[index]);
     
     return true;
 }
@@ -348,54 +348,54 @@ bool spi_config(spi_cfg_t *ptSpiCfg)
     uint32_t wStatus   = PM_POWER_GET_STATUS(PCONP_SPI);
     PM_POWER_ENABLE(PCONP_SPI);
     
-        spi_reg_t *ptREG = &SPI_REG;
+    spi_reg_t *ptREG = &SPI_REG;
 
-        //!  read SPCR register
-        uint32_t wTemp = ptREG->SPCR &
-                            ~(  SPI_SPCR_LSBF_MSK     |
-                                SPI_SPCR_CPOL_MSK    |
-                                SPI_SPCR_CPHA_MSK    |
-                                SPI_SPCR_MSTR_MSK   |
-                                SPI_SPCR_BITS_MSK);
+    //!  read SPCR register
+    uint32_t wTemp = ptREG->SPCR &
+                        ~(  SPI_SPCR_LSBF_MSK     |
+                            SPI_SPCR_CPOL_MSK    |
+                            SPI_SPCR_CPHA_MSK    |
+                            SPI_SPCR_MSTR_MSK   |
+                            SPI_SPCR_BITS_MSK);
 
-        if (ptSpiCfg->hwMode & SPI_MODE_CLK_IDLE_HIGH) {
-            wTemp |= SPI_SPCR_CPOL_MSK;
-        } else {
-            //! use idle low type
-        }
-        
-        if (ptSpiCfg->hwMode & SPI_MODE_SAMP_SECOND_EDGE) {
-            wTemp |= SPI_SPCR_CPHA_MSK;
-        } else {
-            //! samp at first edge
-        }
-        
-        if (ptSpiCfg->hwMode & SPI_MODE_LSB_FIRST) {
-            wTemp |= SPI_SPCR_LSBF_MSK;
-        } else {
-            //! MSB transive first.
-        }
+    if (ptSpiCfg->hwMode & SPI_MODE_CLK_IDLE_HIGH) {
+        wTemp |= SPI_SPCR_CPOL_MSK;
+    } else {
+        //! use idle low type
+    }
+    
+    if (ptSpiCfg->hwMode & SPI_MODE_SAMP_SECOND_EDGE) {
+        wTemp |= SPI_SPCR_CPHA_MSK;
+    } else {
+        //! samp at first edge
+    }
+    
+    if (ptSpiCfg->hwMode & SPI_MODE_LSB_FIRST) {
+        wTemp |= SPI_SPCR_LSBF_MSK;
+    } else {
+        //! MSB transive first.
+    }
 
-        wTemp |= (uint32_t)(ptSpiCfg->chDataSize & 0x0Fu) << SPI_SPCR_BITS_BIT0;
+    wTemp |= (uint32_t)(ptSpiCfg->chDataSize & 0x0Fu) << SPI_SPCR_BITS_BIT0;
 
-        if (ptSpiCfg->hwMode & SPI_MODE_SLAVE) {
-            //! use slave mode
-        } else {
-            wTemp |= SPI_SPCR_MSTR_MSK;
-            //! use master mode
-        }
-        
-        ptREG->SPCR = wTemp;
-        
-        //! update CPSR
-        wTemp = ptSpiCfg->chClockDiv;
-        if (wTemp < 8) {
-            wTemp = 8;
-        }
-        if (wTemp & 0x01u) {
-            wTemp += 1;
-        }
-        ptREG->SPCCR = wTemp;
+    if (ptSpiCfg->hwMode & SPI_MODE_SLAVE) {
+        //! use slave mode
+    } else {
+        wTemp |= SPI_SPCR_MSTR_MSK;
+        //! use master mode
+    }
+    
+    ptREG->SPCR = wTemp;
+    
+    //! update CPSR
+    wTemp = ptSpiCfg->chClockDiv;
+    if (wTemp < 8) {
+        wTemp = 8;
+    }
+    if (wTemp & 0x01u) {
+        wTemp += 1;
+    }
+    ptREG->SPCCR = wTemp;
         
     PM_POWER_RESUME(PCONP_SPI, wStatus);
 

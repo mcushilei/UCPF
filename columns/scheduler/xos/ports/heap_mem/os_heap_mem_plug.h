@@ -1,5 +1,5 @@
 /*******************************************************************************
- *  Copyright(C)2019 by Dreistein<mcu_shilei@hotmail.com>                     *
+ *  Copyright(C)2019-2021 by Dreistein<mcu_shilei@hotmail.com>                *
  *                                                                            *
  *  This program is free software; you can redistribute it and/or modify it   *
  *  under the terms of the GNU Lesser General Public License as published     *
@@ -23,7 +23,7 @@
 
 /*============================ MACROS ========================================*/
 #ifndef HEAP_MEM_CFG_LEN
-#define HEAP_MEM_CFG_LEN    (1u)
+#error "HEAP_MEM_CFG_LEN must be defined"
 #endif
 
 /*============================ MACROFIED FUNCTIONS ===========================*/

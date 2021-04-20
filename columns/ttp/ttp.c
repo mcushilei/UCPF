@@ -30,10 +30,11 @@
 #define TTP_CRC16_POLLY                CRC16_POLY_CCITT
 
 /*============================ MACROFIED FUNCTIONS ===========================*/
-#define TTP_QUEUE_INIT()               QUEUE_UINT8_INIT(               \
-                                                &obj->RcvQueue,            \
-                                                obj->RcvQueueBuffer,         \
-                                                TTP_PAYLOAD_MAX_SIZE + 6)
+#define TTP_QUEUE_INIT()               QUEUE_UINT8_INIT(                    \
+                                                &obj->RcvQueue,             \
+                                                obj->RcvQueueBuffer,        \
+                                                TTP_PAYLOAD_MAX_SIZE + 6,   \
+                                                NULL)
 #define TTP_QUEUE_DEINIT()             QUEUE_DEINIT(&obj->RcvQueue)
 #define TTP_ENQUEUE(__BYTE)            QUEUE_ENQUEUE(&obj->RcvQueue, __BYTE)
 #define TTP_DEQUEUE(__PBYTE)           QUEUE_DEQUEUE(&obj->RcvQueue, __PBYTE)
