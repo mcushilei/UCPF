@@ -34,7 +34,8 @@ enum {
 #define PASER_Q_INIT()                  QUEUE_UINT8_INIT(                       \
                                                 &((pasrer)->RcvQueue),          \
                                                 (pasrer)->RcvQueueBuffer,       \
-                                                CURLY_BRACKET_PARSER_MAX_LENGTH)
+                                                CURLY_BRACKET_PARSER_MAX_LENGTH,\
+                                                NULL)
 #define PASER_Q_PUT(__BYTE)             QUEUE_ENQUEUE(&pasrer->RcvQueue, __BYTE)
 #define PASER_Q_GET(__PBYTE)            QUEUE_DEQUEUE(&pasrer->RcvQueue, __PBYTE)
 #define PASER_Q_PEEK(__PBYTE)           QUEUE_PEEK(&pasrer->RcvQueue, __PBYTE)
