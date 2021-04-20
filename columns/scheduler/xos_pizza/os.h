@@ -66,7 +66,7 @@
 
 
 #define OS_TASK_CREATE(__HANDLE, __NAME, __ENTRY, __ARG,  __STACK_SIZE, __RIO, __OPT)   \
-    osTaskCreate( &(__HANDLE), __NAME, __ENTRY, (void *)(__ARG),  NULL, (__STACK_SIZE) / sizeof(CPU_STK), __OPT, __RIO );
+    osTaskCreate( &(__HANDLE), __NAME, __ENTRY, (void *)(__ARG),  NULL, (__STACK_SIZE) / sizeof(CPU_STK), __OPT, __RIO )
 #define OS_TASK_ENTRY(__TASK)               void *__TASK(void *pArg)
 #define OS_TASK_ARG                         (pArg)
 #define OS_TASK_SLEEP(__T)                  osTaskSleep(OS_MS2TICK(__T))
