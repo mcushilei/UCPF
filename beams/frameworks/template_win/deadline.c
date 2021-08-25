@@ -1,5 +1,5 @@
 /*******************************************************************************
- *  Copyright(C)2017 by Dreistein<mcu_shilei@hotmail.com>                     *
+ *  Copyright(C)2020 by Dreistein<mcu_shilei@hotmail.com>                     *
  *                                                                            *
  *  This program is free software; you can redistribute it and/or modify it   *
  *  under the terms of the GNU Lesser General Public License as published     *
@@ -15,50 +15,65 @@
  *  along with this program; if not, see http://www.gnu.org/licenses/.        *
 *******************************************************************************/
 
-#ifndef __TTP_H__
-#define __TTP_H__
+
+
 
 /*============================ INCLUDES ======================================*/
-#include ".\app_cfg.h"
-#include "..\queue\queue.h"
+#include "./app_cfg.h"
+#include "./deadline_type.h"
 
 /*============================ MACROS ========================================*/
 /*============================ MACROFIED FUNCTIONS ===========================*/
 /*============================ TYPES =========================================*/
-typedef bool ttp_output_byte_t(uint8_t byte);
-typedef bool ttp_poll_byte_t(uint8_t *pByte, bool *pIsTimeout);
+/*============================ PRIVATE PROTOTYPES ============================*/
+/*============================ PRIVATE VARIABLES =============================*/
+/*============================ PUBLIC VARIABLES ==============================*/
+/*============================ IMPLEMENTATION ================================*/
 
-typedef struct {
-    ttp_output_byte_t   *OutputByte;
-    ttp_poll_byte_t     *PollByte;
+void deadline_init(deadline_t *dlTimer)
+{
+	dlTimer->EndTime = 0;
+    dlTimer->StartTime = 0;
+}
 
-    uint8_t     RcvState0;
-    uint8_t     RcvState1;
-    uint16_t    RcvDataLength;
-    uint16_t    RcvWritePoint;
-    uint16_t    RcvChecksum;
-    uint8_t     RcvPort;
-    uint8_t     RcvQueueBuffer[TTP_PAYLOAD_MAX_SIZE + 6];
-    queue_t     RcvQueue;
+bool deadline_is_expired(deadline_t *dlTimer)
+{
+	uint64_t now, deltaExpire, deltaDeadline;
 
-    uint8_t     SndState;
-    uint16_t    SndWritePoint;
-    uint16_t    SndChecksum;
-} ttp_t;
+	now = GetTickCount64();
+    deltaExpire = now - dlTimer->StartTime;
+    deltaDeadline = dlTimer->EndTime - dlTimer->StartTime;
+    if (deltaExpire >= deltaDeadline) {
+        return true;
+    } else {
+        return false;
+    }
+}
 
-/*============================ GLOBAL VARIABLES ==============================*/
-/*============================ PROTOTYPES ====================================*/
-extern bool ttp_ini(ttp_t               *obj,
-                    ttp_output_byte_t   *pOutputByte,
-                    ttp_poll_byte_t     *pPollByte);
-extern uint8_t ttp_rcv_fsm( ttp_t       *obj,
-                            uint8_t     *pPort,
-                            uint8_t     *pBuffer,
-                            uint16_t    *pLength);
-extern uint8_t ttp_snd_fsm( ttp_t          *obj,
-                            uint8_t         port,
-                            const uint8_t  *pBuffer,
-                            uint16_t        length);
+void deadline_set_ms(deadline_t *dlTimer, uint32_t timeout)
+{
+	dlTimer->StartTime = GetTickCount64();
+    dlTimer->EndTime = dlTimer->StartTime + timeout;
+}
 
-#endif  //! #ifndef __TTP_H__
+void deadline_set(deadline_t *dlTimer, uint32_t timeout)
+{
+    deadline_set_ms(dlTimer, timeout * 1000);
+}
+
+int deadline_left_ms(deadline_t *dlTimer)
+{
+	uint64_t now, deltaExpire, deltaDeadline;
+
+	now = GetTickCount64();
+    deltaExpire = now - dlTimer->StartTime;
+    deltaDeadline = dlTimer->EndTime - dlTimer->StartTime;
+    if (deltaExpire >= deltaDeadline) {
+        return 0;
+    } else {
+        return deltaDeadline - deltaExpire;
+    }
+}
+
+
 /* EOF */

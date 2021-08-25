@@ -1,5 +1,5 @@
 /*******************************************************************************
- *  Copyright(C)2017 by Dreistein<mcu_shilei@hotmail.com>                     *
+ *  Copyright(C)2020 by Dreistein<mcu_shilei@hotmail.com>                     *
  *                                                                            *
  *  This program is free software; you can redistribute it and/or modify it   *
  *  under the terms of the GNU Lesser General Public License as published     *
@@ -15,22 +15,21 @@
  *  along with this program; if not, see http://www.gnu.org/licenses/.        *
 *******************************************************************************/
 
-
-//! \note do not move this pre-processor statement to other places
-#include "..\app_cfg.h"
-
-#ifndef __TTP_APP_CFG_H__
-#define __TTP_APP_CFG_H__
+#ifndef __DEADLINE_TYPE_H__
+#define __DEADLINE_TYPE_H__
 
 /*============================ INCLUDES ======================================*/
 /*============================ MACROS ========================================*/
-#define TTP_PAYLOAD_MAX_SIZE   (128u)
-#define TTP_HEAD_BYTE          (0xF5)
-
 /*============================ MACROFIED FUNCTIONS ===========================*/
 /*============================ TYPES =========================================*/
-/*============================ GLOBAL VARIABLES ==============================*/
-/*============================ PROTOTYPES ====================================*/
+     
+typedef struct {
+    uint64_t StartTime;
+	uint64_t EndTime;
+} deadline_t;
 
-#endif  //! #ifndef __TTP_APP_CFG_H__
+/*============================ PUBLIC VARIABLES ==============================*/
+/*============================ PUBLIC PROTOTYPES =============================*/
+
+#endif  //!< #ifndef __DEADLINE_TYPE_H__
 /* EOF */
