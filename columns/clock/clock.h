@@ -26,25 +26,21 @@
 /*============================ MACROS ========================================*/
 /*============================ MACROFIED FUNCTIONS ===========================*/
 /*============================ TYPES =========================================*/
-typedef struct clock_alarm_t    clock_alarm_t;
-typedef void clock_alarm_callback_t(clock_alarm_t *alarm, bool isTimeout);
-typedef void clock_engine_atom_lock_set_t(void);
-typedef void clock_engine_atom_lock_reset_t(void);
-
-struct clock_alarm_t {
+typedef struct clock_alarm_t {
 	list_node_t             ListNode;
     uint32_t                Time;       //! second of day for day-alarm; absolute value in second for date-alarm.
-};
+} clock_alarm_t;
 
 /*============================ PUBLIC VARIABLES ==============================*/
 /*============================ PUBLIC PROTOTYPES =============================*/
+//! \note This function should be called periodly by RTC's ISR.
 extern void clock_tick_tock(void);
 extern bool clock_init(
-                const date_time_t *originDate,
-                const date_time_t *currentTime,
-                clock_alarm_callback_t *callback,
-                clock_engine_atom_lock_set_t lockSet,
-                clock_engine_atom_lock_reset_t lockReset);
+                const date_time_t *dataStartFrom,
+                const date_time_t *timeNow,
+                void (*callback)(clock_alarm_t *alarm, bool isTimeout),
+                void (*lockSet)(void),
+                void (*lockReset)(void) );
 extern bool         clock_set_time(const date_time_t *newTime);
 extern date_time_t  clock_get_time(void);
 extern uint32_t     clock_get_ticktock(void);

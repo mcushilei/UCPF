@@ -28,6 +28,10 @@
 /*============================ MACROS ========================================*/
 /*============================ MACROFIED FUNCTIONS ===========================*/
 /*============================ TYPES =========================================*/
+typedef void clock_alarm_callback_t(clock_alarm_t *alarm, bool isTimeout);
+typedef void clock_engine_atom_lock_set_t(void);
+typedef void clock_engine_atom_lock_reset_t(void);
+
 typedef struct {
     list_node_t             Alarm;              //! this alarm would be triggered every day.
     list_node_t            *NextAlarmToTrigger; //! scanhand point to the next alarm to check.
@@ -121,27 +125,10 @@ static void check_date_alarm(bool isTimeout)
     }
 }
 
-//! This function should be called periodly by RTC's ISR.
-void clock_tick_tock(void)
+static void check_daily_alarm(bool isTimeout)
 {
     clock_alarm_t *pAlarm;
 
-    if (!realClock.IsRunning) {
-        return;
-    }
-
-    realClock.SafeAtomStart();
-
-    realClock.TickTock++;
-    //! process date-alarm here.
-    check_date_alarm(true);
-
-    //! process alarm.
-    realClock.TimeOfDay++;
-    if (realClock.TimeOfDay >= SECONDS_OF_DAY) {
-        realClock.TimeOfDay = 0u;
-        realClock.NextAlarmToTrigger = realClock.Alarm.Next;    //! reset NextAlarmToTrigger.
-    }
     //! move NextAlarmToTrigger forward till we reach a un-timeout alarm or the head of the list.
     while (realClock.NextAlarmToTrigger != &realClock.Alarm) {
         pAlarm = CONTAINER_OF(realClock.NextAlarmToTrigger, clock_alarm_t, ListNode);
@@ -152,35 +139,56 @@ void clock_tick_tock(void)
             break;
         }
     }
+}
+
+void clock_tick_tock(void)
+{
+    if (!realClock.IsRunning) {
+        return;
+    }
+
+    realClock.SafeAtomStart();
+
+    realClock.TickTock++;
+    //! process date-alarm here.
+    check_date_alarm(true);
+
+    realClock.TimeOfDay++;
+    if (realClock.TimeOfDay >= SECONDS_OF_DAY) {
+        realClock.TimeOfDay = 0u;
+        realClock.NextAlarmToTrigger = realClock.Alarm.Next;    //! reset NextAlarmToTrigger.
+    }
+    //! process daily alarm.
+    check_daily_alarm(true);
 
     realClock.SafeAtomEnd();
 }
 
 bool clock_init(
-                const date_time_t *originDate,
-                const date_time_t *currentTime,
-                clock_alarm_callback_t *callback,
-                clock_engine_atom_lock_set_t lockSet,
-                clock_engine_atom_lock_reset_t lockReset)
+                const date_time_t *dataStartFrom,
+                const date_time_t *timeNow,
+                void (*callback)(clock_alarm_t *alarm, bool isTimeout),
+                void (*lockSet)(void),
+                void (*lockReset)(void) )
 {
     uint32_t sec = 0u;
     int32_t  days = 0;
 
     //! validate parameters.
-    sec = time_to_seconds(&currentTime->Time);
+    sec = time_to_seconds(&timeNow->Time);
     if (sec >= SECONDS_OF_DAY) {
         return false;
     }
 
-    if (!validate_date(&originDate->Date)) {
+    if (!validate_date(&dataStartFrom->Date)) {
         return false;
     }
 
-    if (!validate_date(&currentTime->Date)) {
+    if (!validate_date(&timeNow->Date)) {
         return false;
     }
 
-    days = count_days_between(&originDate->Date, &currentTime->Date);
+    days = count_days_between(&dataStartFrom->Date, &timeNow->Date);
     if (days < 0) {
         return false;
     }
@@ -191,7 +199,7 @@ bool clock_init(
     list_init(&realClock.DateAlarm);
     realClock.NextAlarmToTrigger = &realClock.Alarm;
     realClock.AlarmCallback      = callback;
-    realClock.OriginDate    = originDate->Date;
+    realClock.OriginDate    = dataStartFrom->Date;
     realClock.TickTock      = days * SECONDS_OF_DAY + sec;
     realClock.TimeOfDay     = sec;
     realClock.IsRunning     = true;
@@ -199,7 +207,7 @@ bool clock_init(
     return true;
 }
 
-bool clock_set_ticktock(uint32_t time)
+static bool clock_set_ticktock(uint32_t time)
 {
     bool forward;
     uint32_t sec;
@@ -357,15 +365,17 @@ bool clock_add_timer(clock_alarm_t *alarm, const date_time_t *time)
     sec += days * SECONDS_OF_DAY;
 
     //! init it.
+    *alarm = NULL_ALARM;
     list_init(&alarm->ListNode);
-    alarm->Time     = sec;
+    alarm->Time = sec;
 
-    //! insert it to running list.
     realClock.SafeAtomStart();
+    //! the alarm time should be in the future.
     if (sec <= realClock.TickTock) {
         realClock.SafeAtomEnd();
         return false;
     }
+    //! insert it to the running list.
     clock_date_alarm_list_insert(alarm);
     realClock.SafeAtomEnd();
 
