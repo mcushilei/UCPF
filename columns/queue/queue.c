@@ -220,3 +220,18 @@ size_t queue_get_length( queue_t *obj )
     return len;
 }
 
+void queue_reset( queue_t *obj )
+{
+    if( NULL == obj ) {
+        return;
+    }
+
+    obj->Lock.Set( &obj->Lock );
+    obj->Head = 0;
+    obj->Tail = 0;
+    obj->Peek = 0;
+    obj->Length = 0;
+    obj->PeekLength = 0;
+    obj->Lock.Reset( &obj->Lock );
+}
+

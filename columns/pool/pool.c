@@ -1,5 +1,5 @@
 /*******************************************************************************
- *  Copyright(C)2015-2019 by Dreistein<mcu_shilei@hotmail.com>                *
+ *  Copyright(C)2015-2021 by Dreistein<mcu_shilei@hotmail.com>                *
  *                                                                            *
  *  This program is free software; you can redistribute it and/or modify it   *
  *  under the terms of the GNU Lesser General Public License as published     *
@@ -36,9 +36,10 @@
 /*============================ TYPES =========================================*/
 //! \brief   memory block structure: single-list node.
 //! @{
-DEF_STRUCTURE(pool_block_t)
+typedef struct pool_block_t pool_block_t;
+struct pool_block_t {
     pool_block_t   *Next;
-END_DEF_STRUCTURE(pool_block_t)
+};
 //! @}
 
 /*============================ PROTOTYPES ====================================*/

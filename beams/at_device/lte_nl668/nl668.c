@@ -76,6 +76,23 @@ static int32_t nl668_at_check_sim(void)
     return at_cmd(cmd, strlen(cmd), "+CPIN:", NULL,NULL);
 }
 
+static int nl668_at_get_version(void)
+{
+    char *cmd = "AT+CGMR?";
+    char tmpbuf[64] = {0};
+    char version[64] = {0};
+    uint32_t buf_len = UBOUND(tmpbuf);
+    
+    if(at_cmd(cmd, strlen(cmd), "OK", tmpbuf, &buf_len) < 0) {
+        return -1;
+    }
+    
+    sscanf(tmpbuf, "%*[^ ]%64s", &version);
+    DBG_LOG("%s", version);
+    
+    return AT_OK;
+}
+
 static char *nl668_at_get_imsi(void)
 {
     char *cmd = "AT+CIMI";
@@ -490,6 +507,18 @@ static int32_t nl668_init(uint32_t opt)
 	if(timecnt == 0u) {
         goto __err_exit;
 	}
+    
+	for (timecnt = 10; timecnt != 0u; timecnt--) {
+		if(nl668_at_get_version() == AT_OK) {
+			break;
+		}
+        OS_TASK_SLEEP(1000);
+	}
+	if(timecnt == 0u) {
+        RTT_LOG("ERROR: cannot read version!");
+        goto __err_exit;
+    } else {
+    }
     
     char *pstring = NULL;
 	for (timecnt = 10; timecnt != 0u; timecnt--) {

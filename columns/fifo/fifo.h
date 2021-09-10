@@ -18,6 +18,10 @@
 #ifndef __FIFO_H__
 #define __FIFO_H__
 
+/*  \brief this is a lockless ring-buffer between one producer and one consumer
+ *  with a limitation that the buffer size must be a exponent of 2.
+ */
+
 /*============================ INCLUDES ======================================*/
 #include ".\app_cfg.h"
 
@@ -25,7 +29,7 @@
 /*============================ MACROFIED FUNCTIONS ===========================*/
 /*============================ TYPES =========================================*/
 typedef struct {
-    char       *Buffer;
+    unsigned char *Buffer;
     size_t      Size;           //!< buffer size: the number of item it can store. 
                                 //   It must be the value of 2 to he power n.
     size_t      Out;            //!< point to filled space.
@@ -35,13 +39,15 @@ typedef struct {
 
 /*============================ GLOBAL VARIABLES ==============================*/
 /*============================ PROTOTYPES ====================================*/
-extern bool     fifo_init       (fifo_t *obj, char *buffer, size_t size);
-extern size_t   fifo_burst_in   (fifo_t *obj, const char *buf, size_t len);
-extern size_t   fifo_burst_out  (fifo_t *obj, char *buf, size_t len);
+extern bool     fifo_init       (fifo_t *obj, unsigned char *buffer, size_t size);
+extern size_t   fifo_burst_in   (fifo_t *obj, const unsigned char *buf, size_t len);
+extern size_t   fifo_burst_out  (fifo_t *obj, unsigned char *buf, size_t len);
+extern size_t   fifo_in         (fifo_t *obj, unsigned char byte);
+extern size_t   fifo_out        (fifo_t *obj, unsigned char *buf);
 extern size_t   fifo_length     (fifo_t *obj);
 extern void     fifo_flush      (fifo_t *obj);
-extern size_t   fifo_drip_byte  (fifo_t *obj, char byte);
-extern size_t   fifo_burst_drip (fifo_t *obj, const char *buf, size_t len);
+extern size_t   fifo_drip_byte  (fifo_t *obj, unsigned char byte);
+extern size_t   fifo_burst_drip (fifo_t *obj, const unsigned char *buf, size_t len);
 extern size_t   fifo_length_dripped(fifo_t *obj);
 extern void     fifo_flush_dripped(fifo_t *obj);
 

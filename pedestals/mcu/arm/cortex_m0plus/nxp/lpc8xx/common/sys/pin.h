@@ -297,9 +297,9 @@ typedef struct {
 
 //! \name csc user interface
 //! @{
-DEF_INTERFACE(io_t)
+typedef struct {
     bool            (*Config)(io_cfg_t const *pConfig, uint32_t size);//!< io configuration
-END_DEF_INTERFACE(io_t)
+} io_t;
 //! @}
 
 

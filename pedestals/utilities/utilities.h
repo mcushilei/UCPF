@@ -27,22 +27,6 @@
 
 /*============================ MACROS ========================================*/
 /*============================ MACROFIED FUNCTIONS ===========================*/
-//! \name structure definition with pre-declaration
-//! @{
-#define DEF_STRUCTURE(__NAME)               \
-            typedef struct __NAME __NAME;   \
-            struct __NAME {
-
-#define END_DEF_STRUCTURE(__NAME)           \
-            };
-
-#define DEF_INTERFACE(__NAME)               \
-            typedef struct __NAME __NAME;   \
-            struct __NAME {
-
-#define END_DEF_INTERFACE(__NAME)           \
-            };
-//! @}
 
 /*! \brief  change representation of a varible to another type. This is different
  *          from type conversion which change the BINARY value of varible.
@@ -64,7 +48,7 @@
 #define IS_POWER_OF_2(__N)  (\
         ((__N) != 0u) && (( ((__N) - 1u) & (__N) ) == 0) )
 
-#define NEXT_POEWER_OF_2(__N, __V)          do {\
+#define U32_ROUNDUP_POEWER2(__N, __V)          do {\
             uint32_t x = (__N);                 \
             if (IS_POWER_OF_2(x)) {             \
                 __V = x;                        \

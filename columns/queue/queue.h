@@ -38,6 +38,7 @@
 #define QUEUE_GET_ALL_PEEKED(__PQUEUE)      queue_flush_peeked(__PQUEUE)
 #define QUEUE_RESET_PEEK(__PQUEUE)          queue_reset_peek(__PQUEUE)
 #define QUEUE_GET_OBJECT_COUNT(__PQUEUE)    queue_get_length(__PQUEUE)
+#define QUEUE_RESET(__PQUEUE)               queue_reset(__PQUEUE)
 
 /*============================ TYPES =========================================*/
         
@@ -72,6 +73,7 @@ extern bool     queue_peek          ( queue_t *obj, void *data );
 extern void     queue_flush_peeked  ( queue_t *obj );
 extern void     queue_reset_peek    ( queue_t *obj );
 extern size_t   queue_get_length    ( queue_t *obj );
+extern void     queue_reset         ( queue_t *obj );
 
 #endif
 /* EOF */

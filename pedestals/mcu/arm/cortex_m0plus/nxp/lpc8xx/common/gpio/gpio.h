@@ -30,7 +30,7 @@
 /*============================ TYPES =========================================*/
 //! \name gpio control interface
 //! @{
-DEF_INTERFACE(gpio_interface_t)
+typedef struct {
     void        (*SetDirection)(uint32_t wDirection, uint32_t wPinMask);
     uint32_t    (*GetDirection)(uint32_t wPinMask);
     void        (*SetInput)(uint32_t wPinMask);
@@ -40,12 +40,12 @@ DEF_INTERFACE(gpio_interface_t)
     void        (*Set)(uint32_t wPinMask);
     void        (*Clear)(uint32_t wPinMask);
     void        (*Toggle)(uint32_t wPinMask);
-END_DEF_INTERFACE(gpio_interface_t)
+} gpio_interface_t;
 //! @}
 
 //! \name csc user interface
 //! @{
-DEF_INTERFACE(i_gpio_t)
+typedef struct {
     bool        (*Enable)(void);
     bool        (*Disable)(void);
     union {
@@ -54,7 +54,7 @@ DEF_INTERFACE(i_gpio_t)
             MREPEAT(IO_PORT_COUNT, __GPIO_INTERFACE, 0)
         };
     };
-END_DEF_INTERFACE(i_gpio_t)
+} i_gpio_t;
 //! @}
 
 /*============================ PUBLIC VARIABLES ==============================*/

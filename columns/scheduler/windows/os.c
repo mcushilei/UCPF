@@ -369,7 +369,7 @@ OS_ERR osQueueDelete (OS_HANDLE hQueue)
     return OS_ERR_NONE;
 }
 
-OS_ERR osQueueWrite (OS_HANDLE hQueue, void *buffer, UINT32 timeMS)
+OS_ERR osQueueWrite (OS_HANDLE hQueue, const void *buffer, UINT32 timeMS)
 {
     os_queue_t *pQueue = (os_queue_t *)hQueue;
     DWORD retValue;

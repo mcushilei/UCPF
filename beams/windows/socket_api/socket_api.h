@@ -24,6 +24,7 @@
 #include ".\app_cfg.h"
 #include <winsock2.h>
 #include <ws2tcpip.h>
+#include <mswsock.h>
 #include <iphlpapi.h>
 
 /*============================ MACROS ========================================*/

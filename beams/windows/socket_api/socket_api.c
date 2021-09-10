@@ -43,7 +43,7 @@ static int tcp_write(socket_t *pSocket, const uint8_t *pBuffer, uint32_t *buffer
     DWORD           wRes;
     int             ret = SOCKET_ERR_NONE;
 
-    socketBuffer.buf = pBuffer;
+    socketBuffer.buf = (char *)pBuffer;
     socketBuffer.len = *bufferSize;
     *bufferSize = 0u;
 
