@@ -31,82 +31,19 @@
 /*============================ GLOBAL VARIABLES ==============================*/
 /*============================ IMPLEMENTATION ================================*/
 
-bool fifo_init(fifo_t *obj, unsigned char *buffer, size_t size)
+bool fifo_init(fifo_t *obj, unsigned char *buf, size_t size)
 {
-    if (NULL == obj || NULL == buffer || (!IS_POWER_OF_2(size))) {
+    if (NULL == obj || NULL == buf || (!IS_POWER_OF_2(size))) {
         return false;
     }
 
-    obj->Buffer    = buffer;
+    obj->Buffer    = buf;
     obj->Size      = size;
     obj->Out       = 0;
     obj->In        = 0;
-    obj->Drip      = 0;
 
     return true;
 }
-
-/*
- *  \return 0: fail
- *  \rteurn 1: ok
- */
-size_t fifo_drip_byte(fifo_t *obj, unsigned char byte)
-{
-    size_t L1, L2;
-
-    L1 = obj->Size - (obj->Drip - obj->Out);       //! calculate the free space
-    L2 = obj->Size - (obj->Drip & (obj->Size - 1));
-    if (L1 < 1) {     //!< no enough space.
-        return 0;
-    }
-
-    L1 = 1;
-    L2 = MIN(1,  L2);
-    
-    if (L2) {
-        obj->Buffer[obj->Drip & (obj->Size - 1)] = byte;
-    } else {
-        obj->Buffer[0] = byte;
-    }
-    obj->Drip += L1;
-
-    return L1;
-}
-
-/*
- *  \return 0: fail
- *  \rteurn len: ok
- */
-size_t fifo_burst_drip(fifo_t *obj, const unsigned char *buf, size_t len)
-{
-    size_t L1, L2;
-
-    L1 = obj->Size - (obj->Drip - obj->Out);       //! calculate the free space
-    L2 = obj->Size - (obj->Drip & (obj->Size - 1));
-    if (L1 < len) {     //!< no enough space.
-        return 0;
-    }
-
-    L1 = len;
-    L2 = MIN(L1,  L2);
-
-    memcpy((char *)obj->Buffer + (obj->Drip & (obj->Size - 1)), buf, L2);
-    memcpy(obj->Buffer, buf + L2, L1 - L2);
-    obj->Drip += L1;
-
-    return L1;
-}
-
-size_t fifo_length_dripped(fifo_t *obj)
-{
-    return obj->Drip - obj->In;
-}
-
-void fifo_flush_dripped(fifo_t *obj)
-{
-    obj->In = obj->Drip;
-}
-
 
 /* \note 
     
@@ -125,7 +62,7 @@ void fifo_flush_dripped(fifo_t *obj)
         vv
     ----X---------------------
     
-    scenario 3(most case):
+    scenario 3(normal):
        out            in
         |              |
         v              v
@@ -136,6 +73,12 @@ void fifo_flush_dripped(fifo_t *obj)
         |              |
         v              v
     XXXX---------------XXXXXXX
+    
+    scenario 5(full):
+        in == out + size
+        |               
+        v               
+    XXXXXXXXXXXXXXXXXXXXXXXXXX
     
  */
 
@@ -169,11 +112,6 @@ size_t fifo_burst_in(fifo_t *obj, const unsigned char *buf, size_t len)
 {
     size_t L1, L2;
 
-    //! input is disabled if there is any data dripped in the FIFO.
-    if (obj->In != obj->Drip) {
-        return 0;
-    }
-
     L1 = obj->Size - (obj->In - obj->Out);       //! calculate the free space
     L2 = obj->Size - (obj->In & (obj->Size - 1));
     if (L1 < len) {     //!< no enough space.
@@ -186,7 +124,6 @@ size_t fifo_burst_in(fifo_t *obj, const unsigned char *buf, size_t len)
     memcpy((char *)obj->Buffer + (obj->In & (obj->Size - 1)), buf, L2);
     memcpy(obj->Buffer, buf + L2, L1 - L2);
     obj->In += L1;
-    obj->Drip = obj->In;
 
     return L1;
 }
@@ -197,7 +134,18 @@ size_t fifo_burst_out(fifo_t *obj, unsigned char *buf, size_t len)
 
     L1 = obj->In - obj->Out;      //! calculate the length of data in the fifo.
     L2 = obj->Size - (obj->Out & (obj->Size - 1));
-    if (0 == L1) {     //!< no data.
+/*
+    in case scenario 4(reverse):
+        in             out
+        |              |
+        v              v
+    XXXX---------------XXXXXXX
+                       ^     ^
+                       |--L2-| 
+       ^               ^
+    ---|               |--L1--
+*/
+    if (L1 == 0u) {     //!< no data.
         return 0;
     }
 
@@ -210,7 +158,7 @@ size_t fifo_burst_out(fifo_t *obj, unsigned char *buf, size_t len)
     }
     obj->Out += L1;
 
-    return L1;
+    return L1;      //!< the length of data read out.
 }
 
 size_t fifo_length(fifo_t *obj)
@@ -221,6 +169,89 @@ size_t fifo_length(fifo_t *obj)
 void fifo_flush(fifo_t *obj)
 {
     obj->Out = obj->In;
+}
+
+size_t fifo_peek_head(fifo_t *obj, unsigned char *buf)
+{
+    if ((obj->In - obj->Out) == 0u) {     //!< no data.
+        return 0;
+    }
+
+    if (NULL != buf) {
+        *buf = obj->Buffer[obj->Out & (obj->Size - 1)];
+    }
+
+    return 1;
+}
+
+/*---------------------------- drip operations -------------------------------*/
+void fifo_start_drip(fifo_dp_t *obj)
+{
+    obj->Drip = obj->In;
+}
+
+/*
+ *  \return 0: fail
+ *  \rteurn 1: ok
+ */
+size_t fifo_drip_byte(fifo_dp_t *obj, unsigned char byte)
+{
+    if ((obj->Size - (obj->Drip - obj->Out)) == 0u) {     //!< no enough space.
+        return 0;
+    }
+
+    obj->Buffer[obj->Drip & (obj->Size - 1)] = byte;
+    obj->Drip++;
+
+    return 1;
+}
+
+size_t fifo_length_dripped(fifo_dp_t *obj)
+{
+    return obj->Drip - obj->In;
+}
+
+/* \brief all data dripped will be in the FIFO.
+ */
+void fifo_flush_dripped(fifo_dp_t *obj)
+{
+    obj->In = obj->Drip;
+}
+
+/*---------------------------- peek operations -------------------------------*/
+void fifo_start_peek(fifo_dp_t *obj)
+{
+    obj->Peek = obj->Out;
+}
+
+/*
+ *  \return 0: fail
+ *  \rteurn 1: ok
+ */
+size_t fifo_peek_byte(fifo_dp_t *obj, unsigned char *buf)
+{
+    if ((obj->In - obj->Peek) == 0u) {     //!< no data.
+        return 0;
+    }
+
+    if (NULL != buf) {
+        *buf = obj->Buffer[obj->Peek & (obj->Size - 1)];
+    }
+    obj->Peek++;
+
+    return 1;
+}
+
+size_t fifo_length_peeked(fifo_dp_t *obj)
+{
+    return obj->Peek - obj->Out;
+}
+
+/* \brief all data peeked will be removed from the FIFO.
+ */
+void fifo_remove_peeked(fifo_dp_t *obj)
+{
+    obj->Out = obj->Peek;
 }
 
 /* EOF */
