@@ -132,9 +132,9 @@ int int_str2int(const char *str)
         neg = true;
     }
 
-    for (; CHAR_IS_INT(*str); str++) {
+    for (; CHAR_IS_DIG(*str); str++) {
         val *= 10;
-        val += CHAR_TO_INT(*str);
+        val += CHAR_DIG_TO_INT(*str);
     }
 
     if (neg) {
@@ -147,7 +147,7 @@ int int_str_len(const char *str)
 {
     int len;
     
-    for (len = 0; CHAR_IS_INT(str[len]); len++);
+    for (len = 0; CHAR_IS_DIG(str[len]); len++);
     
     return len;
 }
@@ -175,14 +175,14 @@ float dec_str2float(const char *str)
     for (; *str != '\0'; ++str) {
         letter = *str;
 
-        if (!CHAR_IS_INT(letter)) {
+        if (!CHAR_IS_DIG(letter)) {
             if (letter == '.') { 
                 isDecimal = true;
                 ++str;
             }
             break; 
         } else {
-            integer = integer * 10.0f + CHAR_TO_INT(letter);
+            integer = integer * 10.0f + CHAR_DIG_TO_INT(letter);
         }
     } 
 
@@ -190,10 +190,10 @@ float dec_str2float(const char *str)
         for (; *str != '\0'; ++str) {
             letter = *str;
 
-            if (!CHAR_IS_INT(letter)) {
+            if (!CHAR_IS_DIG(letter)) {
                 break;
             } else {
-                decimal += CHAR_TO_INT(letter) * power; 
+                decimal += CHAR_DIG_TO_INT(letter) * power; 
                 power = power * 0.1f; 
             }
         } 
@@ -423,6 +423,8 @@ uint32_t itostr(int32_t value, char *integerString, int32_t radix)
         uint32_t i = 0;
         uint32_t tmp;
         if (10 == radix) {         // decimal
+            //! the maximum value of 32bit integer is 4294967295 which has length of 10.
+            //! this algorithm has constant 10 times dividing and none remainder calculating. 
             const static uint32_t muntable[10] = {1000000000, 100000000, 10000000, 1000000, 100000, 10000, 1000, 100, 10, 1};
             for (i = 0; i < 10u; i++) {
                 tmp = wValue / muntable[i];

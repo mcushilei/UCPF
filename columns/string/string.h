@@ -26,18 +26,21 @@
 
 /*============================ MACROS ========================================*/
 /*============================ MACROFIED FUNCTIONS ===========================*/
+#define CAHR_IS_UPPERCASE(__C)      ((__C) >= 'A' && (__C) <= 'Z')
+#define CAHR_IS_LOWERCASE(__C)      ((__C) >= 'a' && (__C) <= 'z')
+
+#define CHAR_IS_SPACE(__C)          (' ' == (__C))
+
+#define CHAR_IS_DIG(__C)            ((__C) >= '0' && (__C) <= '9')
+
 #define CHAR_IS_HEX(__C)            (  ((__C) >= '0' && (__C) <= '9')       \
                                     || ((__C) >= 'A' && (__C) <= 'F')       \
                                     || ((__C) >= 'a' && (__C) <= 'f') )
 
-#define CAHR_IS_UPPERCASE(__C)      ((__C) >= 'A' && (__C) <= 'Z')
-#define CAHR_IS_LOWERCASE(__C)      ((__C) >= 'a' && (__C) <= 'z')
+#define CHAR_DIG_TO_INT(__C)        ((__C) - '0')
 
-#define CHAR_IS_INT(__CHAR)         ((__CHAR) >= '0' && (__CHAR) <= '9')
-
-#define CHAR_TO_INT(__CHAR)         ((__CHAR) - '0')
-#define CHAR_IS_SPACE(__CHAR)       (' ' == (__CHAR))
-
+#define CHAR_HEX_TO_INT(__C)        \
+    ((__C) >= '0' && (__C) <= '9') ? ((__C) - '0') : ( ((__C) >= 'A' && (__C) <= 'F') ? ((__C) - 'A') : ( ((__C) >= 'a' && (__C) <= 'f') ?  ((__C) - 'a' ) : 0u ) )
 
 #ifdef USE_STAND_STRING_LIB
 #   define STRING_PRINTF(__string, __VA0, ...)          \
