@@ -15,24 +15,19 @@
  *  along with this program; if not, see http://www.gnu.org/licenses/.        *
 *******************************************************************************/
 
-#ifndef __SERVICE_DEBUG_PLUG_H__
-#define __SERVICE_DEBUG_PLUG_H__
-
-/*============================ INCLUDES ======================================*/
-#include "./app_cfg.h"
-
-#if !defined(DEBUG_CONFIG_FILE)
-#include "./debug_config.h"
-#else
-#include DEBUG_CONFIG_FILE
-#endif
+#ifndef __SERVICE_DEBUG_CFG_H__
+#define __SERVICE_DEBUG_CFG_H__
 
 /*============================ MACROS ========================================*/
-/*============================ MACROFIED FUNCTIONS ===========================*/
-/*============================ TYPES =========================================*/
-/*============================ PUBLIC VARIABLES ==============================*/
-/*============================ PUBLIC PROTOTYPES =============================*/
-extern void debug_output_char(_CHAR ch);
+#define DEBUG_POINTER_WIDTH     (32)
+#define DEBUG_INT_WIDTH         (32)
+#define DEBUG_MSG_ENABLE        ENABLED
+#define DEBUG_ASSERT_ENABLE     ENABLED
+#define DEBUG_ROM_VAR_TYPE
 
-#endif  //!< #ifndef __SERVICE_DEBUG_PLUG_H__
+/*============================ TYPES =========================================*/
+typedef char _CHAR;
+
+
+#endif  //!< #ifndef __SERVICE_DEBUG_CFG_H__
 /* EOF */

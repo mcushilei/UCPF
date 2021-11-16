@@ -1,5 +1,5 @@
 /*******************************************************************************
- *  Copyright(C)2015-2020 by Dreistein<mcu_shilei@hotmail.com>                *
+ *  Copyright(C)2015-2021 by Dreistein<mcu_shilei@hotmail.com>                *
  *                                                                            *
  *  This program is free software; you can redistribute it and/or modify it   *
  *  under the terms of the GNU Lesser General Public License as published     *
@@ -19,32 +19,27 @@
 
 /*============================ INCLUDES ======================================*/
 #include "./app_cfg.h"
-
-#if !defined(DEBUG_CONFIG_FILE)
-#include "./debug_config.h"
-#else
-#include DEBUG_CONFIG_FILE
-#endif
-
 #include "./debug_plug.h"
 #include "./debug.h"
 
 /*============================ MACROS ========================================*/
 /*============================ MACROFIED FUNCTIONS ===========================*/
-#define DEBUG_PRINT_EOL {                            \
+#define DEBUG_PRINT_EOL() do {                       \
     debug_output_char('\r');                         \
     debug_output_char('\n');                         \
-}
+} while (0)
 
 #if DEBUG_DISALLOW_FILE_INFO == ENABLED
 #   define DEBUG_PRINT_LOCATION(__FILE, __LINE)
 #else 
-#   define DEBUG_PRINT_LOCATION(__FILE, __LINE) {   \
+#   define DEBUG_PRINT_LOCATION(__FILE, __LINE)  do {\
+        debug_output_char('[');                     \
         debug_print_string(__FILE);                 \
         debug_output_char(':');                     \
         debug_print_number_unsigned(__LINE);        \
-        debug_output_char('>');                     \
-    }
+        debug_output_char(']');                     \
+        debug_output_char(' ');                     \
+    } while (0)
 #endif
 
 /*============================ TYPES =========================================*/
@@ -55,14 +50,14 @@ static void debug_print_number_hex(const _UINT number, const _UINT lengthToPrint
 static void debug_print_mask(const _UINT mask, const _UINT number);
 
 /*============================ LOCAL VARIABLES ===============================*/
-static DEBUG_ROM_VAR_TYPE const _CHAR DebugStrFail[]      = "[Err]";
-static DEBUG_ROM_VAR_TYPE const _CHAR DebugStrMessage[]   = "[Msg]";
-static DEBUG_ROM_VAR_TYPE const _CHAR DebugStrNull[]      = "NULL";
-static DEBUG_ROM_VAR_TYPE const _CHAR DebugStrExpected[]  = "Expected ";
-static DEBUG_ROM_VAR_TYPE const _CHAR DebugStrWas[]       = " Was ";
-static DEBUG_ROM_VAR_TYPE const _CHAR DebugStrNullPointer[]   = "Pointer was NULL.";
+static DEBUG_ROM_VAR_TYPE const _CHAR DebugStrOk[]          = "[OOO]";
+static DEBUG_ROM_VAR_TYPE const _CHAR DebugStrError[]       = "[XXX]";
+static DEBUG_ROM_VAR_TYPE const _CHAR DebugStrNull[]        = "NULL";
+static DEBUG_ROM_VAR_TYPE const _CHAR DebugStrExpected[]    = "Expected ";
+static DEBUG_ROM_VAR_TYPE const _CHAR DebugStrWas[]         = " Was ";
+static DEBUG_ROM_VAR_TYPE const _CHAR DebugStrNullPointer[] = "NULL Pointer!";
 
-static volatile _CHAR exitTrap = 0; 
+static volatile _CHAR exitTrap = 0;
 
 /*============================ GLOBAL VARIABLES ==============================*/
 /*============================ IMPLEMENTATION ================================*/
@@ -74,7 +69,7 @@ static volatile _CHAR exitTrap = 0;
  * Make dummy function to prevent NULL pointer dereferences before
  * debug_printf has been set by calling debug_set_printf().
  */
-static int debug_printf_uninit( const char *format, ... )
+static int debug_printf_uninit( const _CHAR *format, ... )
 {
     ((void) format);
     return( 0 );
@@ -82,12 +77,11 @@ static int debug_printf_uninit( const char *format, ... )
 #define DEBUG_STD_PRINTF    debug_printf_uninit
 #endif /* !DEBUG_STD_PRINTF */
 
-int (*debug_printf)( const char *, ... ) = DEBUG_STD_PRINTF;
+int (*debug_printf)( const _CHAR *, ... ) = DEBUG_STD_PRINTF;
 
-int debug_set_printf( int (*printf_func)( const char *, ... ) )
+int debug_set_printf( int (*printf_func)( const _CHAR *, ... ) )
 {
     debug_printf = printf_func;
-    return( 0 );
 }
 #endif /* DEBUG_PRINTF_ALT */
 
@@ -112,10 +106,11 @@ int debug_string_compare(const _CHAR *expected, const _CHAR *actual)
 //-----------------------------------------------
 void debug_print_string(const _CHAR *string)
 {
-    if (string != NULL) {
-        for (; *string != '\0'; string++) {
-            debug_output_char(*string);
-        }
+    if( string == NULL ) {
+        return;
+    }
+    for (; *string != '\0'; string++) {
+        debug_output_char(*string);
     }
 }
 
@@ -124,22 +119,16 @@ void debug_print_string(const _CHAR *string)
 static void debug_print_number_unsigned(const _UINT number)
 {
     _UINT divisor = 1;
-    _UINT nextDivisor;
 
-    // figure out initial divisor
-    while (number / divisor > 9) {
-        nextDivisor = divisor * 10;
-        if (nextDivisor > divisor) {
-            divisor = nextDivisor;
-        } else {
-            break;
-        }
+    // figure out initial divisor by counting the length of the number.
+    while (number / divisor > 9u) {
+        divisor *= 10u;
     }
 
     // now mod and print, then divide divisor
     do {
-        debug_output_char('0' + (number / divisor % 10));
-        divisor /= 10;
+        debug_output_char('0' + (number / divisor % 10u));
+        divisor /= 10u;
     } while (divisor > 0);
 }
 
@@ -302,26 +291,19 @@ void debug_print_equal_number(
 //-----------------------------------------------
 // Control Functions
 //-----------------------------------------------
-void debug_failure_captured(const _CHAR *file, const _UINT line)
+void debug_failure_captured( const _CHAR *file, const _UINT line )
 {
-    DEBUG_PRINT_EOL
-    debug_print_string(DebugStrFail);
-    DEBUG_PRINT_LOCATION(file, line)
+    DEBUG_PRINT_EOL();
+    debug_print_string( DebugStrError );
+    DEBUG_PRINT_LOCATION( file, line );
 }
 
-void debug_msg_output(const _CHAR *file, const _UINT line)
+void debug_trap( void )
 {
-    DEBUG_PRINT_EOL
-    debug_print_string(DebugStrMessage);
-    DEBUG_PRINT_LOCATION(file, line)
+    while( !exitTrap );
 }
 
-void debug_trap(void)
-{
-    while (!exitTrap);
-}
-
-void debug_exit_trap(void)
+void debug_exit_trap( void )
 {
     exitTrap = 1;
 }

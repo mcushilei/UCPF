@@ -1,5 +1,5 @@
 /*******************************************************************************
- *  Copyright(C)2015-2020 by Dreistein<mcu_shilei@hotmail.com>                *
+ *  Copyright(C)2015-2021 by Dreistein<mcu_shilei@hotmail.com>                *
  *                                                                            *
  *  This program is free software; you can redistribute it and/or modify it   *
  *  under the terms of the GNU Lesser General Public License as published     *
@@ -24,81 +24,8 @@
 
 /*============================ INCLUDES ======================================*/
 /*============================ MACROS ========================================*/
-#define DEBUG_POINTER_WIDTH     (32)
-#define DEBUG_INT_WIDTH         (32)
-#define DEBUG_ROM_VAR_TYPE      
-
 /*============================ MACROFIED FUNCTIONS ===========================*/
-
-//-------------------------------------------------------
-// Int Support
-//-------------------------------------------------------
-#ifndef DEBUG_INT_WIDTH
-    #define DEBUG_INT_WIDTH     (32)
-#endif
-
-//-------------------------------------------------------
-// Pointer Support
-//-------------------------------------------------------
-#ifndef DEBUG_POINTER_WIDTH
-    #define DEBUG_POINTER_WIDTH (32)
-#endif
-
-//-------------------------------------------------------
-// Float Support
-//-------------------------------------------------------
-#ifndef DEBUG_INCLUDE_FLOAT
-    #undef DEBUG_FLOAT_PRECISION
-#else
-    #define DEBUG_FLOAT_PRECISION (0.00001f)
-#endif
-
 /*============================ TYPES =========================================*/
-//-------------------------------------------------------
-// Char Support
-//-------------------------------------------------------
-typedef char _CHAR;
-
-//-------------------------------------------------------
-// Int Support
-//-------------------------------------------------------
-
-#if   (DEBUG_INT_WIDTH == 64)
-    typedef uint64_t _UINT;
-    typedef int64_t _SINT;
-#elif (DEBUG_INT_WIDTH == 32)
-    typedef uint32_t _UINT;
-    typedef int32_t _SINT;
-#elif (DEBUG_INT_WIDTH == 16)
-    typedef uint16_t _UINT;
-    typedef int16_t _SINT;
-#elif (DEBUG_INT_WIDTH == 8)
-    typedef uint8_t _UINT;
-    typedef int8_t _SINT;
-#else
-    #error "Invalid DEBUG_INT_WIDTH specified! (64, 32, 16 or 8 are supported)"
-#endif
-
-//-------------------------------------------------------
-// Pointer Support
-//-------------------------------------------------------
-#if   (DEBUG_POINTER_WIDTH == 64)
-    typedef uint64_t _UP;
-#elif (DEBUG_POINTER_WIDTH == 32)
-    typedef uint32_t _UP;
-#elif (DEBUG_POINTER_WIDTH == 16)
-    typedef uint16_t _UP;
-#else
-    #error "Invalid DEBUG_POINTER_WIDTH specified! (64, 32 or 16 are supported)"
-#endif
-
-//-------------------------------------------------------
-// Float Support
-//-------------------------------------------------------
-#ifndef DEBUG_EXCLUDE_FLOAT 
-    typedef float _UF;
-#endif
-
 /*============================ GLOBAL VARIABLES ==============================*/
 /*============================ PROTOTYPES ====================================*/
 
