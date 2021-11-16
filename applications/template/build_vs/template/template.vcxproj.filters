@@ -1,0 +1,1019 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="application">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="application\template">
+      <UniqueIdentifier>{d106f68a-17e4-4e6e-bb89-b3ee1a454799}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="pedestals">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="columns">
+      <UniqueIdentifier>{c6996951-5652-4cd6-877d-50cf532d2dc3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="pedestals\utilities">
+      <UniqueIdentifier>{c5d5e5ba-f656-4175-8473-3b6550c80336}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="pedestals\utilities\preprocessor">
+      <UniqueIdentifier>{2434323d-063e-43a0-a7c3-4b9da140a371}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="application\template\config">
+      <UniqueIdentifier>{bb1ec2fd-ea2e-4eb0-b928-a9c9ffc8d18f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="columns\debug">
+      <UniqueIdentifier>{c955e96a-d9a1-41db-b50e-6e0c14416514}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="columns\string">
+      <UniqueIdentifier>{8f088236-b4fa-4b72-b63c-53526c683da0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="columns\queue">
+      <UniqueIdentifier>{35485c2d-c126-43af-8da1-c94ff3fb65a7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="columns\fifo">
+      <UniqueIdentifier>{0c59700b-aa7e-4d49-9b79-677a981bc982}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="columns\pool">
+      <UniqueIdentifier>{8759c1fc-e678-4979-93a6-d08b53ea7f01}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="columns\list">
+      <UniqueIdentifier>{e2b73a47-12bf-4394-a101-3ccbf53f3e14}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="columns\hash">
+      <UniqueIdentifier>{996bb430-1772-4f26-8dc3-3c516ca60e2b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="columns\hash\crc">
+      <UniqueIdentifier>{cca2b4fa-98a7-4bff-934e-45a5018989e3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="columns\scheduler">
+      <UniqueIdentifier>{7730fc99-122e-4da2-a4ce-a5cc59f91907}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="columns\scheduler\windows">
+      <UniqueIdentifier>{5f3b70c2-94ef-4329-b6f9-150cdfaab50e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="columns\event_fsm">
+      <UniqueIdentifier>{a975d8ce-9a92-4f17-8dcf-a793e80f57a7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="columns\hash\fletcher">
+      <UniqueIdentifier>{69377e8a-6e11-4b25-8f45-905fab016a7b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="columns\geometry">
+      <UniqueIdentifier>{6cde7891-15ef-4b4d-b48e-dcbc621418b2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="columns\calendar">
+      <UniqueIdentifier>{cd8ba0c1-23b5-413c-a945-895e1f5f36c4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="beams">
+      <UniqueIdentifier>{f593f873-d343-4b1d-a0f1-ef9ad5b5a59c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="columns\dsp">
+      <UniqueIdentifier>{6b57e381-f107-4c56-a7fb-b53ebbfc09c1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="columns\timer">
+      <UniqueIdentifier>{ad25ea78-b49d-45e9-9591-6ee9294f41db}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="pedestals\utilities\compiler">
+      <UniqueIdentifier>{204249c9-e000-4795-b298-23d72c6351dd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="pedestals\utilities\compiler\x86">
+      <UniqueIdentifier>{faa21d79-5bd7-4e82-a4b8-3ef1c9aae3c7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="columns\clock">
+      <UniqueIdentifier>{fb05b1c4-0926-4835-8f1c-0955429de57c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="beams\frameworks">
+      <UniqueIdentifier>{e2186b4d-63ee-4214-b045-8ecb18758f67}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="columns\heap_memory">
+      <UniqueIdentifier>{eee58034-0e59-4c53-8c38-b7eb465107f4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="columns\heap_memory\heap_first_fit">
+      <UniqueIdentifier>{78054058-f8fa-49bc-884c-929ded677ff6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="beams\frameworks\template_win">
+      <UniqueIdentifier>{fe4dda32-6f4d-4e5e-8c01-5c671f7fc58c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="columns\cJSON">
+      <UniqueIdentifier>{bd671311-560f-48a3-ab83-47884814c917}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="columns\json_checker">
+      <UniqueIdentifier>{22e07aa0-42ce-456f-b67c-6e714e923991}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="beams\frameworks\template_win\ports">
+      <UniqueIdentifier>{9e655bc1-231e-44d9-8eca-3adcc6abd282}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="beams\frameworks\template_win\ports\cJSON">
+      <UniqueIdentifier>{07a45f1d-e248-4f3e-9024-9cfc65431456}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="beams\frameworks\template_win\ports\json_checker">
+      <UniqueIdentifier>{8c1cede0-e21c-4a55-8624-8dfe3bfa03f8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="beams\windows">
+      <UniqueIdentifier>{4f895ac3-df16-4255-85ef-7ddcc1696b3b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="beams\windows\file_api">
+      <UniqueIdentifier>{8c5cba29-a5d3-4d8a-86dd-31b210b04916}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="beams\windows\rtc_api">
+      <UniqueIdentifier>{3e1318c4-69cc-4378-8911-9adb078c3619}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="beams\windows\uart_api">
+      <UniqueIdentifier>{ebc42ab5-e483-40da-a938-68d07845a97f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="beams\windows\socket_api">
+      <UniqueIdentifier>{3db84ba2-f8e7-45d3-8753-9e4dee38f129}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="beams\parser_curly_bracket">
+      <UniqueIdentifier>{61a8d497-cc9d-4940-b6f7-ed9faf1c62ea}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="beams\frameworks\template_win\ports\rtu_modbus">
+      <UniqueIdentifier>{fc0aeb9d-b970-413b-9843-b5bdc1ecb6cd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="columns\codec">
+      <UniqueIdentifier>{8649a2a3-b3d5-48ff-ac15-83f6481858bb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="columns\runtime_fault">
+      <UniqueIdentifier>{89f19856-23be-4e73-be2c-404788cc9b8c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="beams\deadline">
+      <UniqueIdentifier>{da1025c6-82b6-43e2-9cce-5a0b63589a9d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="beams\frameworks\template_win\toolchain_preinclude">
+      <UniqueIdentifier>{ce0c5b84-d042-4bff-aef7-149931007361}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="columns\cipher">
+      <UniqueIdentifier>{ae836231-8420-4890-898b-43771395dcb0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="beams\mbedtls">
+      <UniqueIdentifier>{1e3f8f0a-e3ca-4c86-b15f-e21355444918}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="beams\net_socket">
+      <UniqueIdentifier>{6135e560-b06d-4b73-869a-527f74712690}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="columns\ring_buffer">
+      <UniqueIdentifier>{1551f062-9d62-4412-bf16-d2b6cea0dbe3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="beams\upd">
+      <UniqueIdentifier>{4de4b00a-d5de-44cf-a752-6183ba0f3104}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\..\..\main.c" />
+    <ClCompile Include="..\..\..\..\columns\debug\debug.c">
+      <Filter>columns\debug</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\columns\string\string.c">
+      <Filter>columns\string</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\application_win.c">
+      <Filter>application\template</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\columns\queue\queue.c">
+      <Filter>columns\queue</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\columns\fifo\fifo.c">
+      <Filter>columns\fifo</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\columns\pool\pool.c">
+      <Filter>columns\pool</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\columns\list\list.c">
+      <Filter>columns\list</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\columns\hash\crc\crc8.c">
+      <Filter>columns\hash\crc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\columns\hash\crc\crc16.c">
+      <Filter>columns\hash\crc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\columns\hash\crc\crc32.c">
+      <Filter>columns\hash\crc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\columns\event_fsm\event_fsm.c">
+      <Filter>columns\event_fsm</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\columns\hash\fletcher\fletcher.c">
+      <Filter>columns\hash\fletcher</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\columns\hash\crc\crc7.c">
+      <Filter>columns\hash\crc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\columns\geometry\geometry.c">
+      <Filter>columns\geometry</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\columns\calendar\calendar.c">
+      <Filter>columns\calendar</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\columns\scheduler\windows\os.c">
+      <Filter>columns\scheduler\windows</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\columns\timer\timer.c">
+      <Filter>columns\timer</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\columns\clock\clock.c">
+      <Filter>columns\clock</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\columns\heap_memory\heap_first_fit\heap_first_fit.c">
+      <Filter>columns\heap_memory\heap_first_fit</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\beams\frameworks\template_win\framework.c">
+      <Filter>beams\frameworks\template_win</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\columns\cJSON\cJSON.c">
+      <Filter>columns\cJSON</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\columns\json_checker\JSON_checker.c">
+      <Filter>columns\json_checker</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\beams\frameworks\template_win\ports\cJSON\cJSON_port.c">
+      <Filter>beams\frameworks\template_win\ports\cJSON</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\beams\frameworks\template_win\ports\json_checker\JSON_checker_port.c">
+      <Filter>beams\frameworks\template_win\ports\json_checker</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\beams\windows\file_api\win_file.c">
+      <Filter>beams\windows\file_api</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\beams\windows\socket_api\socket_api.c">
+      <Filter>beams\windows\socket_api</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\beams\windows\rtc_api\rtc_api.c">
+      <Filter>beams\windows\rtc_api</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\beams\parser_curly_bracket\parser_curly_bracket.c">
+      <Filter>beams\parser_curly_bracket</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\beams\windows\uart_api\uart_api.c">
+      <Filter>beams\windows\uart_api</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\beams\frameworks\template_win\ports\rtu_modbus\rtu_modbus_port.c">
+      <Filter>beams\frameworks\template_win\ports\rtu_modbus</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\columns\codec\base16_codec.c">
+      <Filter>columns\codec</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\columns\hash\rfc1145_checksum.c">
+      <Filter>columns\hash</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\columns\hash\sha256.c">
+      <Filter>columns\hash</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\columns\hash\sha512.c">
+      <Filter>columns\hash</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\columns\runtime_fault\runtime_fault.c">
+      <Filter>columns\runtime_fault</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\beams\frameworks\template_win\deadline.c">
+      <Filter>beams\frameworks\template_win</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\columns\cipher\aes.c">
+      <Filter>columns\cipher</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\columns\cipher\rsa_internal.c">
+      <Filter>columns\cipher</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\columns\cipher\bignum.c">
+      <Filter>columns\cipher</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\columns\cipher\padlock.c">
+      <Filter>columns\cipher</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\columns\cipher\aesni.c">
+      <Filter>columns\cipher</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\columns\cipher\rsa.c">
+      <Filter>columns\cipher</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\columns\cipher\memory_buffer_alloc.c">
+      <Filter>columns\cipher</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\columns\codec\base64.c">
+      <Filter>columns\codec</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\beams\mbedtls\md.c">
+      <Filter>beams\mbedtls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\beams\mbedtls\rsa_wrapper.c">
+      <Filter>beams\mbedtls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\beams\mbedtls\pk.c">
+      <Filter>beams\mbedtls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\beams\mbedtls\pk_wrap.c">
+      <Filter>beams\mbedtls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\beams\mbedtls\oid.c">
+      <Filter>beams\mbedtls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\beams\mbedtls\cipher.c">
+      <Filter>beams\mbedtls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\beams\mbedtls\cipher_wrap.c">
+      <Filter>beams\mbedtls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\columns\cipher\des.c">
+      <Filter>columns\cipher</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\columns\cipher\camellia.c">
+      <Filter>columns\cipher</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\columns\cipher\chacha20.c">
+      <Filter>columns\cipher</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\columns\cipher\chachapoly.c">
+      <Filter>columns\cipher</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\columns\cipher\poly1305.c">
+      <Filter>columns\cipher</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\beams\mbedtls\ccm.c">
+      <Filter>beams\mbedtls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\beams\mbedtls\gcm.c">
+      <Filter>beams\mbedtls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\columns\cipher\arc4.c">
+      <Filter>columns\cipher</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\columns\cipher\aria.c">
+      <Filter>columns\cipher</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\beams\mbedtls\cmac.c">
+      <Filter>beams\mbedtls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\columns\cipher\blowfish.c">
+      <Filter>columns\cipher</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\beams\mbedtls\asn1parse.c">
+      <Filter>beams\mbedtls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\beams\mbedtls\asn1write.c">
+      <Filter>beams\mbedtls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\beams\mbedtls\certs.c">
+      <Filter>beams\mbedtls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\beams\mbedtls\ctr_drbg.c">
+      <Filter>beams\mbedtls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\beams\mbedtls\ecdh.c">
+      <Filter>beams\mbedtls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\beams\mbedtls\ecdsa.c">
+      <Filter>beams\mbedtls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\beams\mbedtls\ecjpake.c">
+      <Filter>beams\mbedtls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\beams\mbedtls\ecp.c">
+      <Filter>beams\mbedtls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\beams\mbedtls\ecp_curves.c">
+      <Filter>beams\mbedtls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\beams\mbedtls\hmac_drbg.c">
+      <Filter>beams\mbedtls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\beams\mbedtls\dhm.c">
+      <Filter>beams\mbedtls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\beams\mbedtls\pem.c">
+      <Filter>beams\mbedtls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\beams\mbedtls\hkdf.c">
+      <Filter>beams\mbedtls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\beams\mbedtls\nist_kw.c">
+      <Filter>beams\mbedtls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\beams\mbedtls\pkcs5.c">
+      <Filter>beams\mbedtls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\beams\mbedtls\pkcs11.c">
+      <Filter>beams\mbedtls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\beams\mbedtls\pkcs12.c">
+      <Filter>beams\mbedtls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\beams\mbedtls\pkparse.c">
+      <Filter>beams\mbedtls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\beams\mbedtls\pkwrite.c">
+      <Filter>beams\mbedtls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\beams\mbedtls\ssl_cache.c">
+      <Filter>beams\mbedtls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\beams\mbedtls\ssl_ciphersuites.c">
+      <Filter>beams\mbedtls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\beams\mbedtls\ssl_cli.c">
+      <Filter>beams\mbedtls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\beams\mbedtls\ssl_cookie.c">
+      <Filter>beams\mbedtls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\beams\mbedtls\ssl_msg.c">
+      <Filter>beams\mbedtls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\beams\mbedtls\ssl_srv.c">
+      <Filter>beams\mbedtls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\beams\mbedtls\ssl_ticket.c">
+      <Filter>beams\mbedtls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\beams\mbedtls\ssl_tls.c">
+      <Filter>beams\mbedtls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\beams\mbedtls\x509.c">
+      <Filter>beams\mbedtls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\beams\mbedtls\x509_create.c">
+      <Filter>beams\mbedtls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\beams\mbedtls\x509_crl.c">
+      <Filter>beams\mbedtls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\beams\mbedtls\x509_crt.c">
+      <Filter>beams\mbedtls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\beams\mbedtls\x509_csr.c">
+      <Filter>beams\mbedtls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\beams\mbedtls\x509write_crt.c">
+      <Filter>beams\mbedtls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\beams\mbedtls\x509write_csr.c">
+      <Filter>beams\mbedtls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\beams\mbedtls\xtea.c">
+      <Filter>beams\mbedtls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\beams\mbedtls\mbedtls_debug.c">
+      <Filter>beams\mbedtls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\columns\hash\md5.c">
+      <Filter>columns\hash</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\beams\mbedtls\entropy.c">
+      <Filter>beams\mbedtls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\beams\mbedtls\entropy_poll.c">
+      <Filter>beams\mbedtls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\beams\mbedtls\mbedtls_net_sockets.c">
+      <Filter>beams\mbedtls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\columns\cipher\mbedtls_platform.c">
+      <Filter>columns\cipher</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\columns\hash\md2.c">
+      <Filter>columns\hash</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\columns\hash\md4.c">
+      <Filter>columns\hash</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\columns\hash\sha1.c">
+      <Filter>columns\hash</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\beams\net_socket\net_socket.c">
+      <Filter>beams\net_socket</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\columns\hash\ripemd160.c">
+      <Filter>columns\hash</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\columns\cipher\mbedtls_timing.c">
+      <Filter>columns\cipher</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\columns\ring_buffer\ring_buffer.c">
+      <Filter>columns\ring_buffer</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\beams\upd\upd.c">
+      <Filter>beams\upd</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\beams\upd\upd_test.c">
+      <Filter>beams\upd</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\columns\codec\base64_codec.c">
+      <Filter>columns\codec</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\..\..\pedestals\app_cfg.h">
+      <Filter>pedestals</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\pedestals\utilities\preprocessor\mrepeat.h">
+      <Filter>pedestals\utilities\preprocessor</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\pedestals\utilities\preprocessor\preprocessor.h">
+      <Filter>pedestals\utilities\preprocessor</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\pedestals\utilities\preprocessor\stringz.h">
+      <Filter>pedestals\utilities\preprocessor</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\pedestals\utilities\preprocessor\tpaste.h">
+      <Filter>pedestals\utilities\preprocessor</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\pedestals\utilities\usebits.h">
+      <Filter>pedestals\utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\columns\app_cfg.h">
+      <Filter>columns</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app_cfg.h">
+      <Filter>application\template</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\columns\debug\app_cfg.h">
+      <Filter>columns\debug</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\columns\debug\debug.h">
+      <Filter>columns\debug</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\columns\string\app_cfg.h">
+      <Filter>columns\string</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\columns\string\string.h">
+      <Filter>columns\string</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\config\application_cfg.h">
+      <Filter>application\template\config</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\columns\queue\app_cfg.h">
+      <Filter>columns\queue</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\columns\queue\queue.h">
+      <Filter>columns\queue</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\columns\fifo\app_cfg.h">
+      <Filter>columns\fifo</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\columns\fifo\fifo.h">
+      <Filter>columns\fifo</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\columns\pool\app_cfg.h">
+      <Filter>columns\pool</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\columns\pool\pool.h">
+      <Filter>columns\pool</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\columns\list\app_cfg.h">
+      <Filter>columns\list</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\columns\list\list.h">
+      <Filter>columns\list</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\columns\hash\crc\app_cfg.h">
+      <Filter>columns\hash\crc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\columns\hash\crc\crc.h">
+      <Filter>columns\hash\crc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\columns\hash\app_cfg.h">
+      <Filter>columns\hash</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\pedestals\utilities\utilities.h">
+      <Filter>pedestals\utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\columns\scheduler\app_cfg.h">
+      <Filter>columns\scheduler</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\columns\scheduler\os.h">
+      <Filter>columns\scheduler</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\columns\scheduler\windows\os.h">
+      <Filter>columns\scheduler\windows</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\columns\event_fsm\app_cfg.h">
+      <Filter>columns\event_fsm</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\columns\event_fsm\event_fsm.h">
+      <Filter>columns\event_fsm</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\pedestals\utilities\user_type.h">
+      <Filter>pedestals\utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\columns\hash\fletcher\app_cfg.h">
+      <Filter>columns\hash\fletcher</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\columns\hash\fletcher\fletcher.h">
+      <Filter>columns\hash\fletcher</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\columns\scheduler\windows\app_cfg.h">
+      <Filter>columns\scheduler\windows</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\columns\geometry\app_cfg.h">
+      <Filter>columns\geometry</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\columns\geometry\geometry.h">
+      <Filter>columns\geometry</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\columns\calendar\app_cfg.h">
+      <Filter>columns\calendar</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\columns\calendar\calendar.h">
+      <Filter>columns\calendar</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\beams\beams.h">
+      <Filter>beams</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\columns\dsp\app_cfg.h">
+      <Filter>columns\dsp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\columns\timer\app_cfg.h">
+      <Filter>columns\timer</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\columns\timer\timer.h">
+      <Filter>columns\timer</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\pedestals\utilities\compiler\compiler.h">
+      <Filter>pedestals\utilities\compiler</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\pedestals\utilities\compiler\x86\x86_compiler.h">
+      <Filter>pedestals\utilities\compiler\x86</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\columns\clock\app_cfg.h">
+      <Filter>columns\clock</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\columns\clock\clock.h">
+      <Filter>columns\clock</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\beams\frameworks\app_cfg.h">
+      <Filter>beams\frameworks</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\beams\app_cfg.h">
+      <Filter>beams</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\beams\common_environment_cfg.h">
+      <Filter>beams</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\beams\common_plateform_cfg.h">
+      <Filter>beams</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\columns\columns.h">
+      <Filter>columns</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\columns\heap_memory\app_cfg.h">
+      <Filter>columns\heap_memory</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\columns\heap_memory\heap_memory.h">
+      <Filter>columns\heap_memory</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\columns\heap_memory\heap_first_fit\app_cfg.h">
+      <Filter>columns\heap_memory\heap_first_fit</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\columns\heap_memory\heap_first_fit\heap_first_fit.h">
+      <Filter>columns\heap_memory\heap_first_fit</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\beams\frameworks\template_win\app_cfg.h">
+      <Filter>beams\frameworks\template_win</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\beams\frameworks\template_win\framework.h">
+      <Filter>beams\frameworks\template_win</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\columns\cJSON\cJSON.h">
+      <Filter>columns\cJSON</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\columns\cJSON\cJSON_plug.h">
+      <Filter>columns\cJSON</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\columns\json_checker\JSON_checker.h">
+      <Filter>columns\json_checker</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\columns\json_checker\JSON_checker_plug.h">
+      <Filter>columns\json_checker</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\beams\frameworks\template_win\ports\cJSON\cJSON_port.h">
+      <Filter>beams\frameworks\template_win\ports\cJSON</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\beams\frameworks\template_win\ports\json_checker\JSON_checker_port.h">
+      <Filter>beams\frameworks\template_win\ports\json_checker</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\beams\frameworks\template_win\ports\app_cfg.h">
+      <Filter>beams\frameworks\template_win\ports</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\beams\windows\app_cfg.h">
+      <Filter>beams\windows</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\beams\windows\file_api\app_cfg.h">
+      <Filter>beams\windows\file_api</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\beams\windows\file_api\win_file.h">
+      <Filter>beams\windows\file_api</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\beams\windows\socket_api\app_cfg.h">
+      <Filter>beams\windows\socket_api</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\beams\windows\socket_api\socket_api.h">
+      <Filter>beams\windows\socket_api</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\beams\windows\rtc_api\app_cfg.h">
+      <Filter>beams\windows\rtc_api</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\beams\windows\rtc_api\rtc_api.h">
+      <Filter>beams\windows\rtc_api</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\columns\timer\timer_plug.h">
+      <Filter>columns\timer</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\columns\clock\clock_plug.h">
+      <Filter>columns\clock</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\beams\parser_curly_bracket\app_cfg.h">
+      <Filter>beams\parser_curly_bracket</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\beams\parser_curly_bracket\parser_curly_bracket.h">
+      <Filter>beams\parser_curly_bracket</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\beams\windows\uart_api\app_cfg.h">
+      <Filter>beams\windows\uart_api</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\beams\windows\uart_api\uart_api.h">
+      <Filter>beams\windows\uart_api</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\beams\frameworks\template_win\environment_cfg.h">
+      <Filter>beams\frameworks\template_win</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\beams\frameworks\template_win\plateform_cfg.h">
+      <Filter>beams\frameworks\template_win</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\columns\codec\app_cfg.h">
+      <Filter>columns\codec</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\columns\hash\sha256.h">
+      <Filter>columns\hash</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\columns\hash\sha512.h">
+      <Filter>columns\hash</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\columns\runtime_fault\app_cfg.h">
+      <Filter>columns\runtime_fault</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\columns\runtime_fault\runtime_fault.h">
+      <Filter>columns\runtime_fault</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\columns\runtime_fault\runtime_fault_plug.h">
+      <Filter>columns\runtime_fault</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\beams\deadline\app_cfg.h">
+      <Filter>beams\deadline</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\beams\deadline\deadline.h">
+      <Filter>beams\deadline</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\beams\frameworks\template_win\toolchain_preinclude\preinclude.h">
+      <Filter>beams\frameworks\template_win\toolchain_preinclude</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\beams\frameworks\template_win\deadline_type.h">
+      <Filter>beams\frameworks\template_win</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\columns\cipher\aes.h">
+      <Filter>columns\cipher</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\columns\cipher\bignum.h">
+      <Filter>columns\cipher</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\columns\cipher\bn_mul.h">
+      <Filter>columns\cipher</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\columns\cipher\rsa_internal.h">
+      <Filter>columns\cipher</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\columns\cipher\app_cfg.h">
+      <Filter>columns\cipher</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\columns\cipher\padlock.h">
+      <Filter>columns\cipher</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\columns\cipher\aesni.h">
+      <Filter>columns\cipher</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\columns\cipher\rsa.h">
+      <Filter>columns\cipher</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\columns\cipher\memory_buffer_alloc.h">
+      <Filter>columns\cipher</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\beams\frameworks\template_win\mbedtls_check_config.h">
+      <Filter>beams\frameworks\template_win</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\beams\frameworks\template_win\mbedtls_config.h">
+      <Filter>beams\frameworks\template_win</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\columns\codec\base64.h">
+      <Filter>columns\codec</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\beams\mbedtls\md.h">
+      <Filter>beams\mbedtls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\beams\mbedtls\md_internal.h">
+      <Filter>beams\mbedtls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\beams\mbedtls\rsa_wrapper.h">
+      <Filter>beams\mbedtls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\beams\mbedtls\pk.h">
+      <Filter>beams\mbedtls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\beams\mbedtls\pk_internal.h">
+      <Filter>beams\mbedtls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\beams\mbedtls\oid.h">
+      <Filter>beams\mbedtls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\beams\mbedtls\cipher.h">
+      <Filter>beams\mbedtls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\beams\mbedtls\cipher_internal.h">
+      <Filter>beams\mbedtls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\columns\cipher\des.h">
+      <Filter>columns\cipher</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\columns\cipher\camellia.h">
+      <Filter>columns\cipher</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\columns\cipher\chacha20.h">
+      <Filter>columns\cipher</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\columns\cipher\chachapoly.h">
+      <Filter>columns\cipher</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\columns\cipher\poly1305.h">
+      <Filter>columns\cipher</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\beams\mbedtls\ccm.h">
+      <Filter>beams\mbedtls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\beams\mbedtls\gcm.h">
+      <Filter>beams\mbedtls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\columns\cipher\arc4.h">
+      <Filter>columns\cipher</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\columns\cipher\aria.h">
+      <Filter>columns\cipher</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\beams\mbedtls\cmac.h">
+      <Filter>beams\mbedtls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\columns\cipher\blowfish.h">
+      <Filter>columns\cipher</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\beams\mbedtls\asn1.h">
+      <Filter>beams\mbedtls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\beams\mbedtls\asn1write.h">
+      <Filter>beams\mbedtls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\beams\mbedtls\certs.h">
+      <Filter>beams\mbedtls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\beams\mbedtls\ctr_drbg.h">
+      <Filter>beams\mbedtls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\beams\mbedtls\ecdh.h">
+      <Filter>beams\mbedtls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\beams\mbedtls\ecdsa.h">
+      <Filter>beams\mbedtls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\beams\mbedtls\ecjpake.h">
+      <Filter>beams\mbedtls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\beams\mbedtls\ecp.h">
+      <Filter>beams\mbedtls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\beams\mbedtls\ecp_internal.h">
+      <Filter>beams\mbedtls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\beams\mbedtls\hmac_drbg.h">
+      <Filter>beams\mbedtls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\beams\mbedtls\dhm.h">
+      <Filter>beams\mbedtls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\beams\mbedtls\pem.h">
+      <Filter>beams\mbedtls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\beams\mbedtls\hkdf.h">
+      <Filter>beams\mbedtls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\beams\mbedtls\nist_kw.h">
+      <Filter>beams\mbedtls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\beams\mbedtls\pkcs5.h">
+      <Filter>beams\mbedtls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\beams\mbedtls\pkcs11.h">
+      <Filter>beams\mbedtls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\beams\mbedtls\pkcs12.h">
+      <Filter>beams\mbedtls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\beams\mbedtls\ssl.h">
+      <Filter>beams\mbedtls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\beams\mbedtls\ssl_cache.h">
+      <Filter>beams\mbedtls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\beams\mbedtls\ssl_ciphersuites.h">
+      <Filter>beams\mbedtls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\beams\mbedtls\ssl_cookie.h">
+      <Filter>beams\mbedtls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\beams\mbedtls\ssl_internal.h">
+      <Filter>beams\mbedtls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\beams\mbedtls\ssl_ticket.h">
+      <Filter>beams\mbedtls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\beams\mbedtls\x509.h">
+      <Filter>beams\mbedtls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\beams\mbedtls\x509_crl.h">
+      <Filter>beams\mbedtls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\beams\mbedtls\x509_crt.h">
+      <Filter>beams\mbedtls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\beams\mbedtls\x509_csr.h">
+      <Filter>beams\mbedtls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\beams\mbedtls\xtea.h">
+      <Filter>beams\mbedtls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\beams\mbedtls\mbedtls_debug.h">
+      <Filter>beams\mbedtls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\columns\hash\md5.h">
+      <Filter>columns\hash</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\beams\mbedtls\entropy.h">
+      <Filter>beams\mbedtls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\beams\mbedtls\entropy_poll.h">
+      <Filter>beams\mbedtls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\columns\cipher\mbedtls_error.h">
+      <Filter>columns\cipher</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\beams\mbedtls\mbedtls_net_sockets.h">
+      <Filter>beams\mbedtls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\columns\cipher\mbedtls_platform.h">
+      <Filter>columns\cipher</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\beams\mbedtls\app_cfg.h">
+      <Filter>beams\mbedtls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\columns\hash\md2.h">
+      <Filter>columns\hash</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\columns\hash\md4.h">
+      <Filter>columns\hash</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\columns\hash\sha1.h">
+      <Filter>columns\hash</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\columns\cipher\mbedtls_platform_time.h">
+      <Filter>columns\cipher</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\beams\net_socket\app_cfg.h">
+      <Filter>beams\net_socket</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\beams\net_socket\net_socket.h">
+      <Filter>beams\net_socket</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\beams\frameworks\template_win\net_socket_type.h">
+      <Filter>beams\frameworks\template_win</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\columns\hash\ripemd160.h">
+      <Filter>columns\hash</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\columns\cipher\mbedtls_timing.h">
+      <Filter>columns\cipher</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\columns\ring_buffer\app_cfg.h">
+      <Filter>columns\ring_buffer</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\columns\ring_buffer\ring_buffer.h">
+      <Filter>columns\ring_buffer</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\beams\upd\app_cfg.h">
+      <Filter>beams\upd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\beams\upd\upd.h">
+      <Filter>beams\upd</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="..\..\..\..\columns\hash\crc\IEEE802_3 crc32 table.txt">
+      <Filter>columns\hash\crc</Filter>
+    </Text>
+  </ItemGroup>
+</Project>

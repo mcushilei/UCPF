@@ -1,0 +1,452 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{E569AAC9-36AC-4316-A39E-85B8B7C8DD79}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <RootNamespace>template</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v142</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v142</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v142</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v142</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <LinkIncremental>true</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <LinkIncremental>true</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <LinkIncremental>false</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <LinkIncremental>false</LinkIncremental>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;_LIB;__PRJ_TEMPLATE_WIN__;__CPU_X86__;__OS_WINDOWS__;__DEBUG__;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <CompileAs>CompileAsC</CompileAs>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <TreatSpecificWarningsAsErrors>4020;4028;4033;4047;4090;4098;4113;4133;4473;4477;4715;4716</TreatSpecificWarningsAsErrors>
+      <MultiProcessorCompilation>false</MultiProcessorCompilation>
+      <ForcedIncludeFiles>$(SolutionDir)\..\..\..\beams\frameworks\template_win\toolchain_preinclude\preinclude.h;%(ForcedIncludeFiles)</ForcedIncludeFiles>
+      <AdditionalIncludeDirectories>$(SolutionDir)\..\..\..\pedestals;$(SolutionDir)\..\..\..\columns;$(SolutionDir)\..\..\..\beams;$(SolutionDir)\..\..\..\beams\frameworks\template_win;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <CLanguageStandard>gnu11</CLanguageStandard>
+      <MSCompatibility>true</MSCompatibility>
+      <LanguageStandard_C>stdc11</LanguageStandard_C>
+      <DisableSpecificWarnings>5105</DisableSpecificWarnings>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;_LIB;__PRJ_TEMPLATE__;__DEBUG__;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <CompileAs>CompileAsC</CompileAs>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <Optimization>Full</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;_LIB;__PRJ_TEMPLATE__;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <CompileAs>CompileAsC</CompileAs>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateMapFile>true</GenerateMapFile>
+      <MapFileName>$(OutDir)$(TargetName).map</MapFileName>
+      <TargetMachine>MachineX86</TargetMachine>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <Optimization>Full</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;_LIB;__PRJ_TEMPLATE__;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <CompileAs>CompileAsC</CompileAs>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateMapFile>true</GenerateMapFile>
+      <MapFileName>$(OutDir)$(TargetName).map</MapFileName>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\..\..\beams\frameworks\template_win\deadline.c" />
+    <ClCompile Include="..\..\..\..\beams\frameworks\template_win\framework.c" />
+    <ClCompile Include="..\..\..\..\beams\frameworks\template_win\ports\cJSON\cJSON_port.c" />
+    <ClCompile Include="..\..\..\..\beams\frameworks\template_win\ports\json_checker\JSON_checker_port.c" />
+    <ClCompile Include="..\..\..\..\beams\frameworks\template_win\ports\rtu_modbus\rtu_modbus_port.c" />
+    <ClCompile Include="..\..\..\..\beams\mbedtls\asn1parse.c" />
+    <ClCompile Include="..\..\..\..\beams\mbedtls\asn1write.c" />
+    <ClCompile Include="..\..\..\..\beams\mbedtls\ccm.c" />
+    <ClCompile Include="..\..\..\..\beams\mbedtls\certs.c" />
+    <ClCompile Include="..\..\..\..\beams\mbedtls\cipher.c" />
+    <ClCompile Include="..\..\..\..\beams\mbedtls\cipher_wrap.c" />
+    <ClCompile Include="..\..\..\..\beams\mbedtls\cmac.c" />
+    <ClCompile Include="..\..\..\..\beams\mbedtls\ctr_drbg.c" />
+    <ClCompile Include="..\..\..\..\beams\mbedtls\dhm.c" />
+    <ClCompile Include="..\..\..\..\beams\mbedtls\ecdh.c" />
+    <ClCompile Include="..\..\..\..\beams\mbedtls\ecdsa.c" />
+    <ClCompile Include="..\..\..\..\beams\mbedtls\ecjpake.c" />
+    <ClCompile Include="..\..\..\..\beams\mbedtls\ecp.c" />
+    <ClCompile Include="..\..\..\..\beams\mbedtls\ecp_curves.c" />
+    <ClCompile Include="..\..\..\..\beams\mbedtls\entropy.c" />
+    <ClCompile Include="..\..\..\..\beams\mbedtls\entropy_poll.c" />
+    <ClCompile Include="..\..\..\..\beams\mbedtls\gcm.c" />
+    <ClCompile Include="..\..\..\..\beams\mbedtls\hkdf.c" />
+    <ClCompile Include="..\..\..\..\beams\mbedtls\hmac_drbg.c" />
+    <ClCompile Include="..\..\..\..\beams\mbedtls\mbedtls_debug.c" />
+    <ClCompile Include="..\..\..\..\beams\mbedtls\mbedtls_net_sockets.c" />
+    <ClCompile Include="..\..\..\..\beams\mbedtls\md.c" />
+    <ClCompile Include="..\..\..\..\beams\mbedtls\nist_kw.c" />
+    <ClCompile Include="..\..\..\..\beams\mbedtls\oid.c" />
+    <ClCompile Include="..\..\..\..\beams\mbedtls\pem.c" />
+    <ClCompile Include="..\..\..\..\beams\mbedtls\pk.c" />
+    <ClCompile Include="..\..\..\..\beams\mbedtls\pkcs11.c" />
+    <ClCompile Include="..\..\..\..\beams\mbedtls\pkcs12.c" />
+    <ClCompile Include="..\..\..\..\beams\mbedtls\pkcs5.c" />
+    <ClCompile Include="..\..\..\..\beams\mbedtls\pkparse.c" />
+    <ClCompile Include="..\..\..\..\beams\mbedtls\pkwrite.c" />
+    <ClCompile Include="..\..\..\..\beams\mbedtls\pk_wrap.c" />
+    <ClCompile Include="..\..\..\..\beams\mbedtls\rsa_wrapper.c" />
+    <ClCompile Include="..\..\..\..\beams\mbedtls\ssl_cache.c" />
+    <ClCompile Include="..\..\..\..\beams\mbedtls\ssl_ciphersuites.c" />
+    <ClCompile Include="..\..\..\..\beams\mbedtls\ssl_cli.c" />
+    <ClCompile Include="..\..\..\..\beams\mbedtls\ssl_cookie.c" />
+    <ClCompile Include="..\..\..\..\beams\mbedtls\ssl_msg.c" />
+    <ClCompile Include="..\..\..\..\beams\mbedtls\ssl_srv.c" />
+    <ClCompile Include="..\..\..\..\beams\mbedtls\ssl_ticket.c" />
+    <ClCompile Include="..\..\..\..\beams\mbedtls\ssl_tls.c" />
+    <ClCompile Include="..\..\..\..\beams\mbedtls\x509.c" />
+    <ClCompile Include="..\..\..\..\beams\mbedtls\x509write_crt.c" />
+    <ClCompile Include="..\..\..\..\beams\mbedtls\x509write_csr.c" />
+    <ClCompile Include="..\..\..\..\beams\mbedtls\x509_create.c" />
+    <ClCompile Include="..\..\..\..\beams\mbedtls\x509_crl.c" />
+    <ClCompile Include="..\..\..\..\beams\mbedtls\x509_crt.c" />
+    <ClCompile Include="..\..\..\..\beams\mbedtls\x509_csr.c" />
+    <ClCompile Include="..\..\..\..\beams\mbedtls\xtea.c" />
+    <ClCompile Include="..\..\..\..\beams\net_socket\net_socket.c" />
+    <ClCompile Include="..\..\..\..\beams\parser_curly_bracket\parser_curly_bracket.c" />
+    <ClCompile Include="..\..\..\..\beams\upd\upd.c" />
+    <ClCompile Include="..\..\..\..\beams\upd\upd_test.c" />
+    <ClCompile Include="..\..\..\..\beams\windows\file_api\win_file.c" />
+    <ClCompile Include="..\..\..\..\beams\windows\rtc_api\rtc_api.c" />
+    <ClCompile Include="..\..\..\..\beams\windows\socket_api\socket_api.c" />
+    <ClCompile Include="..\..\..\..\beams\windows\uart_api\uart_api.c" />
+    <ClCompile Include="..\..\..\..\columns\cipher\aes.c" />
+    <ClCompile Include="..\..\..\..\columns\cipher\aesni.c" />
+    <ClCompile Include="..\..\..\..\columns\cipher\arc4.c" />
+    <ClCompile Include="..\..\..\..\columns\cipher\aria.c" />
+    <ClCompile Include="..\..\..\..\columns\cipher\bignum.c" />
+    <ClCompile Include="..\..\..\..\columns\cipher\blowfish.c" />
+    <ClCompile Include="..\..\..\..\columns\cipher\camellia.c" />
+    <ClCompile Include="..\..\..\..\columns\cipher\chacha20.c" />
+    <ClCompile Include="..\..\..\..\columns\cipher\chachapoly.c" />
+    <ClCompile Include="..\..\..\..\columns\cipher\des.c" />
+    <ClCompile Include="..\..\..\..\columns\cipher\mbedtls_platform.c" />
+    <ClCompile Include="..\..\..\..\columns\cipher\mbedtls_timing.c" />
+    <ClCompile Include="..\..\..\..\columns\cipher\memory_buffer_alloc.c" />
+    <ClCompile Include="..\..\..\..\columns\cipher\padlock.c" />
+    <ClCompile Include="..\..\..\..\columns\cipher\poly1305.c" />
+    <ClCompile Include="..\..\..\..\columns\cipher\rsa.c" />
+    <ClCompile Include="..\..\..\..\columns\cipher\rsa_internal.c" />
+    <ClCompile Include="..\..\..\..\columns\cJSON\cJSON.c" />
+    <ClCompile Include="..\..\..\..\columns\codec\base16_codec.c" />
+    <ClCompile Include="..\..\..\..\columns\codec\base64.c" />
+    <ClCompile Include="..\..\..\..\columns\codec\base64_codec.c" />
+    <ClCompile Include="..\..\..\..\columns\hash\md2.c" />
+    <ClCompile Include="..\..\..\..\columns\hash\md4.c" />
+    <ClCompile Include="..\..\..\..\columns\hash\md5.c" />
+    <ClCompile Include="..\..\..\..\columns\hash\rfc1145_checksum.c" />
+    <ClCompile Include="..\..\..\..\columns\hash\ripemd160.c" />
+    <ClCompile Include="..\..\..\..\columns\hash\sha1.c" />
+    <ClCompile Include="..\..\..\..\columns\hash\sha256.c" />
+    <ClCompile Include="..\..\..\..\columns\hash\sha512.c" />
+    <ClCompile Include="..\..\..\..\columns\heap_memory\heap_first_fit\heap_first_fit.c" />
+    <ClCompile Include="..\..\..\..\columns\json_checker\JSON_checker.c" />
+    <ClCompile Include="..\..\..\..\columns\ring_buffer\ring_buffer.c" />
+    <ClCompile Include="..\..\..\..\columns\runtime_fault\runtime_fault.c" />
+    <ClCompile Include="..\..\..\..\columns\scheduler\windows\os.c" />
+    <ClCompile Include="..\..\..\..\columns\calendar\calendar.c" />
+    <ClCompile Include="..\..\..\..\columns\clock\clock.c" />
+    <ClCompile Include="..\..\..\..\columns\geometry\geometry.c" />
+    <ClCompile Include="..\..\..\..\columns\hash\crc\crc7.c" />
+    <ClCompile Include="..\..\..\..\columns\hash\crc\crc16.c" />
+    <ClCompile Include="..\..\..\..\columns\hash\crc\crc32.c" />
+    <ClCompile Include="..\..\..\..\columns\hash\crc\crc8.c" />
+    <ClCompile Include="..\..\..\..\columns\hash\fletcher\fletcher.c" />
+    <ClCompile Include="..\..\..\..\columns\debug\debug.c" />
+    <ClCompile Include="..\..\..\..\columns\event_fsm\event_fsm.c" />
+    <ClCompile Include="..\..\..\..\columns\fifo\fifo.c" />
+    <ClCompile Include="..\..\..\..\columns\list\list.c" />
+    <ClCompile Include="..\..\..\..\columns\pool\pool.c" />
+    <ClCompile Include="..\..\..\..\columns\queue\queue.c" />
+    <ClCompile Include="..\..\..\..\columns\string\string.c" />
+    <ClCompile Include="..\..\..\..\columns\timer\timer.c" />
+    <ClCompile Include="..\..\..\..\main.c" />
+    <ClCompile Include="..\..\application_win.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\..\..\beams\app_cfg.h" />
+    <ClInclude Include="..\..\..\..\beams\common_environment_cfg.h" />
+    <ClInclude Include="..\..\..\..\beams\common_plateform_cfg.h" />
+    <ClInclude Include="..\..\..\..\beams\deadline\app_cfg.h" />
+    <ClInclude Include="..\..\..\..\beams\deadline\deadline.h" />
+    <ClInclude Include="..\..\..\..\beams\frameworks\app_cfg.h" />
+    <ClInclude Include="..\..\..\..\beams\beams.h" />
+    <ClInclude Include="..\..\..\..\beams\frameworks\template_win\app_cfg.h" />
+    <ClInclude Include="..\..\..\..\beams\frameworks\template_win\deadline_type.h" />
+    <ClInclude Include="..\..\..\..\beams\frameworks\template_win\environment_cfg.h" />
+    <ClInclude Include="..\..\..\..\beams\frameworks\template_win\framework.h" />
+    <ClInclude Include="..\..\..\..\beams\frameworks\template_win\mbedtls_check_config.h" />
+    <ClInclude Include="..\..\..\..\beams\frameworks\template_win\mbedtls_config.h" />
+    <ClInclude Include="..\..\..\..\beams\frameworks\template_win\net_socket_type.h" />
+    <ClInclude Include="..\..\..\..\beams\frameworks\template_win\plateform_cfg.h" />
+    <ClInclude Include="..\..\..\..\beams\frameworks\template_win\ports\app_cfg.h" />
+    <ClInclude Include="..\..\..\..\beams\frameworks\template_win\ports\cJSON\cJSON_port.h" />
+    <ClInclude Include="..\..\..\..\beams\frameworks\template_win\ports\json_checker\JSON_checker_port.h" />
+    <ClInclude Include="..\..\..\..\beams\frameworks\template_win\toolchain_preinclude\preinclude.h" />
+    <ClInclude Include="..\..\..\..\beams\mbedtls\app_cfg.h" />
+    <ClInclude Include="..\..\..\..\beams\mbedtls\asn1.h" />
+    <ClInclude Include="..\..\..\..\beams\mbedtls\asn1write.h" />
+    <ClInclude Include="..\..\..\..\beams\mbedtls\ccm.h" />
+    <ClInclude Include="..\..\..\..\beams\mbedtls\certs.h" />
+    <ClInclude Include="..\..\..\..\beams\mbedtls\cipher.h" />
+    <ClInclude Include="..\..\..\..\beams\mbedtls\cipher_internal.h" />
+    <ClInclude Include="..\..\..\..\beams\mbedtls\cmac.h" />
+    <ClInclude Include="..\..\..\..\beams\mbedtls\ctr_drbg.h" />
+    <ClInclude Include="..\..\..\..\beams\mbedtls\dhm.h" />
+    <ClInclude Include="..\..\..\..\beams\mbedtls\ecdh.h" />
+    <ClInclude Include="..\..\..\..\beams\mbedtls\ecdsa.h" />
+    <ClInclude Include="..\..\..\..\beams\mbedtls\ecjpake.h" />
+    <ClInclude Include="..\..\..\..\beams\mbedtls\ecp.h" />
+    <ClInclude Include="..\..\..\..\beams\mbedtls\ecp_internal.h" />
+    <ClInclude Include="..\..\..\..\beams\mbedtls\entropy.h" />
+    <ClInclude Include="..\..\..\..\beams\mbedtls\entropy_poll.h" />
+    <ClInclude Include="..\..\..\..\beams\mbedtls\gcm.h" />
+    <ClInclude Include="..\..\..\..\beams\mbedtls\hkdf.h" />
+    <ClInclude Include="..\..\..\..\beams\mbedtls\hmac_drbg.h" />
+    <ClInclude Include="..\..\..\..\beams\mbedtls\mbedtls_debug.h" />
+    <ClInclude Include="..\..\..\..\beams\mbedtls\mbedtls_net_sockets.h" />
+    <ClInclude Include="..\..\..\..\beams\mbedtls\md.h" />
+    <ClInclude Include="..\..\..\..\beams\mbedtls\md_internal.h" />
+    <ClInclude Include="..\..\..\..\beams\mbedtls\nist_kw.h" />
+    <ClInclude Include="..\..\..\..\beams\mbedtls\oid.h" />
+    <ClInclude Include="..\..\..\..\beams\mbedtls\pem.h" />
+    <ClInclude Include="..\..\..\..\beams\mbedtls\pk.h" />
+    <ClInclude Include="..\..\..\..\beams\mbedtls\pkcs11.h" />
+    <ClInclude Include="..\..\..\..\beams\mbedtls\pkcs12.h" />
+    <ClInclude Include="..\..\..\..\beams\mbedtls\pkcs5.h" />
+    <ClInclude Include="..\..\..\..\beams\mbedtls\pk_internal.h" />
+    <ClInclude Include="..\..\..\..\beams\mbedtls\rsa_wrapper.h" />
+    <ClInclude Include="..\..\..\..\beams\mbedtls\ssl.h" />
+    <ClInclude Include="..\..\..\..\beams\mbedtls\ssl_cache.h" />
+    <ClInclude Include="..\..\..\..\beams\mbedtls\ssl_ciphersuites.h" />
+    <ClInclude Include="..\..\..\..\beams\mbedtls\ssl_cookie.h" />
+    <ClInclude Include="..\..\..\..\beams\mbedtls\ssl_internal.h" />
+    <ClInclude Include="..\..\..\..\beams\mbedtls\ssl_ticket.h" />
+    <ClInclude Include="..\..\..\..\beams\mbedtls\x509.h" />
+    <ClInclude Include="..\..\..\..\beams\mbedtls\x509_crl.h" />
+    <ClInclude Include="..\..\..\..\beams\mbedtls\x509_crt.h" />
+    <ClInclude Include="..\..\..\..\beams\mbedtls\x509_csr.h" />
+    <ClInclude Include="..\..\..\..\beams\mbedtls\xtea.h" />
+    <ClInclude Include="..\..\..\..\beams\net_socket\app_cfg.h" />
+    <ClInclude Include="..\..\..\..\beams\net_socket\net_socket.h" />
+    <ClInclude Include="..\..\..\..\beams\parser_curly_bracket\app_cfg.h" />
+    <ClInclude Include="..\..\..\..\beams\parser_curly_bracket\parser_curly_bracket.h" />
+    <ClInclude Include="..\..\..\..\beams\upd\app_cfg.h" />
+    <ClInclude Include="..\..\..\..\beams\upd\upd.h" />
+    <ClInclude Include="..\..\..\..\beams\windows\app_cfg.h" />
+    <ClInclude Include="..\..\..\..\beams\windows\file_api\app_cfg.h" />
+    <ClInclude Include="..\..\..\..\beams\windows\file_api\win_file.h" />
+    <ClInclude Include="..\..\..\..\beams\windows\rtc_api\app_cfg.h" />
+    <ClInclude Include="..\..\..\..\beams\windows\rtc_api\rtc_api.h" />
+    <ClInclude Include="..\..\..\..\beams\windows\socket_api\app_cfg.h" />
+    <ClInclude Include="..\..\..\..\beams\windows\socket_api\socket_api.h" />
+    <ClInclude Include="..\..\..\..\beams\windows\uart_api\app_cfg.h" />
+    <ClInclude Include="..\..\..\..\beams\windows\uart_api\uart_api.h" />
+    <ClInclude Include="..\..\..\..\columns\cipher\aes.h" />
+    <ClInclude Include="..\..\..\..\columns\cipher\aesni.h" />
+    <ClInclude Include="..\..\..\..\columns\cipher\app_cfg.h" />
+    <ClInclude Include="..\..\..\..\columns\cipher\arc4.h" />
+    <ClInclude Include="..\..\..\..\columns\cipher\aria.h" />
+    <ClInclude Include="..\..\..\..\columns\cipher\bignum.h" />
+    <ClInclude Include="..\..\..\..\columns\cipher\blowfish.h" />
+    <ClInclude Include="..\..\..\..\columns\cipher\bn_mul.h" />
+    <ClInclude Include="..\..\..\..\columns\cipher\camellia.h" />
+    <ClInclude Include="..\..\..\..\columns\cipher\chacha20.h" />
+    <ClInclude Include="..\..\..\..\columns\cipher\chachapoly.h" />
+    <ClInclude Include="..\..\..\..\columns\cipher\des.h" />
+    <ClInclude Include="..\..\..\..\columns\cipher\mbedtls_error.h" />
+    <ClInclude Include="..\..\..\..\columns\cipher\mbedtls_platform.h" />
+    <ClInclude Include="..\..\..\..\columns\cipher\mbedtls_platform_time.h" />
+    <ClInclude Include="..\..\..\..\columns\cipher\mbedtls_timing.h" />
+    <ClInclude Include="..\..\..\..\columns\cipher\memory_buffer_alloc.h" />
+    <ClInclude Include="..\..\..\..\columns\cipher\padlock.h" />
+    <ClInclude Include="..\..\..\..\columns\cipher\poly1305.h" />
+    <ClInclude Include="..\..\..\..\columns\cipher\rsa.h" />
+    <ClInclude Include="..\..\..\..\columns\cipher\rsa_internal.h" />
+    <ClInclude Include="..\..\..\..\columns\cJSON\cJSON.h" />
+    <ClInclude Include="..\..\..\..\columns\cJSON\cJSON_plug.h" />
+    <ClInclude Include="..\..\..\..\columns\clock\clock_plug.h" />
+    <ClInclude Include="..\..\..\..\columns\codec\app_cfg.h" />
+    <ClInclude Include="..\..\..\..\columns\codec\base64.h" />
+    <ClInclude Include="..\..\..\..\columns\columns.h" />
+    <ClInclude Include="..\..\..\..\columns\hash\md2.h" />
+    <ClInclude Include="..\..\..\..\columns\hash\md4.h" />
+    <ClInclude Include="..\..\..\..\columns\hash\md5.h" />
+    <ClInclude Include="..\..\..\..\columns\hash\ripemd160.h" />
+    <ClInclude Include="..\..\..\..\columns\hash\sha1.h" />
+    <ClInclude Include="..\..\..\..\columns\hash\sha256.h" />
+    <ClInclude Include="..\..\..\..\columns\hash\sha512.h" />
+    <ClInclude Include="..\..\..\..\columns\heap_memory\app_cfg.h" />
+    <ClInclude Include="..\..\..\..\columns\heap_memory\heap_first_fit\app_cfg.h" />
+    <ClInclude Include="..\..\..\..\columns\heap_memory\heap_first_fit\heap_first_fit.h" />
+    <ClInclude Include="..\..\..\..\columns\heap_memory\heap_memory.h" />
+    <ClInclude Include="..\..\..\..\columns\json_checker\JSON_checker.h" />
+    <ClInclude Include="..\..\..\..\columns\json_checker\JSON_checker_plug.h" />
+    <ClInclude Include="..\..\..\..\columns\ring_buffer\app_cfg.h" />
+    <ClInclude Include="..\..\..\..\columns\ring_buffer\ring_buffer.h" />
+    <ClInclude Include="..\..\..\..\columns\runtime_fault\app_cfg.h" />
+    <ClInclude Include="..\..\..\..\columns\runtime_fault\runtime_fault.h" />
+    <ClInclude Include="..\..\..\..\columns\runtime_fault\runtime_fault_plug.h" />
+    <ClInclude Include="..\..\..\..\columns\timer\timer_plug.h" />
+    <ClInclude Include="..\..\..\..\pedestals\app_cfg.h" />
+    <ClInclude Include="..\..\..\..\columns\scheduler\app_cfg.h" />
+    <ClInclude Include="..\..\..\..\columns\scheduler\os.h" />
+    <ClInclude Include="..\..\..\..\columns\scheduler\windows\app_cfg.h" />
+    <ClInclude Include="..\..\..\..\columns\scheduler\windows\os.h" />
+    <ClInclude Include="..\..\..\..\columns\app_cfg.h" />
+    <ClInclude Include="..\..\..\..\columns\calendar\app_cfg.h" />
+    <ClInclude Include="..\..\..\..\columns\calendar\calendar.h" />
+    <ClInclude Include="..\..\..\..\columns\clock\app_cfg.h" />
+    <ClInclude Include="..\..\..\..\columns\clock\clock.h" />
+    <ClInclude Include="..\..\..\..\columns\dsp\app_cfg.h" />
+    <ClInclude Include="..\..\..\..\columns\geometry\app_cfg.h" />
+    <ClInclude Include="..\..\..\..\columns\geometry\geometry.h" />
+    <ClInclude Include="..\..\..\..\columns\hash\app_cfg.h" />
+    <ClInclude Include="..\..\..\..\columns\hash\crc\app_cfg.h" />
+    <ClInclude Include="..\..\..\..\columns\hash\crc\crc.h" />
+    <ClInclude Include="..\..\..\..\columns\hash\fletcher\app_cfg.h" />
+    <ClInclude Include="..\..\..\..\columns\hash\fletcher\fletcher.h" />
+    <ClInclude Include="..\..\..\..\columns\debug\app_cfg.h" />
+    <ClInclude Include="..\..\..\..\columns\debug\debug.h" />
+    <ClInclude Include="..\..\..\..\columns\event_fsm\app_cfg.h" />
+    <ClInclude Include="..\..\..\..\columns\event_fsm\event_fsm.h" />
+    <ClInclude Include="..\..\..\..\columns\fifo\app_cfg.h" />
+    <ClInclude Include="..\..\..\..\columns\fifo\fifo.h" />
+    <ClInclude Include="..\..\..\..\columns\list\app_cfg.h" />
+    <ClInclude Include="..\..\..\..\columns\list\list.h" />
+    <ClInclude Include="..\..\..\..\columns\pool\app_cfg.h" />
+    <ClInclude Include="..\..\..\..\columns\pool\pool.h" />
+    <ClInclude Include="..\..\..\..\columns\queue\app_cfg.h" />
+    <ClInclude Include="..\..\..\..\columns\queue\queue.h" />
+    <ClInclude Include="..\..\..\..\columns\string\app_cfg.h" />
+    <ClInclude Include="..\..\..\..\columns\string\string.h" />
+    <ClInclude Include="..\..\..\..\columns\timer\app_cfg.h" />
+    <ClInclude Include="..\..\..\..\columns\timer\timer.h" />
+    <ClInclude Include="..\..\..\..\pedestals\utilities\compiler\compiler.h" />
+    <ClInclude Include="..\..\..\..\pedestals\utilities\compiler\x86\x86_compiler.h" />
+    <ClInclude Include="..\..\..\..\pedestals\utilities\preprocessor\mrepeat.h" />
+    <ClInclude Include="..\..\..\..\pedestals\utilities\preprocessor\preprocessor.h" />
+    <ClInclude Include="..\..\..\..\pedestals\utilities\preprocessor\stringz.h" />
+    <ClInclude Include="..\..\..\..\pedestals\utilities\preprocessor\tpaste.h" />
+    <ClInclude Include="..\..\..\..\pedestals\utilities\usebits.h" />
+    <ClInclude Include="..\..\..\..\pedestals\utilities\user_type.h" />
+    <ClInclude Include="..\..\..\..\pedestals\utilities\utilities.h" />
+    <ClInclude Include="..\..\app_cfg.h" />
+    <ClInclude Include="..\..\config\application_cfg.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="..\..\..\..\columns\hash\crc\IEEE802_3 crc32 table.txt" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
