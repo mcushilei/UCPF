@@ -1,5 +1,5 @@
 /*******************************************************************************
- *  Copyright(C)2015 by Dreistein<mcu_shilei@hotmail.com>                     *
+ *  Copyright(C)2015-2021 by Dreistein<mcu_shilei@hotmail.com>                *
  *                                                                            *
  *  This program is free software; you can redistribute it and/or modify it   *
  *  under the terms of the GNU Lesser General Public License as published     *
@@ -60,7 +60,7 @@ void n2h_2(char *n)
 
 bool memory_is_same(const void *m1, const void *m2, size_t n)
 {
-    if ((NULL == m1) || (NULL == m2) || (0 == n)) {
+    if ((NULL == m1) || (NULL == m2)) {
         return false;
     }
 
@@ -72,7 +72,7 @@ bool memory_is_same(const void *m1, const void *m2, size_t n)
         m2 = (char *)m2 + 1;
     }
 
-    return false;
+    return true;
 }
 
 bool memory_copy(void *d, const void *s, size_t n)
@@ -90,14 +90,14 @@ bool memory_copy(void *d, const void *s, size_t n)
     return true;
 }
 
-bool mmemory_zeroize( void *buf, size_t len )
+bool memory_zeroize( void *buf, size_t len )
 {
-    if (!( len >= 0 || buf != NULL)) {
+    if (NULL == buf) {
         return false;
     }
 
     if (len > 0) {
-        memset( buf, 0, len );
+        memset(buf, 0, len);
     }
     return true;
 }
@@ -113,7 +113,7 @@ unsigned int hex_str2uint(const char *str)
 
     for (; CHAR_IS_HEX(*str); str++) {
         val <<= 4;
-        val += (*str > '9')? ((*str < 'a')? (10 + (*str - 'A')) : (10 + (*str - 'a'))) : (*str - '0');
+        val += CHAR_HEX_TO_INT(*str);
     }
 
     return val;

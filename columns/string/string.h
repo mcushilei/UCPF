@@ -1,5 +1,5 @@
 /*******************************************************************************
- *  Copyright(C)2015-2019 by Dreistein<mcu_shilei@hotmail.com>                *
+ *  Copyright(C)2015-2021 by Dreistein<mcu_shilei@hotmail.com>                *
  *                                                                            *
  *  This program is free software; you can redistribute it and/or modify it   *
  *  under the terms of the GNU Lesser General Public License as published     *
@@ -40,7 +40,7 @@
 #define CHAR_DIG_TO_INT(__C)        ((__C) - '0')
 
 #define CHAR_HEX_TO_INT(__C)        \
-    ((__C) >= '0' && (__C) <= '9') ? ((__C) - '0') : ( ((__C) >= 'A' && (__C) <= 'F') ? ((__C) - 'A') : ( ((__C) >= 'a' && (__C) <= 'f') ?  ((__C) - 'a' ) : 0u ) )
+    ( (__C) > 'a' )? ( (__C) - 'a' + 10 ) : ( ( (__C) > 'A' )? ( (__C) - 'A' + 10 ) : ( (__C) - '0' ) )
 
 #ifdef USE_STAND_STRING_LIB
 #   define STRING_PRINTF(__string, __VA0, ...)          \
@@ -56,7 +56,7 @@
 /*============================ PROTOTYPES ====================================*/
 extern bool         memory_is_same(const void *m1, const void *m2, size_t n);
 extern bool         memory_copy(void *d, const void *s, size_t n);
-extern bool         mmemory_zeroize( void *buf, size_t len );
+extern bool         memory_zeroize( void *buf, size_t len );
 extern unsigned int hex_str2uint(const char *str);
 extern int          int_str2int(const char *str);
 extern float        dec_str2float(const char *decimalString);
