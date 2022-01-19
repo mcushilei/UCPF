@@ -46,10 +46,13 @@
 /*============================ MACROFIED FUNCTIONS ===========================*/
 
 //! \brief these macros are used to generate the macros operating on register values in the reg_xxx.h files.
-//! PRINT_REG_DEFINR_W    a field of a register is defined by width and shift.
-//! PRINT_REG_DEFINR_B    a field of a register is defined by MSB and LSB.
+//! PRINT_REG_DEFINE_W    a field of a register is defined by width and shift.
+//! PRINT_REG_DEFINE_B    a field of a register is defined by MSB and LSB.
+//! part: is the peripheral name eg. ADC, UART etc.
+//! reg: is the register name.
+//! field: is the name of bit fild in a register.
 //!
-#define PRINT_REG_DEFINR_B(part, reg, field, msb, lsb)    \
+#define PRINT_REG_DEFINE_B(part, reg, field, msb, lsb)    \
 do {    \
     char buf[200];\
     snprintf(buf, sizeof(buf), "\r\n#define REG_%s_%s_%s_S", #part, #reg, #field);\
@@ -62,7 +65,7 @@ do {    \
     printf("%-40s  (((uint32_t)(v) & 0x%08X) >> %u)", buf, ((1u << ((msb) - (lsb) + 1u)) - 1) << lsb, lsb);\
 } while (0)
 
-#define PRINT_REG_DEFINR_W(part, reg, field, width, shift)    \
+#define PRINT_REG_DEFINE_W(part, reg, field, width, shift)    \
 do {    \
     char buf[200];\
     snprintf(buf, sizeof(buf), "\r\n#define REG_%s_%s_%s_S", #part, #reg, #field);\
