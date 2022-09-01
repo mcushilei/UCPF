@@ -20,7 +20,7 @@
 #define __SERVICE_DEBUG_H__
 
 /*============================ INCLUDES ======================================*/
-#include ".\app_cfg.h"
+#include "./app_cfg.h"
 #include <stdio.h>
 
 //! DEBUG_CONFIG_FILE should be defined to specify the path of configration file.
@@ -88,15 +88,11 @@ extern int (*debug_printf)( const _CHAR *format, ... );
  */
 int debug_set_printf( int (*printf_func)( const _CHAR *, ... ) );
 
-#else /* !DEBUG_PRINTF_ALT */
-
-#if defined(DEBUG_PRINTF_MACRO)
-#define debug_printf     DEBUG_PRINTF_MACRO
+#elif defined(DEBUG_PRINTF_MACRO)
+#   define debug_printf     DEBUG_PRINTF_MACRO
 #else
-#define debug_printf     printf
-#endif /* DEBUG_PRINTF_MACRO */
-
-#endif /* DEBUG_PRINTF_ALT */
+#   define debug_printf     printf
+#endif
 
 //! \brief run-time trace log message
 //! {
@@ -119,7 +115,7 @@ int debug_set_printf( int (*printf_func)( const _CHAR *, ... ) );
 //! \brief debug log message with filter
 //! {
 #if DEBUG_MSG_ENABLE == ENABLED
-#   define __DEBUG_MSG(filter, line, fmt, ...)       \
+#   define __DEBUG_MSG_FLT(filter, line, fmt, ...)       \
     do {                                        \
         if (( (filter) & (DEBUG_ON)) &&         \
             ( (filter) & (DEBUG_TYPES_ON)) &&   \
@@ -131,9 +127,9 @@ int debug_set_printf( int (*printf_func)( const _CHAR *, ... ) );
         }                                       \
     } while(0)
 
-#   define DEBUG_MSG(filter, fmt, ...)    __DEBUG_MSG(filter, __LINE__, fmt, ##__VA_ARGS__)
+#   define DBG_MSG(filter, fmt, ...)        __DEBUG_MSG_FLT(filter, __LINE__, fmt, ##__VA_ARGS__)
 #else
-#   define DEBUG_MSG(filter, fmt, ...)
+#   define DBG_MSG(filter, fmt, ...)
 #endif
 //! }
 
