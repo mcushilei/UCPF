@@ -54,34 +54,33 @@
 #   define WEAK             __weak
 #   define ROOT             __root
 #   define RAMFUNC          __ramfunc
-#   define __asm__          __asm
 #   define ALIGN(__N)       _Alignas(__N)
 #   define ALIGN_OF(__V)    __ALIGNOF__(__V)
 #   define AT_ADDR(__ADDR)  _Pragma(STRINGZ(location=__ADDR))
 #   define SECTION(__SEC)   _Pragma(STRINGZ(location=__SEC))
-#   define INLINE           inline
+#   define __asm__          asm
+#   define barrier()        asm volatile("":::"memory")
 #elif   __IS_COMPILER_GCC__
 #   define NO_INIT          __attribute__((section("noinit"))
 #   define WEAK             __attribute__((weak))
 #   define ROOT             __attribute__((used))
 #   define RAMFUNC          __attribute__((section("textrw")))
-#   define __asm__          __asm
 #   define ALIGN(__N)       __attribute__((aligned(__N)))
-#   define ALIGN_OF(__V)    alignof(__V)
-#   define AT_ADDR(__ADDR)  __attribute__((at(__ADDR)))
+#   define ALIGN_OF(__V)    __alignof__(__V)
 #   define SECTION(__SEC)   __attribute__((section(__SEC)))
-#   define INLINE           inline
+#   define barrier()        __asm__ __volatile__("":::"memory")
 #elif   __IS_COMPILER_MDK__
 #   define NO_INIT          __attribute__((section("noinit"),zero_init))
 #   define WEAK             __attribute__((weak))
 #   define ROOT             __attribute__((used))
 #   define RAMFUNC          __attribute__((section("textrw")))
-#   define __asm__          __asm
 #   define ALIGN(__N)       __attribute__((aligned(__N)))
 #   define ALIGN_OF(__V)    __ALIGNOF__(__V)
 #   define AT_ADDR(__ADDR)  __attribute__((at(__ADDR)))
 #   define SECTION(__SEC)   __attribute__((section(__SEC)))
-#   define INLINE           __inline
+#   define __asm__          __asm
+#   define inline           __inline
+#   define barrier()        __asm volatile("":::"memory")
 #endif
 
 #define ISR(__VECTOR)       ROOT void __VECTOR(void)
