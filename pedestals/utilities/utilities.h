@@ -37,9 +37,16 @@
             
 #define SIZE_OF(__type, __member)   (sizeof( ((__type *)0)->__member ))
 
+//! \brief get the address offset of a member in a structure type.
+#ifndef offsetof
+#   define OFFSET_OF(__type, __member)      ( (size_t)&(( (__type *)0 )->__member) )
+#else
+#   define OFFSET_OF                        offsetof
+#endif
+
 //! \brief  get compound type variable's address from one of its member's address.
 #define CONTAINER_OF(__ptr, __type, __member) ( \
-        (__type*)( (char*)(__ptr) - offsetof(__type, __member) ))
+        (__type*)( (char*)(__ptr) - OFFSET_OF(__type, __member) ))
 
 
 #define UBOUND(__ARRAY)             ( sizeof(__ARRAY) / sizeof(__ARRAY[0]) )
@@ -128,33 +135,46 @@
 #define ABS(__I)            (((__I) ^ ((__I) >> 31)) - ((__I) >> 31))
             
 //! \brief LFSM(Little Finite State Machine) implement by 'goto' method;
-#define LFSM_BEGIN(__M)             __##__M##_begin__:\
-                                    {\
+//! {
+#define LFSM_BEGIN(__M)             __##__M##_begin__:  \
+                                    {
     
-#define LFSM_END(__M)               }\
+#define LFSM_END(__M)               }                   \
                                     __##__M##_end__:
 
 #define LFSM_CPL(__M)               goto __##__M##_end__;
 
-#define LFSM_STATE_BEGIN(__S, ...)  \
-                                    __##__S##_ENTRY__:\
-                                    {\
-                                    ##__VA_ARGS__\
-                                    }\
-                                    __##__S##_begin__:\
-                                    {
+//! \note __##__S##_ENTRY__ vs __##__S##_begin__
+//!  ENTRY code will only run when entrying this state but not be touched within this state.
+#define LFSM_STATE_BEGIN(__S, ...)                                  \
+                                    __##__S##_ENTRY__:              \
+                                    {                               \
+                                        ##__VA_ARGS__               \
+                                        __##__S##_begin__:          \
+                                        {
 
-//! It just jumps at the start of this state if there is no state transfer.
-#define LFSM_STATE_END(__S)         }\
-                                    goto __##__S##_begin__;
+//! It just jumps at the start of this state if there is no state transfer(polling this state).
+#define LFSM_STATE_END(__S)             }                           \
+                                        goto __##__S##_begin__;     \
+                                    }
 
-#define LFSM_STATE_TRANS_TO(__S, ...)\
-                                    {\
-                                    ##__VA_ARGS__\
-                                    }\
-                                    goto __##__S##_ENTRY__;\
+#define LFSM_STATE_TRANS_TO(__S, ...)                       \
+                                    {                       \
+                                        ##__VA_ARGS__       \
+                                    }                       \
+                                    goto __##__S##_ENTRY__;
+
+//! }
 
 /* LFSM example:
+
+void on_entry_state_2(void)
+{
+    printf("\r\n entry state_2.");
+}
+
+void main()
+{
     LFSM_BEGIN(test_fsm)
         uint8_t c = 4;
         LFSM_STATE_BEGIN(state_1)
@@ -162,7 +182,7 @@
             LFSM_STATE_TRANS_TO(state_2)
         LFSM_STATE_END(state_1)
 
-        LFSM_STATE_BEGIN(state_2)
+        LFSM_STATE_BEGIN(state_2, on_entry_state_2();)
             uint8_t d = 4;
             printf("\r\nd = %u", d);
             c--;
@@ -173,6 +193,8 @@
             }
         LFSM_STATE_END(state_2)
     LFSM_END(test_fsm)
+}
+
 */
 
 #if defined(__DEBUG__)
