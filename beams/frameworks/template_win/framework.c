@@ -82,7 +82,7 @@ bool framework_init(void)
 }
 
 
-void debug_output_char(char ch)
+void uctest_output_char(char ch)
 {
     putchar(ch);
 }
@@ -91,6 +91,15 @@ int user_printf_output_char(char ch)
 {
     putchar(ch);
     return ch;
+}
+
+void debug_trap( void )
+{
+
+}
+void debug_exit_trap( void )
+{
+
 }
 
 

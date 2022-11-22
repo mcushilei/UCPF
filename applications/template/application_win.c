@@ -35,7 +35,6 @@ static void my_debug( void *ctx, int level, const char *file, int line, const ch
 	printf(" \r\n %s:%04d: %s", file, line, str );
 }
 
-extern void test_upd( void );
 
 
 void print_mem( const void* data, unsigned int length )
@@ -51,12 +50,6 @@ void print_mem( const void* data, unsigned int length )
 }
 
 
-unsigned char test1[] = { 21, 8, 30, 22, 23, 24 };
-//char test1[] = { 0,0,0,0,0,0 };
-char test2[32];
-char test3[32];
-
-extern uint32_t base64_encode( uint8_t in[], uint32_t inLen, uint8_t out[] );
 
 /*! \note user's application
  *  \param none
@@ -64,15 +57,57 @@ extern uint32_t base64_encode( uint8_t in[], uint32_t inLen, uint8_t out[] );
  */
 int app_init( void )
 {
+    CHAR currentPath[MAX_PATH] = { 0 };
+    CHAR myPath[MAX_PATH];
 
-    uint32_t len;
+    if( GetCurrentDirectory( MAX_PATH, currentPath ) == 0 ) {
+        DBG_LOG( "GetCurrentDirectory fail: %u", GetLastError() );
+        return -1;
+    }
+    strcat_s( currentPath, MAX_PATH - strlen( currentPath ), "\\" );
+    printf( "\r\n%s", currentPath );
 
-    len = base64_encode( test1, 6, test2 );
-    printf( "%s, %d \r\n", test2, len );
+#if 0
+    //! file operation example
+    file_t source, dest;
+    if( !file_api_open( &source, "C:\\Users\\zheng\\Desktop\\111.mp3" ) ) {
+        printf( "\r\n file_api_open() fail!" );
+        return -1;
+    }
+    uint64_t fileSize = 0;
+    file_api_get_size( source, &fileSize );
+    char *buf = malloc( fileSize );
+    uint32_t len = fileSize;
+    if( !file_api_read( source, 0, buf, &len ) ) {
+        printf( "\r\n file_api_read() fail!" );
+        return -1;
+    }
+    file_api_close( source );
 
 
-    //test_upd();
+    char pathNew[200] = "C:\\Users\\zheng\\Desktop\\test_files\\";
+    int pathNewLen = strlen( pathNew );
+    CreateDirectory( pathNew, NULL );
+    for( uint32_t i = 0; i < 1000; i++ ) {
+        sprintf( pathNew + pathNewLen, "%04u.mp3", i );
+        printf( "\r\n%s", pathNew );
+        if( !file_api_open( &dest, pathNew ) ) {
+            printf( "\r\n file_api_open() fail!" );
+            return -1;
+        }
+        file_api_write( dest, 0, buf, fileSize );
+        file_api_close( dest );
+    }
+#endif
 
+    DBG_MSG( DEBUG_ON | DEBUG_TRACE | DEBUG_LEVEL_NORMAL, "this is a test of DEBUG_MSG()" );
+
+    UCTEST_TRUE( GetCurrentDirectory( MAX_PATH, currentPath ) == 0 );
+    UCTEST_NOT_NULL( NULL );
+    UCTEST_EQUAL_HEX( 1, hex_str2uint("Fe2"));
+    UCTEST_EQUAL_UINT( 4294967295, hex_str2uint( "Fe2" ) );
+    UCTEST_EQUAL_INT( -1, hex_str2uint( "Fe2" ) );
+    UCTEST_EQUAL_BIN( 0xFFFFu, 0xF0, 0x0F );
 
     return 0;
 }

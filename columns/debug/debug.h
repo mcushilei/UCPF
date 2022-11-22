@@ -1,5 +1,5 @@
 /*******************************************************************************
- *  Copyright(C)2015-2021 by Dreistein<mcu_shilei@hotmail.com>                *
+ *  Copyright(C)2015-2022 by Dreistein<mcu_shilei@hotmail.com>                *
  *                                                                            *
  *  This program is free software; you can redistribute it and/or modify it   *
  *  under the terms of the GNU Lesser General Public License as published     *
@@ -21,7 +21,6 @@
 
 /*============================ INCLUDES ======================================*/
 #include "./app_cfg.h"
-#include <stdio.h>
 
 //! DEBUG_CONFIG_FILE should be defined to specify the path of configration file.
 //! debug_config.h is the default one to prevent compiler aborting and shall not
@@ -71,7 +70,7 @@
 
 /*============================ MACROFIED FUNCTIONS ===========================*/
 
-#if defined(DEBUG_PRINTF_ALT)
+#if defined(DEBUG_PRINTF_DYN)
 /*
  * The function pointers for printf
  */
@@ -86,11 +85,10 @@ extern int (*debug_printf)( const _CHAR *format, ... );
  *
  * \return              \c 0 on success.
  */
-int debug_set_printf( int (*printf_func)( const _CHAR *, ... ) );
+extern int debug_set_printf( int (*printf_func)( const _CHAR *, ... ) );
 
-#elif defined(DEBUG_PRINTF_MACRO)
-#   define debug_printf     DEBUG_PRINTF_MACRO
-#else
+#elif !defined(debug_printf)
+#   include <stdio.h>
 #   define debug_printf     printf
 #endif
 
@@ -133,132 +131,10 @@ int debug_set_printf( int (*printf_func)( const _CHAR *, ... ) );
 #endif
 //! }
 
-//! \brief debug asserts
-//! {
-#if DEBUG_ASSERT_ENABLE == ENABLED
-
-#   define __DEBUG_ASSERT(condition, line, ...)     \
-    do {                                            \
-        if (!(condition)) {                         \
-            debug_failure_captured((const _CHAR *)__ThisFileName, line);    \
-            __VA_ARGS__                             \
-        }                                           \
-    } while (0);
-
-#   define DEBUG_ASSERT(condition, ...)     __DEBUG_ASSERT(condition, __LINE__, ##__VA_ARGS__)
-
-
-#   define DEBUG_ASSERT_NOT_NULL(pointer, ...)                      \
-        DEBUG_ASSERT(                                               \
-            ((pointer) != NULL),                                    \
-            debug_print_null_point();                               \
-            __VA_ARGS__                                             \
-        )
-
-#   define DEBUG_ASSERT_EQUAL_HEX(expected, actual, ...)            \
-        DEBUG_ASSERT(                                               \
-            ((_UINT)(expected) == (_UINT)(actual)),                 \
-            debug_print_equal_number((_SINT)(expected), (_SINT)(actual), DEBUG_DISPLAY_STYLE_POINTER);\
-            __VA_ARGS__                                             \
-        )
-
-#   define DEBUG_ASSERT_EQUAL_PTR DEBUG_ASSERT_EQUAL_HEX
-
-#   define DEBUG_ASSERT_EQUAL_UINT(expected, actual, ...)           \
-        DEBUG_ASSERT(                                               \
-            ((_UINT)(expected) == (_UINT)(actual)),                 \
-            debug_print_equal_number((_SINT)(expected), (_SINT)(actual), DEBUG_DISPLAY_STYLE_UINT);\
-            __VA_ARGS__                                             \
-        )
-
-#   define DEBUG_ASSERT_EQUAL_INT(expected, actual, ...)            \
-        DEBUG_ASSERT(                                               \
-            ((_SINT)(expected) == (_SINT)(actual)),                 \
-            debug_print_equal_number((_SINT)(expected), (_SINT)(actual), DEBUG_DISPLAY_STYLE_INT);\
-            __VA_ARGS__                                             \
-        )
-
-#   define DEBUG_ASSERT_EQUAL_STRING(expected, actual, ...)         \
-        DEBUG_ASSERT(                                               \
-            debug_string_compare((expected), (actual)),             \
-            debug_print_expected_actual_string((expected), (actual));\
-            __VA_ARGS__                                             \
-        )
-
-#   define DEBUG_ASSERT_BITS(mask, expected, actual, ...)           \
-        DEBUG_ASSERT(                                               \
-            (((_UINT)mask & (_UINT)expected) == ((_UINT)mask & (_UINT)actual)),\
-            debug_print_equal_bits((_UINT)mask, (_UINT)expected, (_UINT)actual);\
-            __VA_ARGS__                                             \
-        )
-
-#else
-#   define DEBUG_ASSERT(condition, ...)
-#   define DEBUG_ASSERT_NOT_NULL(pointer, ...)
-#   define DEBUG_ASSERT_EQUAL_HEX(expected, actual, ...)
-#   define DEBUG_ASSERT_EQUAL_PTR(expected, actual, ...)
-#   define DEBUG_ASSERT_EQUAL_UINT(expected, actual, ...)
-#   define DEBUG_ASSERT_EQUAL_INT(expected, actual, ...)
-#   define DEBUG_ASSERT_EQUAL_STRING(expected, actual, ...)
-#   define DEBUG_ASSERT_BITS(mask, expected, actual, ...)
-#endif
-//! }
-
 /*============================ TYPES =========================================*/
-//-------------------------------------------------------
-// Internal Structs Needed
-//-------------------------------------------------------
-enum {
-    DEBUG_DISPLAY_STYLE_INT      = 0,
-    DEBUG_DISPLAY_STYLE_UINT,
-    DEBUG_DISPLAY_STYLE_HEX,
-    DEBUG_DISPLAY_STYLE_POINTER,
-};
-
-#if   (DEBUG_INT_WIDTH == 64)
-typedef uint64_t _UINT;
-typedef int64_t _SINT;
-#elif (DEBUG_INT_WIDTH == 32)
-typedef uint32_t _UINT;
-typedef int32_t _SINT;
-#elif (DEBUG_INT_WIDTH == 16)
-typedef uint16_t _UINT;
-typedef int16_t _SINT;
-#elif (DEBUG_INT_WIDTH == 8)
-typedef uint8_t _UINT;
-typedef int8_t _SINT;
-#else
-#error "Invalid DEBUG_INT_WIDTH specified! (64, 32, 16 or 8 are supported)"
-#endif
-
-#if   (DEBUG_POINTER_WIDTH == 64)
-typedef uint64_t _UP;
-#elif (DEBUG_POINTER_WIDTH == 32)
-typedef uint32_t _UP;
-#elif (DEBUG_POINTER_WIDTH == 16)
-typedef uint16_t _UP;
-#else
-#error "Invalid DEBUG_POINTER_WIDTH specified! (64, 32 or 16 are supported)"
-#endif
-
-
 /*============================ LOCAL VARIABLES ===============================*/
 /*============================ GLOBAL VARIABLES ==============================*/
 /*============================ PROTOTYPES ====================================*/
-//-------------------------------------------------------
-// Debug Fuctions
-//-------------------------------------------------------
-//  Use the macros above this section instead of calling
-//  these directly. The macros have a consistent naming
-//  convention and will pull in file and line information
-//  for you.
-extern void debug_print_string( const _CHAR *string );
-extern void debug_failure_captured( const _CHAR *file, const _UINT line );
-extern void debug_print_equal_number( const _SINT expected, const _SINT actual, const unsigned int style );
-extern void debug_print_equal_bits( const _UINT mask, const _UINT expected, const _UINT actual );
-extern void debug_print_expected_actual_string( const _CHAR *expected, const _CHAR *actual );
-extern void debug_print_null_point( void );
-extern int  debug_string_compare( const _CHAR *expected, const _CHAR *actual );
 extern void debug_trap( void );
 extern void debug_exit_trap( void );
 

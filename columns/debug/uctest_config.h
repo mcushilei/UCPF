@@ -15,24 +15,13 @@
  *  along with this program; if not, see http://www.gnu.org/licenses/.        *
 *******************************************************************************/
 
-#ifndef __SERVICE_DEBUG_PLUG_H__
-#define __SERVICE_DEBUG_PLUG_H__
-
-/*============================ INCLUDES ======================================*/
-#include "./app_cfg.h"
-
-#if !defined(DEBUG_CONFIG_FILE)
-#include "./debug_config.h"
-#else
-#include DEBUG_CONFIG_FILE
-#endif
+#ifndef __SERVICE_UCTEST_CFG_H__
+#define __SERVICE_UCTEST_CFG_H__
 
 /*============================ MACROS ========================================*/
-/*============================ MACROFIED FUNCTIONS ===========================*/
-/*============================ TYPES =========================================*/
-/*============================ PUBLIC VARIABLES ==============================*/
-/*============================ PUBLIC PROTOTYPES =============================*/
-extern void debug_output_char(_CHAR ch);
+#define UCTEST_POINTER_WIDTH     (32)
+#define UCTEST_INT_WIDTH         (32)
+#define UCTEST_DISALLOW_FILE_INFO 0
 
-#endif  //!< #ifndef __SERVICE_DEBUG_PLUG_H__
+#endif  //!< #ifndef __SERVICE_UCTEST_CFG_H__
 /* EOF */

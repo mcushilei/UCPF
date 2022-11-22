@@ -501,6 +501,9 @@
     <ClCompile Include="..\..\..\..\columns\codec\base64_codec.c">
       <Filter>columns\codec</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\..\..\columns\debug\uctest.c">
+      <Filter>columns\debug</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\..\pedestals\app_cfg.h">
@@ -1009,6 +1012,12 @@
     </ClInclude>
     <ClInclude Include="..\..\..\..\beams\upd\upd.h">
       <Filter>beams\upd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\columns\debug\debug_config.h">
+      <Filter>columns\debug</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\columns\debug\uctest.h">
+      <Filter>columns\debug</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

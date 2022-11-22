@@ -96,11 +96,11 @@
 
 //! \name internal class
 //! @{
-DEF_STRUCTURE(__spi_t)
+typedef struct {
     ssp_reg_t       *ptREG;                 //!< reference to register page
     uint32_t      tPOWER;
     uint32_t    tPClk;
-END_DEF_STRUCTURE(__spi_t)
+} __spi_t;
 //! @}
 
 /*============================ PROTOTYPES ====================================*/

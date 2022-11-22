@@ -22,6 +22,7 @@
 /*============================ INCLUDES ======================================*/
 #include "./app_cfg.h"
 #include "./debug/debug.h"
+#include "./debug/uctest.h"
 #include "./string/string.h"
 #include "./runtime_fault/runtime_fault.h"
 #include "./json_checker/json_checker.h"

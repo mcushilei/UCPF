@@ -1,5 +1,5 @@
 /*******************************************************************************
- *  Copyright(C)2018-2020 by Dreistein<mcu_shilei@hotmail.com>                *
+ *  Copyright(C)2018-2021 by Dreistein<mcu_shilei@hotmail.com>                *
  *                                                                            *
  *  This program is free software; you can redistribute it and/or modify it   *
  *  under the terms of the GNU Lesser General Public License as published     *
@@ -67,9 +67,6 @@ a example:
     uint32_t xfercount = length - 1;
 
 	Chip_DMA_Init( &DMA0_REG );
-
-    Chip_DMA_Disable( &DMA0_REG );
-	Chip_DMA_SetSRAMBase( &DMA0_REG , (uint32_t)(Chip_DMA_Table));
     
     Descriptor_Start.source = (uint32_t)(&ADC0_REG.SEQ_GDAT[ADC_SEQA_IDX]);
 	Descriptor_Start.dest   = (uint32_t)(&buf[xfercount]);
@@ -139,14 +136,10 @@ a example:
 #include ".\reg_dma.h"
 
 /*============================ MACROS ========================================*/
-/* DMA interrupt status bits (common) */
-#define DMA_INTSTAT_ACTIVEINT       0x2		/*!< Summarizes whether any enabled interrupts are pending */
-#define DMA_INTSTAT_ACTIVEERRINT    0x4		/*!< Summarizes whether any error interrupts are pending */
-
 /*============================ MACROFIED FUNCTIONS ===========================*/
 /*============================ TYPES =========================================*/
 
-/* DMA channel source/address/next descriptor */
+/* DMA channel descriptor */
 typedef struct {
 	uint32_t  xfercfg;		/*!< Transfer configuration (only used in linked lists and ping-pong configs) */
 	uint32_t  source;		/*!< DMA transfer source end address */
@@ -155,37 +148,22 @@ typedef struct {
 } DMA_CHDESC_T;
 
 /*============================ GLOBAL VARIABLES ==============================*/
-
-
-/* DMA SRAM table - this can be optionally used with the Chip_DMA_SetSRAMBase()
-   function if a DMA SRAM table is needed. */
-extern DMA_CHDESC_T Chip_DMA_Table[18];
-
 /*============================ LOCAL VARIABLES ===============================*/
 /*============================ PROTOTYPES ====================================*/
+
 /**
  * @brief	Initialize DMA controller
  * @param	pDMA	: The base of DMA controller on the chip
  * @return	Nothing
  */
-static INLINE void Chip_DMA_Init(dma_reg_t *pDMA)
-{
-	(void) pDMA;
-    
-	clock_enable(CLOCK_DMA);
-    sysctrl_periph_reset(DMA_RST);
-}
+extern void Chip_DMA_Init(dma_reg_t *pDMA);
 
 /**
  * @brief	De-Initialize DMA controller
  * @param	pDMA	: The base of DMA controller on the chip
  * @return	Nothing
  */
-static INLINE void Chip_DMA_DeInit(dma_reg_t *pDMA)
-{
-	(void) pDMA;
-	clock_disable(CLOCK_DMA);
-}
+extern void Chip_DMA_DeInit(dma_reg_t *pDMA);
 
 /**
  * @brief	Enable DMA controller
@@ -207,6 +185,10 @@ static INLINE void Chip_DMA_Disable(dma_reg_t *pDMA)
 	pDMA->CTRL = 0;
 }
 
+/* DMA interrupt status bits (common) */
+#define CHIP_DMA_INTSTAT_ACTIVEINT       0x2		/*!< Summarizes whether any enabled interrupts are pending */
+#define CHIP_DMA_INTSTAT_ACTIVEERRINT    0x4		/*!< Summarizes whether any error interrupts are pending */
+
 /**
  * @brief	Get pending interrupt or error interrupts
  * @param	pDMA	: The base of DMA controller on the chip
@@ -220,32 +202,7 @@ static INLINE uint32_t Chip_DMA_GetIntStatus(dma_reg_t *pDMA)
 	return (pDMA->INTSTAT & ~REG_DMA_INTSTAT_RESERVED);
 }
 
-/**
- * @brief	Set DMA controller SRAM base address
- * @param	pDMA	: The base of DMA controller on the chip
- * @param	base	: The base address where the DMA descriptors will be stored
- * @return	Nothing
- * @note	A 256 byte block of memory aligned on a 256 byte boundary must be
- *			provided for this function. It sets the base address used for
- *			DMA descriptor table (16 descriptors total that use 16 bytes each).<br>
- *
- *			A pre-defined table with correct alignment can be used for this
- *			function by calling Chip_DMA_SetSRAMBase(LPC_DMA, (uint32_t)(Chip_DMA_Table));
- */
-static INLINE void Chip_DMA_SetSRAMBase(dma_reg_t *pDMA, uint32_t base)
-{
-	pDMA->SRAMBASE = base & ~REG_DMA_SRAMBASE_RESERVED;
-}
 
-/**
- * @brief	Returns DMA controller SRAM base address
- * @param	pDMA	: The base of DMA controller on the chip
- * @return	The base address where the DMA descriptors are stored
- */
-static INLINE uint32_t Chip_DMA_GetSRAMBase(dma_reg_t *pDMA)
-{
-	return (pDMA->SRAMBASE & ~REG_DMA_SRAMBASE_RESERVED);
-}
 
 /** @defgroup DMA_COMMON_8XX CHIP: LPC8xx DMA Controller driver common channel functions
  * @{
@@ -259,7 +216,7 @@ static INLINE uint32_t Chip_DMA_GetSRAMBase(dma_reg_t *pDMA)
  */
 static INLINE void Chip_DMA_EnableChannel(dma_reg_t *pDMA, uint32_t ch)
 {
-	pDMA->DMACOMMON[0].ENABLESET = (1 << ch);
+	pDMA->DMACOMMON[0].ENABLESET = (1u << ch);
 }
 
 /**
@@ -270,7 +227,7 @@ static INLINE void Chip_DMA_EnableChannel(dma_reg_t *pDMA, uint32_t ch)
  */
 static INLINE void Chip_DMA_DisableChannel(dma_reg_t *pDMA, uint32_t ch)
 {
-	pDMA->DMACOMMON[0].ENABLECLR = (1 << ch);
+	pDMA->DMACOMMON[0].ENABLECLR = (1u << ch);
 }
 
 /**
@@ -339,7 +296,7 @@ static INLINE uint32_t Chip_DMA_GetErrorIntChannels(dma_reg_t *pDMA)
  */
 static INLINE void Chip_DMA_ClearErrorIntChannel(dma_reg_t *pDMA, uint32_t ch)
 {
-	pDMA->DMACOMMON[0].ERRINT = (1 << ch);
+	pDMA->DMACOMMON[0].ERRINT = (1u << ch);
 }
 
 /**
@@ -350,7 +307,7 @@ static INLINE void Chip_DMA_ClearErrorIntChannel(dma_reg_t *pDMA, uint32_t ch)
  */
 static INLINE void Chip_DMA_EnableIntChannel(dma_reg_t *pDMA, uint32_t ch)
 {
-	pDMA->DMACOMMON[0].INTENSET = (1 << ch);
+	pDMA->DMACOMMON[0].INTENSET = (1u << ch);
 }
 
 /**
@@ -361,7 +318,7 @@ static INLINE void Chip_DMA_EnableIntChannel(dma_reg_t *pDMA, uint32_t ch)
  */
 static INLINE void Chip_DMA_DisableIntChannel(dma_reg_t *pDMA, uint32_t ch)
 {
-	pDMA->DMACOMMON[0].INTENCLR = (1 << ch);
+	pDMA->DMACOMMON[0].INTENCLR = (1u << ch);
 }
 
 /**
@@ -394,6 +351,18 @@ static INLINE uint32_t Chip_DMA_GetActiveIntAChannels(dma_reg_t *pDMA)
 }
 
 /**
+ * @brief	Returns active A interrupt status for a single channel
+ * @param	pDMA	: The base of DMA controller on the chip
+ * @param	ch		: DMA channel ID
+ * @return	none-zero indicates that the channel has an active A interrupt.
+ *			A zero indicates that the A interrupt is not active.
+ */
+static INLINE uint32_t Chip_DMA_GetActiveIntAChannel(dma_reg_t *pDMA, uint32_t ch)
+{
+	return (pDMA->DMACOMMON[0].INTA & (1u << ch));
+}
+
+/**
  * @brief	Clears active A interrupt status for a single channel
  * @param	pDMA	: The base of DMA controller on the chip
  * @param	ch		: DMA channel ID
@@ -401,7 +370,7 @@ static INLINE uint32_t Chip_DMA_GetActiveIntAChannels(dma_reg_t *pDMA)
  */
 static INLINE void Chip_DMA_ClearActiveIntAChannel(dma_reg_t *pDMA, uint32_t ch)
 {
-	pDMA->DMACOMMON[0].INTA = (1 << ch);
+	pDMA->DMACOMMON[0].INTA = (1u << ch);
 }
 
 /**
@@ -419,6 +388,18 @@ static INLINE uint32_t Chip_DMA_GetActiveIntBChannels(dma_reg_t *pDMA)
 }
 
 /**
+ * @brief	Returns active B interrupt status for a single channel
+ * @param	pDMA	: The base of DMA controller on the chip
+ * @param	ch		: DMA channel ID
+ * @return	none-zero indicates that the channel has an active B interrupt.
+ *			A zero indicates that the B interrupt is not active.
+ */
+static INLINE uint32_t Chip_DMA_GetActiveIntBChannel(dma_reg_t *pDMA, uint32_t ch)
+{
+	return (pDMA->DMACOMMON[0].INTB & (1u << ch));
+}
+
+/**
  * @brief	Clears active B interrupt status for a single channel
  * @param	pDMA	: The base of DMA controller on the chip
  * @param	ch		: DMA channel ID
@@ -426,7 +407,7 @@ static INLINE uint32_t Chip_DMA_GetActiveIntBChannels(dma_reg_t *pDMA)
  */
 static INLINE void Chip_DMA_ClearActiveIntBChannel(dma_reg_t *pDMA, uint32_t ch)
 {
-	pDMA->DMACOMMON[0].INTB = (1 << ch);
+	pDMA->DMACOMMON[0].INTB = (1u << ch);
 }
 
 /**
@@ -439,7 +420,7 @@ static INLINE void Chip_DMA_ClearActiveIntBChannel(dma_reg_t *pDMA, uint32_t ch)
  */
 static INLINE void Chip_DMA_SetValidChannel(dma_reg_t *pDMA, uint32_t ch)
 {
-	pDMA->DMACOMMON[0].SETVALID = (1 << ch);
+	pDMA->DMACOMMON[0].SETVALID = (1u << ch);
 }
 
 /**
@@ -451,7 +432,7 @@ static INLINE void Chip_DMA_SetValidChannel(dma_reg_t *pDMA, uint32_t ch)
  */
 static INLINE void Chip_DMA_SetTrigChannel(dma_reg_t *pDMA, uint32_t ch)
 {
-	pDMA->DMACOMMON[0].SETTRIG = (1 << ch);
+	pDMA->DMACOMMON[0].SETTRIG = (1u << ch);
 }
 
 /**
@@ -467,7 +448,7 @@ static INLINE void Chip_DMA_SetTrigChannel(dma_reg_t *pDMA, uint32_t ch)
  */
 static INLINE void Chip_DMA_AbortChannel(dma_reg_t *pDMA, uint32_t ch)
 {
-	pDMA->DMACOMMON[0].ABORT = (1 << ch);
+	pDMA->DMACOMMON[0].ABORT = (1u << ch);
 }
 
 /**

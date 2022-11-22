@@ -94,13 +94,21 @@ do {    \
 } while (0)
 
 
+#define PRINT_OFFSET_OF(type, mem) \
+do {\
+    printf("\r\n %s: %08X", #mem, (uint32_t)&(((type *)0)->mem));\
+} while (0)
 
-//! \brief Register bitfield value operations. these macro is used for creating a
-//!             value, they do not modify any register.
-//! REG_BFVS    Move a value to a bitfield.
-//! REG_BFVG    Extract the value of a bitfield from a 32-bit value, such as that
-//!             read from a register.
-//! REG_BFVM    Mask a bitfield.
+
+//! \brief      bitfield value operations.
+//! REG_BFVS    convert the value of a bitfield to a uint32_t value.
+//! REG_BFVG    return the value of a bitfield from a uint32_t value(eg. from a register)
+//! REG_BFVM    move a value of a bitfield to a variable.
+//! \param 
+//! part: the peripheral name eg. ADC, UART etc.
+//! reg: the register name.
+//! field: the field name in a register.
+//! value: a varialbe or a value
 //!
 #define REG_BFVS(part, reg, field, value)                               \
     ( ((uint32_t)(value) << REG_##part##_##reg##_##field##_S) &         \
@@ -110,13 +118,13 @@ do {    \
     ( ((uint32_t)(value) & REG_##part##_##reg##_##field##_M) >>         \
       REG_##part##_##reg##_##field##_S )
 
-#define REG_BFVM(part, reg, field)                                      \
-    ( REG_##part##_##reg##_##field##_M )
+#define REG_BFVM(part, reg, field, var, value)      \
+    ( var = (uint32_t)(var)                         \
+       & (~REG_##part##_##reg##_##field##_M)        \
+       | REG_BFVS(part, reg, field, value) )
 
-#define PRINT_OFFSET_OF(type, mem) \
-do {\
-    printf("\r\n %s: %08X", #mem, (uint32_t)&(((type *)0)->mem));\
-} while (0)
+#define REG_BFM(part, reg, field)                   \
+    ( REG_##part##_##reg##_##field##_M )
 
 /*============================ TYPES =========================================*/
 /*============================ GLOBAL VARIABLES ==============================*/

@@ -32,22 +32,11 @@ THIS_FILE_NAME("win_file");
 /*============================ PUBLIC VARIABLES ==============================*/
 /*============================ IMPLEMENTATION ================================*/
 
-bool file_api_open(file_t *pHandle, char *fileName)
+bool file_api_open(file_t *pHandle, char *fileName )
 {
-    CHAR  currentPath[MAX_PATH] = {0};
-
-    if (GetCurrentDirectory(MAX_PATH, currentPath) == 0) {
-        DBG_LOG("GetCurrentDirectory fail: %u", GetLastError());
-        return false;
-    }
-
-    //! open existing file.
-    CHAR newFileName[MAX_PATH];
-    strcpy_s(newFileName, MAX_PATH, currentPath);
-    strcat_s(newFileName, MAX_PATH - strlen(newFileName), "\\");
-    strcat_s(newFileName, MAX_PATH - strlen(newFileName), fileName);
+    //! open existing file if not exists then create it.
     *pHandle = CreateFile(
-        newFileName,                    // file name.
+        fileName,                       // path + file name.
         GENERIC_WRITE | GENERIC_READ,   // access mode: read and write.
         FILE_SHARE_READ,                // share mode.
         NULL,                           // security attribute.

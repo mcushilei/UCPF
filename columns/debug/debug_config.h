@@ -19,14 +19,7 @@
 #define __SERVICE_DEBUG_CFG_H__
 
 /*============================ MACROS ========================================*/
-#define DEBUG_POINTER_WIDTH     (32)
-#define DEBUG_INT_WIDTH         (32)
 #define DEBUG_MSG_ENABLE        ENABLED
-#define DEBUG_ASSERT_ENABLE     ENABLED
-#define DEBUG_ROM_VAR_TYPE
-
-/*============================ TYPES =========================================*/
-typedef char _CHAR;
 
 
 #endif  //!< #ifndef __SERVICE_DEBUG_CFG_H__

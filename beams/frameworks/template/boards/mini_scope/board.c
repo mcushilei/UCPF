@@ -74,8 +74,6 @@ bool board_init(void)
         {PORT0, PIN0,  PIN_FN_U0_RXD, PIN_MODE_PULL_UP},
         {PORT0, PIN4,  PIN_FN_U0_TXD, PIN_MODE_PULL_UP},
         
-//        {PORT0, OLED_SPI_MOSI_PIN,  PIN_FN_SPI0_MOSI, PIN_MODE_PULL_UP},
-//        {PORT0, OLED_SPI_CLK_PIN,  PIN_FN_SPI0_SCK, PIN_MODE_PULL_UP},
     );
     
     pll_init(SYSPLL_CKLSRC_IRC, 12MHz);//SYSPLL_CLKSRC_SYSOSC 

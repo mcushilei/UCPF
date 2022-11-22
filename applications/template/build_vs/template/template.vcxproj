@@ -240,6 +240,7 @@
     <ClCompile Include="..\..\..\..\columns\codec\base16_codec.c" />
     <ClCompile Include="..\..\..\..\columns\codec\base64.c" />
     <ClCompile Include="..\..\..\..\columns\codec\base64_codec.c" />
+    <ClCompile Include="..\..\..\..\columns\debug\uctest.c" />
     <ClCompile Include="..\..\..\..\columns\hash\md2.c" />
     <ClCompile Include="..\..\..\..\columns\hash\md4.c" />
     <ClCompile Include="..\..\..\..\columns\hash\md5.c" />
@@ -378,6 +379,8 @@
     <ClInclude Include="..\..\..\..\columns\codec\app_cfg.h" />
     <ClInclude Include="..\..\..\..\columns\codec\base64.h" />
     <ClInclude Include="..\..\..\..\columns\columns.h" />
+    <ClInclude Include="..\..\..\..\columns\debug\debug_config.h" />
+    <ClInclude Include="..\..\..\..\columns\debug\uctest.h" />
     <ClInclude Include="..\..\..\..\columns\hash\md2.h" />
     <ClInclude Include="..\..\..\..\columns\hash\md4.h" />
     <ClInclude Include="..\..\..\..\columns\hash\md5.h" />
