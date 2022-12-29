@@ -19,6 +19,8 @@
 #ifndef __SERVICE_UCTEST_H__
 #define __SERVICE_UCTEST_H__
 
+//! \brief this is a micro C unit test tool which the name 'uctest' comes from.
+
 /*============================ INCLUDES ======================================*/
 #include "./app_cfg.h"
 
@@ -35,58 +37,68 @@
 /*============================ MACROS ========================================*/
 /*============================ MACROFIED FUNCTIONS ===========================*/
 
-#define __UCTEST(condition, line, ...)              \
+#define UCTEST_BEGIN(__name)    uctest_init(__name)
+
+#define UCTEST_END(__info)      uctest_report(__info)
+
+#define __UCTEST_B(condition, line, ...)              \
     do {                                            \
+        uctest_hit();                               \
         if (!(condition)) {                         \
             uctest_failure_captured((const char *)__ThisFileName, line);    \
             __VA_ARGS__                             \
+            uctest_print_eol();                   \
         }                                           \
     } while (0);
 
-#define UCTEST(condition, ...)     __UCTEST(condition, __LINE__, ##__VA_ARGS__)
+#define __UCTEST(condition, ...)     __UCTEST_B(condition, __LINE__, ##__VA_ARGS__)
 
-#define UCTEST_TRUE     UCTEST
-
+#define UCTEST_TRUE(condition, ...)         \
+        __UCTEST(                           \
+            ( condition ),        \
+            uctest_print_not_true();                               \
+            __VA_ARGS__                                             \
+        )
 
 #define UCTEST_NOT_NULL(pointer, ...)                      \
-        UCTEST(                                               \
+        __UCTEST(                                               \
             ((pointer) != NULL),                                    \
             uctest_print_null_point();                               \
             __VA_ARGS__                                             \
         )
 
-#define UCTEST_EQUAL_HEX(expected, actual, ...)            \
-        UCTEST(                                               \
+#define UCTEST_EQ_HEX(expected, actual, ...)            \
+        __UCTEST(                                               \
             ((_UINT)(expected) == (_UINT)(actual)),                 \
             uctest_print_equal_number((_SINT)(expected), (_SINT)(actual), UCTEST_DISPLAY_STYLE_HEX);\
             __VA_ARGS__                                             \
         )
 
-#define UCTEST_EQUAL_PTR    UCTEST_EQUAL_HEX
+#define UCTEST_EQ_PTR    UCTEST_EQ_HEX
 
-#define UCTEST_EQUAL_BIN(mask, expected, actual, ...)           \
-        UCTEST(                                               \
+#define UCTEST_EQ_BIN(mask, expected, actual, ...)           \
+        __UCTEST(                                               \
             (((_UINT)mask & (_UINT)expected) == ((_UINT)mask & (_UINT)actual)),\
             uctest_print_equal_bits((_UINT)mask, (_UINT)expected, (_UINT)actual);\
             __VA_ARGS__                                             \
         )
 
-#define UCTEST_EQUAL_UINT(expected, actual, ...)           \
-        UCTEST(                                               \
+#define UCTEST_EQ_UINT(expected, actual, ...)           \
+        __UCTEST(                                               \
             ((_UINT)(expected) == (_UINT)(actual)),                 \
             uctest_print_equal_number((_SINT)(expected), (_SINT)(actual), UCTEST_DISPLAY_STYLE_UINT);\
             __VA_ARGS__                                             \
         )
 
-#define UCTEST_EQUAL_INT(expected, actual, ...)            \
-        UCTEST(                                               \
+#define UCTEST_EQ_INT(expected, actual, ...)            \
+        __UCTEST(                                               \
             ((_SINT)(expected) == (_SINT)(actual)),                 \
             uctest_print_equal_number((_SINT)(expected), (_SINT)(actual), UCTEST_DISPLAY_STYLE_INT);\
             __VA_ARGS__                                             \
         )
 
-#define UCTEST_EQUAL_STRING(expected, actual, ...)         \
-        UCTEST(                                               \
+#define UCTEST_EQ_STRING(expected, actual, ...)         \
+        __UCTEST(                                               \
             uctest_string_compare((expected), (actual)),             \
             uctest_print_expected_actual_string((expected), (actual));\
             __VA_ARGS__                                             \
@@ -137,7 +149,12 @@ typedef uint16_t _UP;
 //  these directly. The macros have a consistent naming
 //  convention and will pull in file and line information
 //  for you.
+extern void uctest_init( const char *name );
+extern void uctest_report( const char *extraInfo );
+extern void uctest_hit( void );
 extern void uctest_failure_captured( const char *file, const _UINT line );
+extern void uctest_print_eol( void );
+extern void uctest_print_not_true( void );
 extern void uctest_print_null_point( void );
 extern void uctest_print_equal_number( const _SINT expected, const _SINT actual, const unsigned int style );
 extern void uctest_print_equal_bits( const _UINT mask, const _UINT expected, const _UINT actual );

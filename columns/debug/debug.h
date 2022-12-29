@@ -33,24 +33,26 @@
 
 
 /*============================ MACROS ========================================*/
+/*
+ * filter structure:
+ * 0bFEDCBA9876543210
+ *   |||||||||||||---level
+ *   ||||||||-----reserved
+ *   ||||----types
+ *   |---reserved
+ *   -enable
+ */
 
-#ifndef DEBUG_MIN_LEVEL
-#define DEBUG_MIN_LEVEL     DEBUG_LEVEL_ALL
-#endif
-
-#ifndef DEBUG_TYPES_ON
-#define DEBUG_TYPES_ON      (DEBUG_TRACE | DEBUG_STATE | DEBUG_FRESH | DEBUG_HALT)
-#endif
-
-//! \brief ocnditions used to control assert
+//! \brief level control. the greater the value is, more info output is enabled.
 //! {
-#define DEBUG_LEVEL_NORMAL  0x0000U
-#define DEBUG_LEVEL_WARNING 0x0001U /* eg: bad checksums, dropped packets, ... */
-#define DEBUG_LEVEL_ERROR   0x0002U /* eg: memory allocation failures, ... */
-
 #define DEBUG_LEVEL_ALL     0x0000U
 #define DEBUG_LEVEL_NONE    0x0007U
 #define DEBUG_LEVEL_MASK    0x0007U
+
+#define DEBUG_LEVEL_NORMAL  0x0000U
+#define DEBUG_LEVEL_WARNING 0x0001U
+#define DEBUG_LEVEL_ERROR   0x0002U
+#define DEBUG_LEVEL_FATAL   0x0003U
 //! }
 
 //! \brief flags for debug types. 
@@ -67,6 +69,14 @@
 #define DEBUG_ON            0x8000U
 #define DEBUG_OFF           0x0000U
 //! }
+
+#ifndef DEBUG_MIN_LEVEL
+#define DEBUG_MIN_LEVEL     DEBUG_LEVEL_ALL
+#endif
+
+#ifndef DEBUG_TYPES_ON
+#define DEBUG_TYPES_ON      (DEBUG_TRACE | DEBUG_STATE | DEBUG_FRESH | DEBUG_HALT)
+#endif
 
 /*============================ MACROFIED FUNCTIONS ===========================*/
 
@@ -92,19 +102,23 @@ extern int debug_set_printf( int (*printf_func)( const _CHAR *, ... ) );
 #   define debug_printf     printf
 #endif
 
+#if !defined(DEBUG_EOL)
+#   define DEBUG_EOL        "\r\n"
+#endif
+
 //! \brief run-time trace log message
 //! {
 #if defined(__DEBUG__)
-#   define RTT_LOG(fmt, ...)    debug_printf("\r\n[I][%s:%d]"fmt, __ThisFileName, __LINE__, ##__VA_ARGS__)
+#   define RTT_LOG(fmt, ...)    debug_printf("[I][%s:%d]" fmt DEBUG_EOL, __ThisFileName, __LINE__, ##__VA_ARGS__)
 #else
-#   define RTT_LOG(fmt, ...)    debug_printf("\r\n[I]"fmt, ##__VA_ARGS__)
+#   define RTT_LOG(fmt, ...)    debug_printf("[I]" fmt DEBUG_EOL, ##__VA_ARGS__)
 #endif
 //! }
 
 //! \brief debug log message
 //! {
 #if defined(__DEBUG__)
-#   define DBG_LOG(fmt, ...)    debug_printf("\r\n[D][%s:%d]"fmt, __ThisFileName, __LINE__, ##__VA_ARGS__)
+#   define DBG_LOG(fmt, ...)    debug_printf("[D][%s:%d]" fmt DEBUG_EOL, __ThisFileName, __LINE__, ##__VA_ARGS__)
 #else
 #   define DBG_LOG(fmt, ...)
 #endif
@@ -118,7 +132,7 @@ extern int debug_set_printf( int (*printf_func)( const _CHAR *, ... ) );
         if (( (filter) & (DEBUG_ON)) &&         \
             ( (filter) & (DEBUG_TYPES_ON)) &&   \
             (((filter) & (DEBUG_LEVEL_MASK)) >= DEBUG_MIN_LEVEL)) {\
-                debug_printf("\r\n[D][%s:%d]"fmt, __ThisFileName, line, ##__VA_ARGS__);\
+                debug_printf("[D][%s:%d]" fmt DEBUG_EOL, __ThisFileName, line, ##__VA_ARGS__);\
                 if ((filter) & DEBUG_HALT) {    \
                     debug_trap();               \
                 }                               \

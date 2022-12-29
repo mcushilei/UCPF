@@ -1,5 +1,5 @@
 /*******************************************************************************
- *  Copyright(C)2020 by Dreistein<mcu_shilei@hotmail.com>                     *
+ *  Copyright(C)2022 by Dreistein<mcu_shilei@hotmail.com>                     *
  *                                                                            *
  *  This program is free software; you can redistribute it and/or modify it   *
  *  under the terms of the GNU Lesser General Public License as published     *
@@ -19,9 +19,10 @@
 #define __SERVICE_UCTEST_CFG_H__
 
 /*============================ MACROS ========================================*/
-#define UCTEST_POINTER_WIDTH     (32)
-#define UCTEST_INT_WIDTH         (32)
-#define UCTEST_DISALLOW_FILE_INFO 0
+#define UCTEST_POINTER_WIDTH        (32)
+#define UCTEST_INT_WIDTH            (32)
+#define UCTEST_ALLOW_FILE_INFO      1
+#define UCTEST_EOL                  "\r\n"
 
 #endif  //!< #ifndef __SERVICE_UCTEST_CFG_H__
 /* EOF */
