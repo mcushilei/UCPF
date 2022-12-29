@@ -54,11 +54,6 @@ static inline unsigned int _bheap_left_child( unsigned int n )
     return (n << 1) + 1u;   //! n * 2u + 1u;
 }
 
-static inline unsigned int _bheap_right_child( unsigned int n )
-{
-    return (n << 1) + 2u;   //! n * 2u + 2u;
-}
-
 static inline void bheap_bubble_up( struct bheap *obj,
     unsigned int n,
     bool (*compare)(struct bheap *obj, int a, int b),
@@ -68,13 +63,14 @@ static inline void bheap_bubble_up( struct bheap *obj,
     while( n ) {
         p = _bheap_parent( n );
         if( compare( obj, p, n ) ) {   //! the parent dominate the current one.
-            return;
+            break;
         }
         swap( obj, p, n );
         n = p;
     }
 }
 
+//! heapify
 static inline void bheap_bubble_down( struct bheap *obj,
     unsigned int n,
     bool (*compare)(struct bheap *obj, int a, int b),
@@ -82,13 +78,13 @@ static inline void bheap_bubble_down( struct bheap *obj,
 {
     unsigned int l, r, d;
     while( 1 ) {
-        r = _bheap_right_child( n );
         l = _bheap_left_child( n );
         if( l >= obj->tail ) {
-            return;
+            break;
         }
+        r = l + 1;
 
-        //! find the dominated one between l and r.
+        //! find the dominated child between l and r.
         d = l;
         if( r >= obj->tail ) {  //! there is no right child.
             //! nothing to do.
@@ -96,12 +92,11 @@ static inline void bheap_bubble_down( struct bheap *obj,
             d = r;
         }
 
-        if( !compare( obj, n, d ) ) {   //! the current one NOT dominate children.
-            swap( obj, n, d );
-            n = d;
-            continue;
+        if( compare( obj, n, d ) ) {   //! the current one dominate children.
+            break;
         }
-        return;
+        swap( obj, n, d );
+        n = d;
     }
 }
 
@@ -138,7 +133,7 @@ static inline int bheap_pop( struct bheap *obj,
 //! \brief to find the top k largest(smallest) numbers by applying a min(max)-heap.
 //! \NOTE make sure the length of data buffer should be heap.size + 1. because
 //! the last one of the buffer is used to store the inserted one.
-static inline void bheap_sort( struct bheap *obj,
+static inline void bheap_topk( struct bheap *obj,
     void (*set)(struct bheap *obj, int n),
     bool (*compare)(struct bheap *obj, int a, int b),
     void (*swap)(struct bheap *obj, int a, int b) )
@@ -155,9 +150,32 @@ static inline void bheap_sort( struct bheap *obj,
     }
 }
 
-static inline int bheap_init( struct bheap *obj, unsigned int size )
+static inline void bheap_sort( struct bheap *obj,
+    bool ( *compare )( struct bheap *obj, int a, int b ),
+    void ( *swap )( struct bheap *obj, int a, int b ) )
 {
-    obj->tail = 0;
+    int len;
+    if( obj->tail <= 1 ) {
+        return;
+    }
+    for( int i = _bheap_parent( obj->tail - 1 ); i >= 0; i-- ) {
+        bheap_bubble_down( obj, i, compare, swap );
+    }
+    len = obj->tail;
+    for( int i = obj->tail - 1; i > 0; i-- ) {
+        swap( obj, 0, i );
+        obj->tail--;
+        bheap_bubble_down( obj, 0, compare, swap );
+    }
+    obj->tail = len;
+}
+
+static inline int bheap_init( struct bheap *obj, int size, int len )
+{
+    if( len < 0 || size < 0 || len > size ) {
+        return 0;
+    }
+    obj->tail = len;
     obj->size = size;
     return size;
 }
