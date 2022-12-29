@@ -25,8 +25,8 @@
  *  [The Algorithm Design Manual] Skiena
  *  http://en.wikipedia.org/wiki/Binary_heap
  * 
- * to get a min-heap, compare() should return ture if a <(=) b.
- * to get a max-heap, compare() should return ture if a >(=) b.
+ * to get a min-heap, compare() should return true if a <(=) b.
+ * to get a max-heap, compare() should return true if a >(=) b.
  */
 /*============================ INCLUDES ======================================*/
 #include "./app_cfg.h"

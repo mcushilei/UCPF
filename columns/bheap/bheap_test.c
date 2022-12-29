@@ -32,10 +32,10 @@
 
 typedef struct {
     struct bheap bheap;
-    uint32_t buf[32 + 1];
+    uint32_t *buf;
 } my_bheap_t;
 
-static struct bheap myBHeap;
+static my_bheap_t myBHeap;
 static uint32_t myBuff[32 + 1];
 
 bool my_compare( struct bheap *obj, int a, int b )
@@ -88,20 +88,21 @@ void test_bheap( void )
     uint32_t seed;
     uint32_t n = 0x3FFF;
 
+    myBHeap.buf = myBuff;
 
-    bheap_init( &myBHeap, 4, 0 );
+    bheap_init( &myBHeap.bheap, 4, 0 );
     seed = time( NULL );
     srand( seed );
 
     printf( "\r\n test bheap queue..." );
-    while( bheap_push( &myBHeap, &my_set0, &my_compare, &my_swap ) );
-    while( bheap_pop( &myBHeap, &my_get, &my_compare, &my_swap ) );
+    while( bheap_push( &myBHeap.bheap, &my_set0, &my_compare, &my_swap ) );
+    while( bheap_pop( &myBHeap.bheap, &my_get, &my_compare, &my_swap ) );
 
     printf( "\r\n test bheap topk..." );
     while( n-- ) {
-        bheap_topk( &myBHeap, &my_set1, &my_compare, &my_swap );
+        bheap_topk( &myBHeap.bheap, &my_set1, &my_compare, &my_swap );
     }
-    while( bheap_pop( &myBHeap, &my_get, &my_compare, &my_swap ) );
+    while( bheap_pop( &myBHeap.bheap, &my_get, &my_compare, &my_swap ) );
 
     printf( "\r\n test bheap sort..." );
     srand( 0 );
@@ -109,8 +110,8 @@ void test_bheap( void )
         myBuff[i] = rand();
         printf( "\r\n %05d", myBuff[i] );
     }
-    bheap_init( &myBHeap, 20, 10 );
-    bheap_sort( &myBHeap, &my_compare, &my_swap );
+    bheap_init( &myBHeap.bheap, 20, 10 );
+    bheap_sort( &myBHeap.bheap, &my_compare, &my_swap );
     printf( "\r\n after sort:" );
     for( int i = 0; i < 10; i++ ) {
         printf( "\r\n %05d", myBuff[i] );
