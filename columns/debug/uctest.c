@@ -1,5 +1,5 @@
 /*******************************************************************************
- *  Copyright(C)2022      by Dreistein<mcu_shilei@hotmail.com>                *
+ *  Copyright(C)2022 by Dreistein<mcu_shilei@hotmail.com>                     *
  *                                                                            *
  *  This program is free software; you can redistribute it and/or modify it   *
  *  under the terms of the GNU Lesser General Public License as published     *
@@ -58,7 +58,7 @@ static const char strNotTrue[]      = "Not true!";
 static const char strReport[]       = "============== Test Report ==============";
 static const char strTestName[]     = "    Test     : ";
 static const char strHitTest[]      = "    Hit      : ";
-static const char strFailTest[]     = "    Filure   : ";
+static const char strFailTest[]     = "    Failure  : ";
 static const char strReportEnd[]    = "=========================================";
 
 static const char *testName = NULL;
@@ -70,7 +70,7 @@ static _UINT errorCount = 0;
 
 static void print_string(const char *string)
 {
-    if( string == NULL ) {
+    if (string == NULL) {
         return;
     }
     for (; *string != '\0'; string++) {
@@ -147,14 +147,14 @@ static void print_bin(const _UINT mask, const _UINT number)
 //-----------------------------------------------
 // Debug Result Output Handlers
 //-----------------------------------------------
-void uctest_print_eol( void )
+void uctest_print_eol(void)
 {
-    print_string( strEOL );
+    print_string(strEOL);
 }
 
-void uctest_print_not_true( void )
+void uctest_print_not_true(void)
 {
-    print_string( strNotTrue );
+    print_string(strNotTrue);
 }
 
 void uctest_print_null_point(void)
@@ -170,7 +170,7 @@ void uctest_print_expected_actual_string(const char *expected, const char *actua
         print_string(expected);
         uctest_output_char('\"');
     } else {
-      print_string(strNull);          
+        print_string(strNull);
     }
 
     print_string(strWas);
@@ -179,7 +179,7 @@ void uctest_print_expected_actual_string(const char *expected, const char *actua
         print_string(actual);
         uctest_output_char('\"');
     } else {
-      print_string(strNull);          
+        print_string(strNull);
     }
 }
 
@@ -195,101 +195,101 @@ void uctest_print_equal_bits(
 }
 
 void uctest_print_equal_number(
-    const _SINT expected, 
-    const _SINT actual, 
+    const _SINT expected,
+    const _SINT actual,
     const unsigned int style)
 {
     print_string(strExpected);
     switch (style) {
-        case UCTEST_DISPLAY_STYLE_INT:
-            print_number_signed(expected);
-            break;
+    case UCTEST_DISPLAY_STYLE_INT:
+        print_number_signed(expected);
+        break;
 
-        case UCTEST_DISPLAY_STYLE_UINT:
-            print_number_unsigned(expected);
-            break;
+    case UCTEST_DISPLAY_STYLE_UINT:
+        print_number_unsigned(expected);
+        break;
 
-        case UCTEST_DISPLAY_STYLE_HEX:
-        default:
-            print_number_hex(expected, 2u * sizeof(_UINT));
-            break;
+    case UCTEST_DISPLAY_STYLE_HEX:
+    default:
+        print_number_hex(expected, 2u * sizeof(_UINT));
+        break;
     }
 
     print_string(strWas);
     switch (style) {
-        case UCTEST_DISPLAY_STYLE_INT:
-            print_number_signed(actual);
-            break;
+    case UCTEST_DISPLAY_STYLE_INT:
+        print_number_signed(actual);
+        break;
 
-        case UCTEST_DISPLAY_STYLE_UINT:
-            print_number_unsigned(actual);
-            break;
+    case UCTEST_DISPLAY_STYLE_UINT:
+        print_number_unsigned(actual);
+        break;
 
-        case UCTEST_DISPLAY_STYLE_HEX:
-        default:
-            print_number_hex(actual, 2u * sizeof(_UINT));
-            break;
+    case UCTEST_DISPLAY_STYLE_HEX:
+    default:
+        print_number_hex(actual, 2u * sizeof(_UINT));
+        break;
     }
 }
 
 //-----------------------------------------------
 // Control Functions
 //-----------------------------------------------
-void uctest_init( const char *name )
+void uctest_init(const char *name)
 {
     testName = name;
     hitCount = 0;
     errorCount = 0;
 }
 
-void uctest_hit( void )
+void uctest_hit(void)
 {
     hitCount++;
 }
 
-int uctest_string_compare( const char *expected, const char *actual )
+int uctest_string_compare(const char *expected, const char *actual)
 {
-    if( expected && actual ) {
-        for( ; *expected || *actual;) {
-            if( *expected++ != *actual++ ) {
+    if (expected && actual) {
+        for (; *expected || *actual;) {
+            if (*expected++ != *actual++) {
                 return 0;
             }
         }
-    } else if( expected || actual ) {
+    } else if (expected || actual) {
         return 0;
     }
 
     return 1;
 }
 
-void uctest_failure_captured( const char *file, const _UINT line )
+void uctest_failure_captured(const char *file, const _UINT line)
 {
-    print_string( strError );
-    PRINT_LOCATION( file, line );
+    print_string(strError);
+    PRINT_LOCATION(file, line);
 
     errorCount++;
 }
 
-void uctest_report( const char *extraInfo )
+void uctest_report(const char *extraInfo)
 {
-    print_string( strReport );
+    print_string(strReport);
     uctest_print_eol();
-    if( NULL != testName ) {
-        print_string( strTestName );
-        print_string( testName );
+    if (NULL != testName) {
+        print_string(strTestName);
+        print_string(testName);
         uctest_print_eol();
     }
-    print_string( strHitTest );
-    print_number_unsigned( hitCount );
+    print_string(strHitTest);
+    print_number_unsigned(hitCount);
     uctest_print_eol();
-    print_string( strFailTest );
-    print_number_unsigned( errorCount );
+    print_string(strFailTest);
+    print_number_unsigned(errorCount);
     uctest_print_eol();
-    if( NULL != extraInfo ) {
-        print_string( extraInfo );
+    if (NULL != extraInfo) {
+        print_string(extraInfo);
         uctest_print_eol();
     }
-    print_string( strReportEnd );
+    print_string(strReportEnd);
     uctest_print_eol();
 }
 

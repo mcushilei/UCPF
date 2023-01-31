@@ -65,7 +65,7 @@ int app_init( void )
         return -1;
     }
     strcat_s( currentPath, MAX_PATH - strlen( currentPath ), "\\" );
-    printf( "\r\n%s", currentPath );
+    printf( "%s\r\n", currentPath );
 
 #if 0
     //! file operation example
@@ -102,12 +102,15 @@ int app_init( void )
 
     DBG_MSG( DEBUG_ON | DEBUG_TRACE | DEBUG_LEVEL_NORMAL, "this is a test of DEBUG_MSG()" );
 
+    UCTEST_BEGIN("try test");
     UCTEST_TRUE( GetCurrentDirectory( MAX_PATH, currentPath ) == 0 );
     UCTEST_NOT_NULL( NULL );
-    UCTEST_EQUAL_HEX( 1, hex_str2uint("Fe2"));
-    UCTEST_EQUAL_UINT( 4294967295, hex_str2uint( "Fe2" ) );
-    UCTEST_EQUAL_INT( -1, hex_str2uint( "Fe2" ) );
-    UCTEST_EQUAL_BIN( 0xFFFFu, 0xF0, 0x0F );
+    UCTEST_EQ_HEX( 1, hex_str2uint("Fe2"));
+    UCTEST_EQ_UINT( 4294967295, hex_str2uint( "Fe2" ) );
+    UCTEST_EQ_INT( -1, hex_str2uint( "Fe2" ) );
+    UCTEST_EQ_BIN( 0xFFFFu, 0xF0, 0x0F );
+    UCTEST_EQ_STRING( "hello", "world" );
+    UCTEST_END( __TIMESTAMP__ );
 
     return 0;
 }

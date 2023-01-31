@@ -1019,6 +1019,9 @@
     <ClInclude Include="..\..\..\..\columns\debug\uctest.h">
       <Filter>columns\debug</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\..\..\columns\debug\uctest_config.h">
+      <Filter>columns\debug</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Text Include="..\..\..\..\columns\hash\crc\IEEE802_3 crc32 table.txt">

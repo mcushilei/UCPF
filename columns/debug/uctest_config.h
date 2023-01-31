@@ -15,14 +15,14 @@
  *  along with this program; if not, see http://www.gnu.org/licenses/.        *
 *******************************************************************************/
 
-#ifndef __SERVICE_UCTEST_CFG_H__
-#define __SERVICE_UCTEST_CFG_H__
+#ifndef __UCTEST_CFG_H__
+#define __UCTEST_CFG_H__
 
 /*============================ MACROS ========================================*/
 #define UCTEST_POINTER_WIDTH        (32)
 #define UCTEST_INT_WIDTH            (32)
 #define UCTEST_ALLOW_FILE_INFO      1
-#define UCTEST_EOL                  "\r\n"
+#define UCTEST_EOL                  "\n"
 
-#endif  //!< #ifndef __SERVICE_UCTEST_CFG_H__
+#endif  //!< #ifndef __UCTEST_CFG_H__
 /* EOF */

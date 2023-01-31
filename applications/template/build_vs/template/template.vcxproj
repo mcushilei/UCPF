@@ -381,6 +381,7 @@
     <ClInclude Include="..\..\..\..\columns\columns.h" />
     <ClInclude Include="..\..\..\..\columns\debug\debug_config.h" />
     <ClInclude Include="..\..\..\..\columns\debug\uctest.h" />
+    <ClInclude Include="..\..\..\..\columns\debug\uctest_config.h" />
     <ClInclude Include="..\..\..\..\columns\hash\md2.h" />
     <ClInclude Include="..\..\..\..\columns\hash\md4.h" />
     <ClInclude Include="..\..\..\..\columns\hash\md5.h" />

@@ -1,5 +1,5 @@
 /*******************************************************************************
- *  Copyright(C)2022      by Dreistein<mcu_shilei@hotmail.com>                *
+ *  Copyright(C)2022 by Dreistein<mcu_shilei@hotmail.com>                     *
  *                                                                            *
  *  This program is free software; you can redistribute it and/or modify it   *
  *  under the terms of the GNU Lesser General Public License as published     *
@@ -16,10 +16,46 @@
 *******************************************************************************/
 
 
-#ifndef __SERVICE_UCTEST_H__
-#define __SERVICE_UCTEST_H__
+#ifndef __UCTEST_H__
+#define __UCTEST_H__
 
 //! \brief this is a micro C unit test tool which the name 'uctest' comes from.
+//! 
+//! a quick demo:
+//! ----------------demo.c------------------
+//! 
+//! THIS_FILE_NAME("demo")
+//! 
+//! void foo(void)
+//! {
+//!     UCTEST_TRUE(a < b);
+//!     UCTEST_NOT_NULL(pData);
+//!     UCTEST_EQ_PTR(0x30000000, pData);
+//!     UCTEST_EQ_BIN(0x00008000, 0x12345678, 0x87654321);
+//!     UCTEST_EQ_UINT(500, aValue);
+//!     UCTEST_EQ_INT(-3, aValue);
+//!     UCTEST_EQ_STRING("True", aString);
+//! }
+//! 
+//! void main(void)
+//! {
+//!     UCTEST_BEGIN("my demo test");
+//!     foo();
+//!     UCTEST_END();
+//! }
+//! ----------------------------------------
+//! 
+//! if a test point fail, let's say a == b, a error message will be generated:
+//! "[XXX][demo:6]Not true!"
+//! a error message is always start with "[XXX]". 
+//! 
+//! a report will be outputed at the end of the test:
+//! ============== Test Report ==============
+//!     Test     : my demo test
+//!     Hit      : 7
+//!     Failure  : 0
+//! =========================================
+//! a test shell be pass if it has 0 failure.
 
 /*============================ INCLUDES ======================================*/
 #include "./app_cfg.h"
@@ -146,22 +182,22 @@ typedef uint16_t _UP;
 /*============================ GLOBAL VARIABLES ==============================*/
 /*============================ PROTOTYPES ====================================*/
 //  Use the macros above this section instead of calling
-//  these directly. The macros have a consistent naming
+//  these function directly. The macros have a consistent naming
 //  convention and will pull in file and line information
 //  for you.
-extern void uctest_init( const char *name );
-extern void uctest_report( const char *extraInfo );
-extern void uctest_hit( void );
-extern void uctest_failure_captured( const char *file, const _UINT line );
-extern void uctest_print_eol( void );
-extern void uctest_print_not_true( void );
-extern void uctest_print_null_point( void );
-extern void uctest_print_equal_number( const _SINT expected, const _SINT actual, const unsigned int style );
-extern void uctest_print_equal_bits( const _UINT mask, const _UINT expected, const _UINT actual );
-extern void uctest_print_expected_actual_string( const char *expected, const char *actual );
-extern int  uctest_string_compare( const char *expected, const char *actual );
+extern void uctest_init(const char *name);
+extern void uctest_report(const char *extraInfo);
+extern void uctest_hit(void);
+extern void uctest_failure_captured(const char *file, const _UINT line);
+extern void uctest_print_eol(void);
+extern void uctest_print_not_true(void);
+extern void uctest_print_null_point(void);
+extern void uctest_print_equal_number(const _SINT expected, const _SINT actual, const unsigned int style);
+extern void uctest_print_equal_bits(const _UINT mask, const _UINT expected, const _UINT actual);
+extern void uctest_print_expected_actual_string(const char *expected, const char *actual);
+extern int  uctest_string_compare(const char *expected, const char *actual);
 
-extern void uctest_output_char( char ch );
+extern void uctest_output_char(char ch);
 
-#endif      //!< #ifndef __SERVICE_UCTEST_H__
+#endif      //!< #ifndef __UCTEST_H__
 /* EOF */
