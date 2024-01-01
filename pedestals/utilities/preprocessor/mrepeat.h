@@ -20,7 +20,7 @@
 #ifndef __MREPEAT_H__
 #define __MREPEAT_H__
 
-#include ".\tpaste.h"
+#include "./tpaste.h"
 
 
 /*! \brief       This macro represents a horizontal repetition construct.

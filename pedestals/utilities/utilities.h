@@ -1,5 +1,5 @@
 /*******************************************************************************
- *  Copyright(C)2015-2020 by Dreistein<mcu_shilei@hotmail.com>                *
+ *  Copyright(C)2015-2023 by Dreistein<mcu_shilei@hotmail.com>                *
  *                                                                            *
  *  This program is free software; you can redistribute it and/or modify it   *
  *  under the terms of the GNU Lesser General Public License as published     *
@@ -33,7 +33,7 @@
  *  \note   It's assume that the destination type is memory alligned to original
  *          type.
  */
-#define TYPE_CAST(__V, __T)         (*(__T *)&(__V))
+#define TYPE_CAST(__RV, __T)         (*(__T *)&(__RV))
             
 #define SIZE_OF(__type, __member)   (sizeof( ((__type *)0)->__member ))
 
@@ -52,13 +52,13 @@
 #define UBOUND(__ARRAY)             ( sizeof(__ARRAY) / sizeof(__ARRAY[0]) )
 #define ARRAY_LENGTH(__ARRAY)       ( sizeof(__ARRAY) / sizeof(__ARRAY[0]) )
 
-#define IS_POWER_OF_2(__N)  (\
-        ((__N) != 0u) && (( ((__N) - 1u) & (__N) ) == 0) )
+#define IS_POWER_OF_2(__IV)  (\
+        ((__IV) != 0u) && (( ((__IV) - 1u) & (__IV) ) == 0) )
 
-#define U32_ROUNDUP_POEWER2(__N, __V)          do {\
-            uint32_t x = (__N);                 \
+#define U32_ROUNDUP_POEWER2(__IV, __RV)        do {\
+            uint32_t x = (__IV);                \
             if (IS_POWER_OF_2(x)) {             \
-                __V = x;                        \
+                __RV = x;                       \
                 break;                          \
             }                                   \
             x |= x >> 1;                        \
@@ -66,43 +66,43 @@
             x |= x >> 4;                        \
             x |= x >> 8;                        \
             x |= x >> 16;                       \
-            __V = x + 1;                        \
+            __RV = x + 1;                       \
         } while (0)
 
-#define U32_COUNT_1S(__N, __V)  do {\
-            uint32_t x = (__N);                 \
+#define U32_COUNT_1S(__IV, __RV)  do {\
+            uint32_t x = (__IV);                 \
             x = (x & 0x55555555) + ((x >> 1)  & 0x55555555);\
             x = (x & 0x33333333) + ((x >> 2)  & 0x33333333);\
             x = (x & 0x0F0F0F0F) + ((x >> 4)  & 0x0F0F0F0F);\
             x = (x & 0x00FF00FF) + ((x >> 8)  & 0x00FF00FF);\
             x = (x & 0x0000FFFF) + ((x >> 16) & 0x0000FFFF);\
-            __V = x;                            \
+            __RV = x;                            \
         } while (0)
 
-#define U64_COUNT_1S(__N, __V)  do {\
-            uint64_t x = (__N);                 \
+#define U64_COUNT_1S(__IV, __RV)  do {\
+            uint64_t x = (__IV);                 \
             x = (x & 0x5555555555555555) + ((x >> 1)  & 0x5555555555555555);\
             x = (x & 0x3333333333333333) + ((x >> 2)  & 0x3333333333333333);\
             x = (x & 0x0F0F0F0F0F0F0F0F) + ((x >> 4)  & 0x0F0F0F0F0F0F0F0F);\
             x = (x & 0x00FF00FF00FF00FF) + ((x >> 8)  & 0x00FF00FF00FF00FF);\
             x = (x & 0x0000FFFF0000FFFF) + ((x >> 16) & 0x0000FFFF0000FFFF);\
             x = (x & 0x00000000FFFFFFFF) + ((x >> 16) & 0x00000000FFFFFFFF);\
-            __V = x;                            \
+            __RV = x;                            \
         } while (0)
 
-#define U32_COUNT_TRAILING_ZEROS(__N, __V)  do {\
-            uint32_t x = (__N);                 \
+#define U32_COUNT_TRAILING_ZEROS(__IV, __RV)  do {\
+            uint32_t x = (__IV);                \
             x = ((x - 1) | x) ^ x;              \
             x = (x & 0x55555555) + ((x >> 1)  & 0x55555555);\
             x = (x & 0x33333333) + ((x >> 2)  & 0x33333333);\
             x = (x & 0x0F0F0F0F) + ((x >> 4)  & 0x0F0F0F0F);\
             x = (x & 0x00FF00FF) + ((x >> 8)  & 0x00FF00FF);\
             x = (x & 0x0000FFFF) + ((x >> 16) & 0x0000FFFF);\
-            __V = x;                            \
+            __RV = x;                           \
         } while (0)
 
-#define U64_COUNT_TRAILING_ZEROS(__N, __V)  do {\
-            uint64_t x = (__N);                 \
+#define U64_COUNT_TRAILING_ZEROS(__IV, __RV)  do {\
+            uint64_t x = (__IV);                \
             x = ((x - 1) | x) ^ x;              \
             x = (x & 0x5555555555555555) + ((x >> 1)  & 0x5555555555555555);\
             x = (x & 0x3333333333333333) + ((x >> 2)  & 0x3333333333333333);\
@@ -110,11 +110,11 @@
             x = (x & 0x00FF00FF00FF00FF) + ((x >> 8)  & 0x00FF00FF00FF00FF);\
             x = (x & 0x0000FFFF0000FFFF) + ((x >> 16) & 0x0000FFFF0000FFFF);\
             x = (x & 0x00000000FFFFFFFF) + ((x >> 16) & 0x00000000FFFFFFFF);\
-            __V = x;                            \
+            __RV = x;                           \
         } while (0)
     
-#define U32_COUNT_LEADING_ZEROS(__N, __V)   do {\
-            uint32_t x = (__N);                 \
+#define U32_COUNT_LEADING_ZEROS(__IV, __RV)   do {\
+            uint32_t x = (__IV);                \
             x |= x >> 1;                        \
             x |= x >> 2;                        \
             x |= x >> 4;                        \
@@ -126,7 +126,7 @@
             x = (x & 0x0F0F0F0Fu) + ((x >> 4)  & 0x0F0F0F0Fu);\
             x = (x & 0x00FF00FFu) + ((x >> 8)  & 0x00FF00FFu);\
             x = (x & 0x0000FFFFu) + ((x >> 16) & 0x0000FFFFu);\
-            __V = x;                            \
+            __RV = x;                           \
         } while (0)
 
 //! \brief math macros
@@ -198,10 +198,10 @@ void main()
 */
 
 #if defined(__DEBUG__)
-#   define THIS_FILE_NAME(string)       \
-        static const char __ThisFileName[] = string
+#   define THIS_FILE_NAME(_string)      \
+        static const char _ThisFileName[] = _string
 #else
-#   define THIS_FILE_NAME(string)
+#   define THIS_FILE_NAME(_string)
 #endif
 
 /*============================ TYPES =========================================*/
