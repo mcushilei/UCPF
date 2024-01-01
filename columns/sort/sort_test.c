@@ -1,5 +1,5 @@
 /*******************************************************************************
- *  Copyright(C)2020-2023 by Dreistein<mcu_shilei@hotmail.com>                *
+ *  Copyright(C)2022 by Dreistein<mcu_shilei@hotmail.com>                     *
  *                                                                            *
  *  This program is free software; you can redistribute it and/or modify it   *
  *  under the terms of the GNU Lesser General Public License as published     *
@@ -15,13 +15,35 @@
  *  along with this program; if not, see http://www.gnu.org/licenses/.        *
 *******************************************************************************/
 
-#ifndef __SERVICE_DEBUG_CFG_H__
-#define __SERVICE_DEBUG_CFG_H__
+
+
+
+/*============================ INCLUDES ======================================*/
+#include "./app_cfg.h"
+#include "./sort.h"
 
 /*============================ MACROS ========================================*/
-#define DEBUG_MSG_ENABLE        ENABLED
-#define DEBUG_EOL               "\r\n"
+/*============================ MACROFIED FUNCTIONS ===========================*/
+/*============================ TYPES =========================================*/
+/*============================ PRIVATE PROTOTYPES ============================*/
+/*============================ PRIVATE VARIABLES =============================*/
+/*============================ PUBLIC VARIABLES ==============================*/
+/*============================ IMPLEMENTATION ================================*/
+static uint32_t myBuff[32 + 1];
 
+void test_selection_sort( void )
+{
+    printf( "\r\n test selection sort..." );
+    srand( 0 );
+    for( int i = 0; i < 10; i++ ) {
+        myBuff[i] = rand();
+        printf( "\r\n %05d", myBuff[i] );
+    }
+    SELECTION_SORT( uint32_t, myBuff, 10 );
+    printf( "\r\n after sort:" );
+    for( int i = 0; i < 10; i++ ) {
+        printf( "\r\n %05d", myBuff[i] );
+    }
+}
 
-#endif  //!< #ifndef __SERVICE_DEBUG_CFG_H__
 /* EOF */

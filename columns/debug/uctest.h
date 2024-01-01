@@ -81,7 +81,7 @@
     do {                                            \
         uctest_hit();                               \
         if (!(condition)) {                         \
-            uctest_failure_captured((const char *)__ThisFileName, line);    \
+            uctest_failure_captured((const char *)_ThisFileName, line);    \
             __VA_ARGS__                             \
             uctest_print_eol();                   \
         }                                           \

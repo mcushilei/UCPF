@@ -1,5 +1,5 @@
 /*******************************************************************************
- *  Copyright(C)2015-2022 by Dreistein<mcu_shilei@hotmail.com>                *
+ *  Copyright(C)2015-2023 by Dreistein<mcu_shilei@hotmail.com>                *
  *                                                                            *
  *  This program is free software; you can redistribute it and/or modify it   *
  *  under the terms of the GNU Lesser General Public License as published     *
@@ -16,8 +16,8 @@
 *******************************************************************************/
 
 
-#ifndef __SERVICE_DEBUG_H__
-#define __SERVICE_DEBUG_H__
+#ifndef __SERVICE_DBG_LOG_H__
+#define __SERVICE_DBG_LOG_H__
 
 /*============================ INCLUDES ======================================*/
 #include "./app_cfg.h"
@@ -36,11 +36,11 @@
 /*
  * filter structure:
  * 0bFEDCBA9876543210
- *   |||||||||||||---level
- *   ||||||||-----reserved
- *   ||||----types
- *   |---reserved
- *   -enable
+ *   |||||||||||||+++level
+ *   ||||||||+++++reserved
+ *   ||||++++types
+ *   |+++reserved
+ *   +enable
  */
 
 //! \brief level control. the greater the value is, more info output is enabled.
@@ -59,8 +59,7 @@
 //! {
 #define DEBUG_TRACE         0x0800U /** flag for indicating a tracing message (to follow program flow) */
 #define DEBUG_STATE         0x0400U /** flag for indicating a state debug message (to follow module states) */
-#define DEBUG_FRESH         0x0200U /** flag for indicating newly added code, not thoroughly debuged yet */
-#define DEBUG_HALT          0x0100U /** flag for to halt after printing this debug message */
+#define DEBUG_FRESH         0x0200U /** flag for indicating newly added code (to debug new code) */
 //! }
 
 /* \brief flags for enable or disable an individual debug output.
@@ -75,11 +74,13 @@
 #endif
 
 #ifndef DEBUG_TYPES_ON
-#define DEBUG_TYPES_ON      (DEBUG_TRACE | DEBUG_STATE | DEBUG_FRESH | DEBUG_HALT)
+#define DEBUG_TYPES_ON      (DEBUG_TRACE | DEBUG_STATE | DEBUG_FRESH)
 #endif
 
 /*============================ MACROFIED FUNCTIONS ===========================*/
 
+//! \brief debug log output redirection at run-time.
+//! {
 #if defined(DEBUG_PRINTF_DYN)
 /*
  * The function pointers for printf
@@ -101,45 +102,34 @@ extern int debug_set_printf( int (*printf_func)( const _CHAR *, ... ) );
 #   include <stdio.h>
 #   define debug_printf     printf
 #endif
+//! }
 
 #if !defined(DEBUG_EOL)
-#   define DEBUG_EOL        "\r\n"
+#   define DEBUG_EOL        "\n"
 #endif
-
-//! \brief run-time trace log message
-//! {
-#if defined(__DEBUG__)
-#   define RTT_LOG(fmt, ...)    debug_printf("[I][%s:%d]" fmt DEBUG_EOL, __ThisFileName, __LINE__, ##__VA_ARGS__)
-#else
-#   define RTT_LOG(fmt, ...)    debug_printf("[I]" fmt DEBUG_EOL, ##__VA_ARGS__)
-#endif
-//! }
 
 //! \brief debug log message
 //! {
 #if defined(__DEBUG__)
-#   define DBG_LOG(fmt, ...)    debug_printf("[D][%s:%d]" fmt DEBUG_EOL, __ThisFileName, __LINE__, ##__VA_ARGS__)
+#   define DBG_LOG(fmt, ...)    debug_printf("[D][%s:%d]" fmt DEBUG_EOL, _ThisFileName, __LINE__, ##__VA_ARGS__)
 #else
 #   define DBG_LOG(fmt, ...)
 #endif
 //! }
 
-//! \brief debug log message with filter
+//! \brief debug tracing message with filter
 //! {
 #if DEBUG_MSG_ENABLE == ENABLED
-#   define __DEBUG_MSG_FLT(filter, line, fmt, ...)       \
+#   define __DBG_MSG(filter, line, fmt, ...)    \
     do {                                        \
-        if (( (filter) & (DEBUG_ON)) &&         \
-            ( (filter) & (DEBUG_TYPES_ON)) &&   \
-            (((filter) & (DEBUG_LEVEL_MASK)) >= DEBUG_MIN_LEVEL)) {\
-                debug_printf("[D][%s:%d]" fmt DEBUG_EOL, __ThisFileName, line, ##__VA_ARGS__);\
-                if ((filter) & DEBUG_HALT) {    \
-                    debug_trap();               \
-                }                               \
+        if (( (filter) & (DEBUG_ON))            \
+        &&  ( (filter) & (DEBUG_TYPES_ON))      \
+        &&  (((filter) & (DEBUG_LEVEL_MASK)) >= DEBUG_MIN_LEVEL)) {\
+            debug_printf("[D][%s:%d]" fmt DEBUG_EOL, _ThisFileName, line, ##__VA_ARGS__);\
         }                                       \
     } while(0)
 
-#   define DBG_MSG(filter, fmt, ...)        __DEBUG_MSG_FLT(filter, __LINE__, fmt, ##__VA_ARGS__)
+#   define DBG_MSG(filter, fmt, ...)        __DBG_MSG(filter, __LINE__, fmt, ##__VA_ARGS__)
 #else
 #   define DBG_MSG(filter, fmt, ...)
 #endif
@@ -149,8 +139,6 @@ extern int debug_set_printf( int (*printf_func)( const _CHAR *, ... ) );
 /*============================ LOCAL VARIABLES ===============================*/
 /*============================ GLOBAL VARIABLES ==============================*/
 /*============================ PROTOTYPES ====================================*/
-extern void debug_trap( void );
-extern void debug_exit_trap( void );
 
-#endif      //!< #ifndef __SERVICE_DEBUG_H__
+#endif      //!< #ifndef __SERVICE_DBG_LOG_H__
 /* EOF */

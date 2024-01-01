@@ -1,5 +1,5 @@
 /*******************************************************************************
- *  Copyright(C)2020-2023 by Dreistein<mcu_shilei@hotmail.com>                *
+ *  Copyright(C)2015-2023 by Dreistein<mcu_shilei@hotmail.com>                *
  *                                                                            *
  *  This program is free software; you can redistribute it and/or modify it   *
  *  under the terms of the GNU Lesser General Public License as published     *
@@ -15,13 +15,37 @@
  *  along with this program; if not, see http://www.gnu.org/licenses/.        *
 *******************************************************************************/
 
-#ifndef __SERVICE_DEBUG_CFG_H__
-#define __SERVICE_DEBUG_CFG_H__
+
+
+/*============================ INCLUDES ======================================*/
+#include "./app_cfg.h"
+#include "./dbg_log.h"
 
 /*============================ MACROS ========================================*/
-#define DEBUG_MSG_ENABLE        ENABLED
-#define DEBUG_EOL               "\r\n"
+/*============================ MACROFIED FUNCTIONS ===========================*/
+/*============================ TYPES =========================================*/
+/*============================ PROTOTYPES ====================================*/
+/*============================ LOCAL VARIABLES ===============================*/
+/*============================ GLOBAL VARIABLES ==============================*/
+/*============================ IMPLEMENTATION ================================*/
 
+#if defined(DEBUG_PRINTF_DYN)
+/*
+ * Make dummy function to prevent NULL pointer dereferences before
+ * debug_printf has been set by calling debug_set_printf().
+ */
+static int default_debug_printf( const _CHAR *format, ... )
+{
+    ((void) format);
+    return( 0 );
+}
 
-#endif  //!< #ifndef __SERVICE_DEBUG_CFG_H__
+int (*debug_printf)( const _CHAR *, ... ) = default_debug_printf;
+
+int debug_set_printf( int (*printf_func)( const _CHAR *, ... ) )
+{
+    debug_printf = printf_func;
+}
+#endif /* DEBUG_PRINTF_DYN */
+
 /* EOF */
